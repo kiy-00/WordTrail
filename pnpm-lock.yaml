@@ -72,6 +72,9 @@ importers:
       '@dcloudio/uni-stacktracey':
         specifier: 3.0.0-4020920240930001
         version: 3.0.0-4020920240930001
+      '@dcloudio/uni-ui':
+        specifier: ^1.5.7
+        version: 1.5.7
       '@dcloudio/uni-vue-devtools':
         specifier: 3.0.0-4020920240930001
         version: 3.0.0-4020920240930001(@vueuse/core@11.2.0(vue@3.4.38(typescript@5.5.4)))(postcss@8.4.47)(rollup@4.24.4)(vue@3.4.38(typescript@5.5.4))
@@ -81,6 +84,15 @@ importers:
       '@iconify-json/carbon':
         specifier: ^1.2.4
         version: 1.2.4
+      '@iconify-json/circle-flags':
+        specifier: ^1.2.1
+        version: 1.2.1
+      '@iconify-json/mynaui':
+        specifier: ^1.2.7
+        version: 1.2.7
+      '@iconify-json/svg-spinners':
+        specifier: ^1.2.1
+        version: 1.2.1
       '@mini-types/alipay':
         specifier: ^3.0.14
         version: 3.0.14
@@ -117,6 +129,9 @@ importers:
       '@unocss/eslint-config':
         specifier: ^0.64.0
         version: 0.64.0(eslint@9.14.0(jiti@1.21.6))(typescript@5.5.4)
+      '@unocss/preset-icons':
+        specifier: ^0.64.0
+        version: 0.64.0
       '@vue/runtime-core':
         specifier: ^3.5.12
         version: 3.5.12
@@ -144,6 +159,9 @@ importers:
       unplugin-auto-import:
         specifier: ^0.18.3
         version: 0.18.3(@vueuse/core@11.2.0(vue@3.4.38(typescript@5.5.4)))(rollup@4.24.4)
+      unplugin-vue-components:
+        specifier: ^0.27.4
+        version: 0.27.4(@babel/parser@7.26.2)(rollup@4.24.4)(vue@3.4.38(typescript@5.5.4))
       vite:
         specifier: ^5.4.10
         version: 5.4.10(@types/node@22.9.0)(terser@5.36.0)
@@ -906,6 +924,9 @@ packages:
   '@dcloudio/uni-stat@3.0.0-4020920240930001':
     resolution: {integrity: sha512-ZPn4WQPlZ3lObaZM9Q1fryewIsan1XD4qy+oWsqAuGop1kaHDQKUfg2D+jclAOCr4+95u4Jfn+RH0HNqrI0eqg==}
 
+  '@dcloudio/uni-ui@1.5.7':
+    resolution: {integrity: sha512-DugxSIrQrze1FLdUOj9a+JEQ0bHGjnJTcGUK1mN/MivKg7nuKJBRWk5Ipa9sUdoBznX6ndz5h2e7Uao6x1CdCw==}
+
   '@dcloudio/uni-vue-devtools@3.0.0-4020920240930001':
     resolution: {integrity: sha512-VAoTU469Qg4JecwjovB0ACAArgLW4+iI/Mn+0pZ9/57jgHUHNykzbC0e8PGOafpffJYl9iBrrW/exSfAUh4JoA==}
 
@@ -1420,6 +1441,15 @@ packages:
   '@iconify-json/carbon@1.2.4':
     resolution: {integrity: sha512-DhW2jjMVGwV0DLHc0cmDYohdtGxMra8UuwgjHrryPy+rQX4gXhJwCBBVP2h2UG/92AoRCTn7zUJve4WvY5MLYg==}
 
+  '@iconify-json/circle-flags@1.2.1':
+    resolution: {integrity: sha512-/gDW8eWHUcF22aR4RIAoqtyBWy2VQOS7JFk27z+gFJ4gxiSS2dRG156sU8Hy30TYf5MaN/fRQPwAJ1ksfiXQig==}
+
+  '@iconify-json/mynaui@1.2.7':
+    resolution: {integrity: sha512-r/PMWGRpQcZ+SXn+cTpUq8AOZJG85/1g8NRXa43EcNBH4Jq//f0EVUNuWqCzp9ILs/kjEsymLDExRmtqghhLug==}
+
+  '@iconify-json/svg-spinners@1.2.1':
+    resolution: {integrity: sha512-QZNA4YzFD2zqdC6nIBJM6WlAGakUCjvMt92Ks1R4XFxkd76Ps3rdiauYWESDRZvNYURAByp2b9cwZarFula65g==}
+
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
 
@@ -1785,46 +1815,55 @@ packages:
     resolution: {integrity: sha512-10ICosOwYChROdQoQo589N5idQIisxjaFE/PAnX2i0Zr84mY0k9zul1ArH0rnJ/fpgiqfu13TFZR5A5YJLOYZA==}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.24.4':
     resolution: {integrity: sha512-ySAfWs69LYC7QhRDZNKqNhz2UKN8LDfbKSMAEtoEI0jitwfAG2iZwVqGACJT+kfYvvz3/JgsLlcBP+WWoKCLcw==}
     cpu: [arm]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.24.4':
     resolution: {integrity: sha512-uHYJ0HNOI6pGEeZ/5mgm5arNVTI0nLlmrbdph+pGXpC9tFHFDQmDMOEqkmUObRfosJqpU8RliYoGz06qSdtcjg==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.24.4':
     resolution: {integrity: sha512-38yiWLemQf7aLHDgTg85fh3hW9stJ0Muk7+s6tIkSUOMmi4Xbv5pH/5Bofnsb6spIwD5FJiR+jg71f0CH5OzoA==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-powerpc64le-gnu@4.24.4':
     resolution: {integrity: sha512-q73XUPnkwt9ZNF2xRS4fvneSuaHw2BXuV5rI4cw0fWYVIWIBeDZX7c7FWhFQPNTnE24172K30I+dViWRVD9TwA==}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-gnu@4.24.4':
     resolution: {integrity: sha512-Aie/TbmQi6UXokJqDZdmTJuZBCU3QBDA8oTKRGtd4ABi/nHgXICulfg1KI6n9/koDsiDbvHAiQO3YAUNa/7BCw==}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-s390x-gnu@4.24.4':
     resolution: {integrity: sha512-P8MPErVO/y8ohWSP9JY7lLQ8+YMHfTI4bAdtCi3pC2hTeqFJco2jYspzOzTUB8hwUWIIu1xwOrJE11nP+0JFAQ==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.24.4':
     resolution: {integrity: sha512-K03TljaaoPK5FOyNMZAAEmhlyO49LaE4qCsr0lYHUKyb6QacTNF9pnfPpXnFlFD3TXuFbFbz7tJ51FujUXkXYA==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.24.4':
     resolution: {integrity: sha512-VJYl4xSl/wqG2D5xTYncVWW+26ICV4wubwN9Gs5NrqhJtayikwCXzPL8GDsLnaLU3WwhQ8W02IinYSFJfyo34Q==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-win32-arm64-msvc@4.24.4':
     resolution: {integrity: sha512-ku2GvtPwQfCqoPFIJCqZ8o7bJcj+Y54cZSr43hHca6jLwAiCbZdBUOrqE6y29QFajNAzzpIOwsckaTFmN6/8TA==}
@@ -5166,6 +5205,19 @@ packages:
       '@vueuse/core':
         optional: true
 
+  unplugin-vue-components@0.27.4:
+    resolution: {integrity: sha512-1XVl5iXG7P1UrOMnaj2ogYa5YTq8aoh5jwDPQhemwO/OrXW+lPQKDXd1hMz15qxQPxgb/XXlbgo3HQ2rLEbmXQ==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@babel/parser': ^7.15.8
+      '@nuxt/kit': ^3.2.2
+      vue: 2 || 3
+    peerDependenciesMeta:
+      '@babel/parser':
+        optional: true
+      '@nuxt/kit':
+        optional: true
+
   unplugin@1.15.0:
     resolution: {integrity: sha512-jTPIs63W+DUEDW207ztbaoO7cQ4p5aVaB823LSlxpsFEU3Mykwxf3ZGC/wzxFJeZlASZYgVrWeo7LgOrqJZ8RA==}
     engines: {node: '>=14.0.0'}
@@ -6896,6 +6948,8 @@ snapshots:
       - vue
       - webpack-sources
 
+  '@dcloudio/uni-ui@1.5.7': {}
+
   '@dcloudio/uni-vue-devtools@3.0.0-4020920240930001(@vueuse/core@11.2.0(vue@3.4.38(typescript@5.5.4)))(postcss@8.4.47)(rollup@4.24.4)(vue@3.4.38(typescript@5.5.4))':
     dependencies:
       '@dcloudio/uni-cli-shared': 3.0.0-4020920240930001(@vueuse/core@11.2.0(vue@3.4.38(typescript@5.5.4)))(postcss@8.4.47)(rollup@4.24.4)(vue@3.4.38(typescript@5.5.4))
@@ -7247,6 +7301,18 @@ snapshots:
   '@humanwhocodes/retry@0.4.1': {}
 
   '@iconify-json/carbon@1.2.4':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/circle-flags@1.2.1':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/mynaui@1.2.7':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/svg-spinners@1.2.1':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -11953,6 +12019,26 @@ snapshots:
       '@vueuse/core': 11.2.0(vue@3.4.38(typescript@5.5.4))
     transitivePeerDependencies:
       - rollup
+      - webpack-sources
+
+  unplugin-vue-components@0.27.4(@babel/parser@7.26.2)(rollup@4.24.4)(vue@3.4.38(typescript@5.5.4)):
+    dependencies:
+      '@antfu/utils': 0.7.10
+      '@rollup/pluginutils': 5.1.3(rollup@4.24.4)
+      chokidar: 3.6.0
+      debug: 4.3.7
+      fast-glob: 3.3.2
+      local-pkg: 0.5.0
+      magic-string: 0.30.12
+      minimatch: 9.0.5
+      mlly: 1.7.2
+      unplugin: 1.15.0
+      vue: 3.4.38(typescript@5.5.4)
+    optionalDependencies:
+      '@babel/parser': 7.26.2
+    transitivePeerDependencies:
+      - rollup
+      - supports-color
       - webpack-sources
 
   unplugin@1.15.0:
