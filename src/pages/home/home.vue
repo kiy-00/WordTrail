@@ -5,10 +5,14 @@ export default defineComponent({
     const selectedLanguage = ref<string>('English')
     const languages = ref<string[]>(['English', 'Spanish', 'French', 'German', 'Chinese'])
 
+    const handleLanguageChange = (event: any) => {
+      selectedLanguage.value = languages.value[event.detail.value]
+    }
+
     return {
       selectedLanguage,
       languages,
-
+      handleLanguageChange,
     }
   },
 })
@@ -17,7 +21,7 @@ export default defineComponent({
 <template>
   <view class="header">
     <image class="avatar" src="@/static/avatar/avatar.png" alt="User Avatar" />
-    <picker v-model="selectedLanguage" mode="selector" :range="languages" class="language-select">
+    <picker :value="selectedLanguage" mode="selector" :range="languages" class="language-select" @change="handleLanguageChange">
       <view>{{ selectedLanguage }}</view>
     </picker>
   </view>
