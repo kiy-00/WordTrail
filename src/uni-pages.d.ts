@@ -11,10 +11,12 @@ interface NavigateToOptions {
        "/pages/user/mycontent" |
        "/pages/user/mydata" |
        "/pages/user/settings" |
+       "/pages/word/WordcardHeader" |
+       "/pages/word/learn" |
+       "/pages/word/review" |
        "/pages/word/wordcards" |
        "/pages/community/components/Comments" |
-       "/pages/community/components/CommunityHeader" |
-       "/pages/word/components/WordCardsHeader";
+       "/pages/community/components/CommunityHeader";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 

@@ -36,6 +36,21 @@
       "style": {}
     },
     {
+      "path": "pages/word/WordcardHeader",
+      "type": "page",
+      "style": {}
+    },
+    {
+      "path": "pages/word/learn",
+      "type": "page",
+      "style": {}
+    },
+    {
+      "path": "pages/word/review",
+      "type": "page",
+      "style": {}
+    },
+    {
       "path": "pages/word/wordcards",
       "type": "page",
       "style": {}
@@ -47,11 +62,6 @@
     },
     {
       "path": "pages/community/components/CommunityHeader",
-      "type": "page",
-      "style": {}
-    },
-    {
-      "path": "pages/word/components/WordCardsHeader",
       "type": "page",
       "style": {}
     }
