@@ -13,6 +13,7 @@ declare module 'vue' {
     CommunityHeader: typeof import('./pages/community/components/CommunityHeader.vue')['default']
     HiCounter: typeof import('./components/HiCounter.vue')['default']
     InputEntry: typeof import('./components/InputEntry.vue')['default']
+    PostCard: typeof import('./pages/community/components/PostCard.vue')['default']
     TabBar: typeof import('./components/TabBar.vue')['default']
     WordCardsHeader: typeof import('./pages/word/components/WordCardsHeader.vue')['default']
   }

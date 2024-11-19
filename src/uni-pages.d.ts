@@ -14,6 +14,7 @@ interface NavigateToOptions {
        "/pages/word/wordcards" |
        "/pages/community/components/Comments" |
        "/pages/community/components/CommunityHeader" |
+       "/pages/community/components/PostCard" |
        "/pages/word/components/WordCardsHeader";
 }
 interface RedirectToOptions extends NavigateToOptions {}

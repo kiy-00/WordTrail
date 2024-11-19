@@ -51,6 +51,11 @@
       "style": {}
     },
     {
+      "path": "pages/community/components/PostCard",
+      "type": "page",
+      "style": {}
+    },
+    {
       "path": "pages/word/components/WordCardsHeader",
       "type": "page",
       "style": {}
