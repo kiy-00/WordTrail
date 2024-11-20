@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { PropType } from 'vue'
+
 import { useRouter } from 'vue-router'
 
 interface Post {
@@ -14,6 +15,7 @@ interface Post {
 
 export default defineComponent({
   name: 'PostCard',
+
   props: {
     post: {
       type: Object as PropType<Post>,
