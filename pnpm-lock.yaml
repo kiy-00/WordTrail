@@ -78,15 +78,24 @@ importers:
       '@iconify-json/carbon':
         specifier: ^1.2.4
         version: 1.2.4
+      '@iconify-json/ci':
+        specifier: ^1.2.1
+        version: 1.2.1
       '@iconify-json/circle-flags':
         specifier: ^1.2.1
         version: 1.2.1
       '@iconify-json/mynaui':
         specifier: ^1.2.7
         version: 1.2.7
+      '@iconify-json/raphael':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@iconify-json/svg-spinners':
         specifier: ^1.2.1
         version: 1.2.1
+      '@iconify/vue':
+        specifier: ^4.1.2
+        version: 4.1.2(vue@3.4.38(typescript@5.5.4))
       '@mini-types/alipay':
         specifier: ^3.0.14
         version: 3.0.14
@@ -1435,11 +1444,17 @@ packages:
   '@iconify-json/carbon@1.2.4':
     resolution: {integrity: sha512-DhW2jjMVGwV0DLHc0cmDYohdtGxMra8UuwgjHrryPy+rQX4gXhJwCBBVP2h2UG/92AoRCTn7zUJve4WvY5MLYg==}
 
+  '@iconify-json/ci@1.2.1':
+    resolution: {integrity: sha512-uQSNwCTuorjgH7rQ7dFXfJ4fqUMHP8cqOmm8m/ibHM4/WQTih4Dkaq3i6e7X4Wji3kFR6R1bAkjDxLYmTD6KGA==}
+
   '@iconify-json/circle-flags@1.2.1':
     resolution: {integrity: sha512-/gDW8eWHUcF22aR4RIAoqtyBWy2VQOS7JFk27z+gFJ4gxiSS2dRG156sU8Hy30TYf5MaN/fRQPwAJ1ksfiXQig==}
 
   '@iconify-json/mynaui@1.2.7':
     resolution: {integrity: sha512-r/PMWGRpQcZ+SXn+cTpUq8AOZJG85/1g8NRXa43EcNBH4Jq//f0EVUNuWqCzp9ILs/kjEsymLDExRmtqghhLug==}
+
+  '@iconify-json/raphael@1.2.0':
+    resolution: {integrity: sha512-Lfh7nso8dpfkgXcMPkfC0QqK355zRSSFvMykdbhscuY8sJufSQ6WZUVIr8Jf04GJEsWDy4qY6CtVrNbax0dwTQ==}
 
   '@iconify-json/svg-spinners@1.2.1':
     resolution: {integrity: sha512-QZNA4YzFD2zqdC6nIBJM6WlAGakUCjvMt92Ks1R4XFxkd76Ps3rdiauYWESDRZvNYURAByp2b9cwZarFula65g==}
@@ -1449,6 +1464,11 @@ packages:
 
   '@iconify/utils@2.1.33':
     resolution: {integrity: sha512-jP9h6v/g0BIZx0p7XGJJVtkVnydtbgTgt9mVNcGDYwaa7UhdHdI9dvoq+gKj9sijMSJKxUPEG2JyjsgXjxL7Kw==}
+
+  '@iconify/vue@4.1.2':
+    resolution: {integrity: sha512-CQnYqLiQD5LOAaXhBrmj1mdL2/NCJvwcC4jtW2Z8ukhThiFkLDkutarTOV2trfc9EXqUqRs0KqXOL9pZ/IyysA==}
+    peerDependencies:
+      vue: '>=3'
 
   '@intlify/core-base@9.1.9':
     resolution: {integrity: sha512-x5T0p/Ja0S8hs5xs+ImKyYckVkL4CzcEXykVYYV6rcbXxJTe2o58IquSqX9bdncVKbRZP7GlBU1EcRaQEEJ+vw==}
@@ -7440,11 +7460,19 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
+  '@iconify-json/ci@1.2.1':
+    dependencies:
+      '@iconify/types': 2.0.0
+
   '@iconify-json/circle-flags@1.2.1':
     dependencies:
       '@iconify/types': 2.0.0
 
   '@iconify-json/mynaui@1.2.7':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/raphael@1.2.0':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -7465,6 +7493,11 @@ snapshots:
       mlly: 1.7.2
     transitivePeerDependencies:
       - supports-color
+
+  '@iconify/vue@4.1.2(vue@3.4.38(typescript@5.5.4))':
+    dependencies:
+      '@iconify/types': 2.0.0
+      vue: 3.4.38(typescript@5.5.4)
 
   '@intlify/core-base@9.1.9':
     dependencies:

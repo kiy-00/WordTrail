@@ -11,6 +11,8 @@ interface NavigateToOptions {
        "/pages/user/mycontent" |
        "/pages/user/mydata" |
        "/pages/user/settings" |
+       "/pages/word/learn" |
+       "/pages/word/review" |
        "/pages/word/wordcards";
 }
 interface RedirectToOptions extends NavigateToOptions {}

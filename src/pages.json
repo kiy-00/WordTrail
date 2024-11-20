@@ -36,6 +36,16 @@
       "style": {}
     },
     {
+      "path": "pages/word/learn",
+      "type": "page",
+      "style": {}
+    },
+    {
+      "path": "pages/word/review",
+      "type": "page",
+      "style": {}
+    },
+    {
       "path": "pages/word/wordcards",
       "type": "page",
       "style": {}

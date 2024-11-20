@@ -76,6 +76,7 @@
     "@iconify-json/mynaui": "^1.2.7",
     "@iconify-json/raphael": "^1.2.0",
     "@iconify-json/svg-spinners": "^1.2.1",
+    "@iconify/vue": "^4.1.2",
     "@mini-types/alipay": "^3.0.14",
     "@types/node": "^22.9.0",
     "@uni-helper/eslint-config": "^0.2.1",
