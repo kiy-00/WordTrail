@@ -1,23 +1,16 @@
 <script lang="ts">
+import type { Post } from '@/types/Post'
 import { defineComponent, ref } from 'vue'
-
-interface Post {
-  id: number
-  title: string
-  likes: number
-  publishTime: string
-  username: string
-  userAvatar: string
-  images?: string[]
-}
 
 export default defineComponent({
   name: 'Community',
 
   setup() {
-    const activeTab = ref<'recommend' | 'my'>('recommend')
+    const activeTab = ref<'recommend' | 'my' | 'favorites'>('recommend')
     const allRecommendedPosts = ref<Post[]>([])
     const allMyPosts = ref<Post[]>([])
+    const allFavoritePosts = ref<Post[]>([])
+
     const displayedPosts = ref<Post[]>([])
     const isRefreshing = ref(false)
     const postsPerLoad = 50
@@ -32,11 +25,13 @@ export default defineComponent({
         newPosts.push({
           id: i,
           title: `推荐帖子标题 ${i}`,
-          likes: Math.floor(Math.random() * 100),
+          content: `这是推荐帖子 ${i} 的内容。`,
           publishTime: new Date().toISOString().split('T')[0],
           username: `用户${i}`,
           userAvatar: `https://via.placeholder.com/40?text=U${i}`,
           images: [`https://via.placeholder.com/600x400?text=Image+${i}`],
+          tags: ['标签1', '标签2'],
+          likes: Math.floor(Math.random() * 100), // 确保 likes 是 number 类型
         })
       }
       // 模拟网络延迟
@@ -53,16 +48,42 @@ export default defineComponent({
         newPosts.push({
           id: i,
           title: `我的帖子标题 ${i}`,
-          likes: Math.floor(Math.random() * 100),
+          content: `这是我的帖子 ${i} 的内容。`,
           publishTime: new Date().toISOString().split('T')[0],
           username: `我`,
           userAvatar: `https://via.placeholder.com/40?text=Me`,
           images: [`https://via.placeholder.com/600x400?text=My+Image+${i}`],
+          tags: ['标签A', '标签B'],
+          likes: Math.floor(Math.random() * 100), // 确保 likes 是 number 类型
+          status: '审核中',
         })
       }
       // 模拟网络延迟
       await new Promise(resolve => setTimeout(resolve, 1000))
       allMyPosts.value.push(...newPosts)
+    }
+
+    // 模拟获取收藏的帖子
+    const fetchFavoritePosts = async () => {
+      const newPosts: Post[] = []
+      const startId = allFavoritePosts.value.length + 1
+      for (let i = startId; i < startId + postsPerLoad; i++) {
+        newPosts.push({
+          id: i,
+          title: `收藏帖子标题 ${i}`,
+          content: `这是收藏帖子 ${i} 的内容。`,
+          publishTime: new Date().toISOString().split('T')[0],
+          username: `用户${i}`,
+          userAvatar: `https://via.placeholder.com/40?text=U${i}`,
+          images: [`https://via.placeholder.com/600x400?text=Favories+Image+${i}`],
+          tags: ['标签1'],
+          likes: 0,
+          collects: 1,
+        })
+      }
+      // 模拟网络延迟
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      allFavoritePosts.value.push(...newPosts)
     }
 
     // 初始化加载推荐帖子
@@ -73,7 +94,7 @@ export default defineComponent({
     }
 
     // 切换标签时加载相应的帖子
-    const handleTabChange = async (tab: 'recommend' | 'my') => {
+    const handleTabChange = async (tab: 'recommend' | 'my' | 'favorites') => {
       activeTab.value = tab
       displayedPosts.value = []
       currentLoad.value = 1
@@ -89,6 +110,12 @@ export default defineComponent({
         }
         displayedPosts.value = allMyPosts.value.slice(0, postsPerLoad)
       }
+      else if (tab === 'favorites') {
+        if (allFavoritePosts.value.length === 0) {
+          await fetchFavoritePosts()
+        }
+        displayedPosts.value = allFavoritePosts.value.slice(0, postsPerLoad)
+      }
     }
 
     // 下拉刷新
@@ -101,6 +128,10 @@ export default defineComponent({
       else if (activeTab.value === 'my') {
         await fetchMyPosts()
         displayedPosts.value = allMyPosts.value.slice(0, currentLoad.value * postsPerLoad)
+      }
+      else if (activeTab.value === 'favorites') {
+        await fetchFavoritePosts()
+        displayedPosts.value = allFavoritePosts.value.slice(0, currentLoad.value * postsPerLoad)
       }
       isRefreshing.value = false
     }
@@ -143,6 +174,29 @@ export default defineComponent({
     // 初始化帖子
     initializePosts()
 
+    const goToEdit = () => {
+      uni.navigateTo({
+        url: '/pages/community/posteditor',
+      })
+    }
+
+    const handleDeletePost = (postId: number) => {
+      uni.showModal({
+        title: '确认删除',
+        content: '确定要删除这条帖子吗？',
+        success: (res) => {
+          if (res.confirm) {
+            displayedPosts.value = displayedPosts.value.filter(post => post.id !== postId)
+            // 可在此处调用 API 删除帖子
+            uni.showToast({
+              title: '删除成功',
+              icon: 'success',
+            })
+          }
+        },
+      })
+    }
+
     return {
       activeTab,
       displayedPosts,
@@ -150,8 +204,10 @@ export default defineComponent({
       handleBack,
       handleTabChange,
       handleSearch,
+      handleDeletePost,
       onRefresh,
       onLoadMore,
+      goToEdit,
     }
   },
 })
@@ -170,29 +226,31 @@ export default defineComponent({
     @refresher-refresh="onRefresh"
     @scrolltolower="onLoadMore"
   >
-    <view class="posts-list">
+    <view class="posts-list grid grid-cols-2 mt-2 gap-2 lg:grid-cols-5 md:grid-cols-2">
       <PostCard
         v-for="post in displayedPosts"
         :key="post.id"
         :post="post"
+        :is-my-post="activeTab === 'my'"
+        @delete="handleDeletePost"
       />
     </view>
   </scroll-view>
+
+  <!-- 悬浮按钮 -->
+  <view class="fixed bottom-4 right-4">
+    <button
+      class="h-16 w-16 flex items-center justify-center rounded-full bg-red-500 text-white shadow-lg"
+      @click="goToEdit"
+    >
+      <view class="i-mynaui:pen text-2xl" />
+    </button>
+  </view>
   <!-- </view> -->
 </template>
 
 <style scoped>
-/* .community-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-} */
-
 .scroll-view {
   flex: 1;
-}
-
-.posts-list {
-  padding: 1rem;
 }
 </style>

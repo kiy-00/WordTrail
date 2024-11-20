@@ -1,13 +1,16 @@
+<!-- CommunityHeader.vue -->
 <script lang="ts">
+import { defineComponent, ref } from 'vue'
+
 export default defineComponent({
   name: 'CommunityHeader',
   emits: {
     'back': () => true,
-    'tab-change': (tab: 'recommend' | 'my') => ['recommend', 'my'].includes(tab),
+    'tab-change': (tab: 'recommend' | 'my' | 'favorites') => ['recommend', 'my', 'favorites'].includes(tab),
     'search': (query: string) => typeof query === 'string' && query.trim().length > 0,
   },
   setup(_, { emit }) {
-    const activeTab = ref<'recommend' | 'my'>('recommend')
+    const activeTab = ref<'recommend' | 'my' | 'favorites'>('recommend')
     const isSearchVisible = ref(false)
     const searchQuery = ref('')
 
@@ -15,7 +18,7 @@ export default defineComponent({
       emit('back')
     }
 
-    const selectTab = (tab: 'recommend' | 'my') => {
+    const selectTab = (tab: 'recommend' | 'my' | 'favorites') => {
       if (activeTab.value !== tab) {
         activeTab.value = tab
         emit('tab-change', tab)
@@ -50,53 +53,68 @@ export default defineComponent({
 </script>
 
 <template>
-  <view class="header">
+  <view class="relative h-12 flex items-center justify-between border-b border-gray-300 bg-white px-4">
     <!-- 左侧返回按钮 -->
-    <view class="header-left" @click="onBack">
-      <uni-icon type="left" size="24" />
+    <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="onBack">
+      <view class="i-mynaui:arrow-left text-2xl text-gray-500" />
     </view>
 
     <!-- 中部标签 -->
-    <view class="header-middle">
+    <view class="flex flex-1 justify-center">
       <view
-        class="tab"
-        :class="{ active: activeTab === 'recommend' }"
+        class="relative mx-2 cursor-pointer text-base text-gray-500 tab"
+        :class="activeTab === 'recommend' ? 'text-red font-bold' : ''"
         @click="selectTab('recommend')"
       >
         推荐
+        <view
+          v-if="activeTab === 'recommend'"
+          class="absolute bottom-[-5px] left-1/2 h-0.5 w-5 transform bg-red -translate-x-1/2"
+        />
       </view>
       <view
-        class="tab"
-        :class="{ active: activeTab === 'my' }"
+        class="relative mx-2 cursor-pointer text-base text-gray-500 tab"
+        :class="activeTab === 'my' ? 'text-red font-bold' : ''"
         @click="selectTab('my')"
       >
         我的
+        <view
+          v-if="activeTab === 'my'"
+          class="absolute bottom-[-5px] left-1/2 h-0.5 w-5 transform bg-red -translate-x-1/2"
+        />
+      </view>
+      <!-- 新增 收藏 选项卡 -->
+      <view
+        class="relative mx-2 cursor-pointer text-base text-gray-500 tab"
+        :class="activeTab === 'favorites' ? 'text-red font-bold' : ''"
+        @click="selectTab('favorites')"
+      >
+        收藏
+        <view
+          v-if="activeTab === 'favorites'"
+          class="absolute bottom-[-5px] left-1/2 h-0.5 w-5 transform bg-red -translate-x-1/2"
+        />
       </view>
     </view>
 
     <!-- 右侧搜索按钮 -->
-    <view class="header-right" @click="toggleSearch">
-      <uni-icon type="search" size="24" />
+    <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
+      <view class="i-mynaui:search text-2xl text-gray-500" />
     </view>
 
     <!-- 搜索框 -->
     <transition name="fade">
-      <view v-if="isSearchVisible" class="search-container">
-        <view class="search-box">
-          <uni-icon type="search" size="20" class="search-icon" />
+      <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-20 z-50 bg-transparent px-4">
+        <view class="flex items-center rounded-lg bg-white p-2">
+          <view class="i-mynaui:search mr-2 text-xl text-gray-500" />
           <input
             v-model="searchQuery"
             type="text"
             placeholder="搜索..."
-            class="search-input"
+            class="flex-1 rounded-sm bg-transparent text-base text-gray-600 outline-none"
             @keydown.enter="onSearch"
           >
-          <uni-icon
-            type="close"
-            size="20"
-            class="close-icon"
-            @click="toggleSearch"
-          />
+          <view class="i-ci:close-md ml-2 cursor-pointer text-xl text-gray-500" @click="toggleSearch" />
         </view>
       </view>
     </transition>
@@ -104,92 +122,8 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1rem;
-  height: 50px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
-  position: relative;
-}
-
-/* 左右按钮的大小保持一致 */
-.header-left,
-.header-right {
-  width: 24px;
-  height: 24px;
-}
-
-.header-middle {
-  display: flex;
-  flex: 1;
-  justify-content: center;
-}
-
-.tab {
-  margin: 0 1rem;
-  font-size: 16px;
-  color: #888888;
-  cursor: pointer;
-  position: relative;
-}
-
-.tab.active {
-  color: #000000;
-  font-weight: bold;
-}
-
-.tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 2px;
-  background-color: #000000;
-}
-
-.search-container {
-  position: absolute;
-  top: 50px;
-  left: 0;
-  right: 0;
-  padding: 0 1rem;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  padding: 0.5rem;
-}
-
-.search-icon {
-  margin-right: 0.5rem;
-  color: #888888;
-}
-
-.close-icon {
-  margin-left: 0.5rem;
-  color: #888888;
-  cursor: pointer;
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 16px;
-  color: #000000;
-}
+/* UnoCSS handles all styling using utility classes */
+/* Add custom animations using UnoCSS */
 
 @keyframes fadeIn {
   from {
@@ -202,14 +136,7 @@ export default defineComponent({
   }
 }
 
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
+.fadeIn {
+  animation: fadeIn 0.3s ease-in-out forwards;
 }
 </style>
