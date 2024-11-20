@@ -10,9 +10,12 @@ declare module 'vue' {
     AppFooter: typeof import('./components/AppFooter.vue')['default']
     AppLogos: typeof import('./components/AppLogos.vue')['default']
     BackButton: typeof import('./components/BackButton.vue')['default']
+    Comments: typeof import('./components/Comments.vue')['default']
+    CommunityHeader: typeof import('./components/CommunityHeader.vue')['default']
     HiCounter: typeof import('./components/HiCounter.vue')['default']
     InputEntry: typeof import('./components/InputEntry.vue')['default']
-    PostCard: typeof import('./pages/community/components/PostCard.vue')['default']
+    PostCard: typeof import('./components/PostCard.vue')['default']
     TabBar: typeof import('./components/TabBar.vue')['default']
+    WordCardsHeader: typeof import('./components/WordCardsHeader.vue')['default']
   }
 }

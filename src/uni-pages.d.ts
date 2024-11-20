@@ -11,11 +11,7 @@ interface NavigateToOptions {
        "/pages/user/mycontent" |
        "/pages/user/mydata" |
        "/pages/user/settings" |
-       "/pages/word/wordcards" |
-       "/pages/community/components/Comments" |
-       "/pages/community/components/CommunityHeader" |
-       "/pages/community/components/PostCard" |
-       "/pages/word/components/WordCardsHeader";
+       "/pages/word/wordcards";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 

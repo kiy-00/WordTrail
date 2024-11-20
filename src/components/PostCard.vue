@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { PropType } from 'vue'
-
+import { defineComponent } from 'vue'
 import { useRouter } from 'vue-router'
 
 interface Post {

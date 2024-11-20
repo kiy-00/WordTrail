@@ -1,6 +1,7 @@
 <script lang="ts">
 export default defineComponent({
   name: 'Home',
+
   setup() {
     const selectedLanguage = ref<string>('English')
     const languages = ref<string[]>(['English', 'Spanish', 'French', 'German', 'Chinese'])

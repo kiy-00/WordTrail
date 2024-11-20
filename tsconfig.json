@@ -10,7 +10,8 @@
       "@dcloudio/types",
       "@mini-types/alipay",
       "miniprogram-api-typings",
-      "@uni-helper/uni-types"
+      "@uni-helper/uni-types",
+      "./src/shims.d.ts" // 确保包含自定义声明文件
     ],
     "sourceMap": true
   },
