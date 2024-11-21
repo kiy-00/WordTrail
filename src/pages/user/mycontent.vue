@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
+const bookLearned = ref(0)
+const recentlyLearned = ref(0)
+const totalLearned = ref(0)
+const vocabularyCount = ref(0)
+const notes = ref(0)
 </script>
 
 <template>
@@ -16,7 +23,7 @@
             在学词书
           </text>
           <text class="link-text-right">
-            5000
+            {{ bookLearned }}
           </text>
           <view class="i-mynaui:chevron-right" />
         </navigator>
@@ -28,7 +35,7 @@
             近日已学
           </text>
           <text class="link-text-right">
-            5000
+            {{ recentlyLearned }}
           </text>
           <view class="i-mynaui:chevron-right" />
         </navigator>
@@ -38,7 +45,7 @@
             全部已学
           </text>
           <text class="link-text-right">
-            5000
+            {{ totalLearned }}
           </text>
           <view class="i-mynaui:chevron-right" />
         </navigator>
@@ -51,7 +58,7 @@
             单词本&nbsp;&nbsp;&nbsp;&nbsp;
           </text>
           <text class="link-text-right">
-            5000
+            {{ vocabularyCount }}
           </text>
           <view class="i-mynaui:chevron-right" />
         </navigator>
@@ -61,7 +68,7 @@
             笔记&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           </text>
           <text class="link-text-right">
-            5000
+            {{ notes }}
           </text>
           <view class="i-mynaui:chevron-right" />
         </navigator>
@@ -79,10 +86,6 @@
   background-color: rgba(0, 0, 57, 0.85);
 }
 
-.background-image {
-  display: none; /* Hide the image element as the background is now set on the container */
-}
-
 .header {
   position: relative;
   z-index: 1;
@@ -90,25 +93,6 @@
   flex-direction: column;
   align-items: center;
   padding: 1rem;
-}
-
-.avatar-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 3rem;
-}
-
-.avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-}
-
-.username {
-  margin-top: 0.5rem;
-  font-size: 1.5rem;
-  color: white;
 }
 
 .help {
@@ -122,7 +106,7 @@
 
 .links {
   position: absolute;
-  bottom: 0;
+  top: 20%;
   width: 100%;
   display: flex;
   flex-direction: column;
