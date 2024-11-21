@@ -1,70 +1,69 @@
 <script setup lang="ts">
-import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
 </script>
 
 <template>
   <view class="profile-page">
     <view class="header">
       <view class="help">
-        <uni-icons type="help" size="24" color="white" />
+        <view class="i-mynaui:info-octagon" size="7" />
       </view>
     </view>
     <view class="links">
       <view class="box">
         <navigator url="/pages/user/mycontent" class="link">
-          <uni-icons type="gear" size="24" color="white" class="icon" />
+          <view class="i-mynaui:book-open" />
           <text class="link-text">
             在学词书
           </text>
           <text class="link-text-right">
             5000
           </text>
-          <uni-icons type="back" size="24" color="white" class="icon" />
+          <view class="i-mynaui:chevron-right" />
         </navigator>
       </view>
       <view class="box">
         <navigator url="/pages/user/mydata" class="link">
-          <uni-icons type="help" size="24" color="white" class="icon" />
+          <view class="i-mynaui:book-check" />
           <text class="link-text">
             近日已学
           </text>
           <text class="link-text-right">
             5000
           </text>
-          <uni-icons type="back" size="24" color="white" class="icon-back" />
+          <view class="i-mynaui:chevron-right" />
         </navigator>
         <navigator url="/pages/user/mydata" class="link">
-          <uni-icons type="help" size="24" color="white" class="icon" />
+          <view class="i-mynaui:book-dot-solid" />
           <text class="link-text">
             全部已学
           </text>
           <text class="link-text-right">
             5000
           </text>
-          <uni-icons type="back" size="24" color="white" class="icon-back" />
+          <view class="i-mynaui:chevron-right" />
         </navigator>
       </view>
 
       <view class="box">
         <navigator url="/pages/user/settings" class="link">
-          <uni-icons type="gear" size="24" color="white" class="icon" />
+          <view class="i-mynaui:album" />
           <text class="link-text">
             单词本&nbsp;&nbsp;&nbsp;&nbsp;
           </text>
           <text class="link-text-right">
             5000
           </text>
-          <uni-icons type="back" size="24" color="white" class="icon-back" />
+          <view class="i-mynaui:chevron-right" />
         </navigator>
         <navigator url="/pages/user/settings" class="link">
-          <uni-icons type="gear" size="24" color="white" class="icon" />
+          <view class="i-mynaui:edit" />
           <text class="link-text">
             笔记&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           </text>
           <text class="link-text-right">
             5000
           </text>
-          <uni-icons type="back" size="24" color="white" class="icon-back" />
+          <view class="i-mynaui:chevron-right" />
         </navigator>
       </view>
     </view>
@@ -129,10 +128,7 @@ import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
   flex-direction: column;
   align-items: center;
 }
-.navigator-wrap{
-  display: flex;
-  width: 100%;
-}
+
 .box {
   width: 80%; /* Adjust the width as needed */
   background-color: rgba(0, 0, 0, 0.8); /* Increase opacity to 0.8 */
@@ -154,28 +150,20 @@ import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   box-sizing: border-box;
 }
-.navigator-wrap {
-  display: flex;
-  width: 100%; /* Ensure the navigator-wrap takes the full width */
-}
+
 .link-text-right {
   margin-left: auto; /* Push the text to the right */
-  margin-right: 0.5rem; /* Add some space between the text and the right edge */
+  margin-right: 0.1rem; /* Add some space between the text and the right edge */
 }
 
-.icon-back {
-  margin-left: 0.5rem; /* Add some space between the text and the icon */
-  margin-right: 0.5rem; /* Add some space between the icon and the right edge */
-  transform: rotateZ(180deg); /* Mirror flip the icon horizontally */
-}
-
-.icon {
-  margin-left: 0.5rem;
-  margin-right: 0.5rem; /* Add some space between the icon and the text */
+[class^="i-mynaui:"]:not(.i-mynaui\:chevron-right) {
+  margin-left: 0.8rem;
+  margin-right: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .link-text {
-  margin-left: 1rem; /* Move the text to the right */
-  margin-right: 5rem;
+  margin-left: 0.3rem; /* Move the text to the right */
+  margin-right: 6.5rem;
 }
 </style>

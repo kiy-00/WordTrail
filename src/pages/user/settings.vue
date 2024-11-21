@@ -1,15 +1,4 @@
 <script>
-import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'Settings',
-  components: {
-    UniIcons,
-  },
-  setup() {
-  },
-})
 </script>
 
 <template>
@@ -23,7 +12,7 @@ export default defineComponent({
         </text>
       </view>
       <view class="notification">
-        <uni-icons type="email" size="24" color="white" />
+        <view class="i-mynaui:envelope" color-white size="5" />
         <text class="notification-count">
           3
         </text>
@@ -32,19 +21,19 @@ export default defineComponent({
     <view class="links">
       <view class="box">
         <navigator url="/pages/user/mydata" class="link">
-          <uni-icons type="color" size="24" color="white" class="icon" />
+          <view class="i-mynaui:image-circle" />
           <text class="link-text">
             外观设置
           </text>
         </navigator>
         <navigator url="/pages/user/mycontent" class="link">
-          <uni-icons type="settings" size="24" color="white" class="icon" />
+          <view class="i-mynaui:config-vertical" />
           <text class="link-text">
             学习设置
           </text>
         </navigator>
         <navigator url="/pages/user/settings" class="link">
-          <uni-icons type="gear" size="24" color="white" class="icon" />
+          <view class="i-mynaui:tool" />
           <text class="link-text">
             更多设置
           </text>
@@ -106,8 +95,11 @@ export default defineComponent({
   z-index: 2;
 }
 
+.i-mynaui\:envelope {
+  margin-right: 0.4rem;
+}
+
 .notification-count {
-  margin-left: 0.5rem;
   color: white;
 }
 
@@ -143,13 +135,14 @@ export default defineComponent({
   border-bottom: none; /* Remove the bottom border for the last link */
 }
 
-.icon {
-  margin-left: 0.5rem;
-  margin-right: 0.5rem; /* Add some space between the icon and the text */
+[class^="i-mynaui:"]:not(.i-mynaui\:envelope) {
+  margin-left: 1rem;
+  margin-right: 0.2rem; /* Add some space between the icon and the text */
+  margin-bottom: 0.23rem;
 }
 
 .link-text {
   margin-bottom: 20px;
-  margin-left: 1rem; /* Move the text to the right */
+  margin-left: 0.5rem; /* Move the text to the right */
 }
 </style>
