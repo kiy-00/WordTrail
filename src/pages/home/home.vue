@@ -1,6 +1,7 @@
 <script lang="ts">
 export default defineComponent({
   name: 'Home',
+
   setup() {
     const selectedLanguage = ref<string>('English')
     const languages = ref<string[]>(['English', 'Spanish', 'French', 'German', 'Chinese'])
@@ -9,10 +10,17 @@ export default defineComponent({
       selectedLanguage.value = languages.value[event.detail.value]
     }
 
+    const navigateTo = (page: string) => {
+      uni.navigateTo({
+        url: page,
+      })
+    }
+
     return {
       selectedLanguage,
       languages,
       handleLanguageChange,
+      navigateTo,
     }
   },
 })
@@ -38,7 +46,7 @@ export default defineComponent({
   </view>
   <view class="footer">
     <view class="buttons">
-      <button class="learn-button">
+      <button class="learn-button" @click="navigateTo('/pages/word/learn')">
         Learn
       </button>
       <button class="review-button">
