@@ -48,7 +48,7 @@ export default defineComponent({
       <button class="learn-button" @click="navigateTo('/pages/word/learn')">
         Learn
       </button>
-      <button class="review-button">
+      <button class="review-button" @click="navigateTo('/pages/word/review')">
         Review
       </button>
     </view>

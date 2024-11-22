@@ -36,11 +36,6 @@
       "style": {}
     },
     {
-      "path": "pages/word/WordcardHeader",
-      "type": "page",
-      "style": {}
-    },
-    {
       "path": "pages/word/learn",
       "type": "page",
       "style": {}
@@ -62,6 +57,11 @@
     },
     {
       "path": "pages/community/components/CommunityHeader",
+      "type": "page",
+      "style": {}
+    },
+    {
+      "path": "pages/word/components/WordcardHeader",
       "type": "page",
       "style": {}
     }
