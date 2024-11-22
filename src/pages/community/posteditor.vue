@@ -1,13 +1,9 @@
 <script lang="ts">
 import type { Post } from '@/types/Post'
-import BackButton from '@/components/BackButton.vue'
 import { defineComponent, ref } from 'vue'
 
 export default defineComponent({
   name: 'PostEditor',
-  components: {
-    BackButton,
-  },
   setup() {
     const images = ref<string[]>([])
     const title = ref('')

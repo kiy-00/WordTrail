@@ -21,11 +21,8 @@ export default defineComponent({
 </script>
 
 <template>
-  <view class="fixed left-0 right-0 top-0 z-50 h-12 flex items-center justify-between border-b border-gray-300 bg-white px-4">
-    <!-- 左侧返回按钮 -->
-    <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="onBack">
-      <view class="i-mynaui:arrow-left text-2xl text-gray-500" aria-label="返回" />
-    </view>
+  <view class="fixed left-4 top-4 z-50 h-12 w-12 flex cursor-pointer items-center justify-center rounded-full bg-white shadow-lg" @click="onBack">
+    <view class="i-mynaui:arrow-left text-2xl text-gray-500" aria-label="返回" />
   </view>
 </template>
 

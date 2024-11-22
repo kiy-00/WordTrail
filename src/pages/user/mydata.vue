@@ -1,45 +1,68 @@
-<script setup lang="ts">
-import CalendarDate from '@/components/CalendarDate.vue'
-import OverviewContent from '@/components/OverviewContent.vue'
-import { onMounted, ref } from 'vue'
+<script lang="ts">
+import { defineComponent, onMounted, ref } from 'vue'
 
-const checkDays = ref(0)
-const todayLearned = ref(9)
-const totalLearned = ref(0)
-const todayTime = ref(0)
-const totalTime = ref(0)
-const bookName = ref('')
-const vocabularyCount = ref(0)
-const bookLearned = ref(0)
-const bookTotal = ref(0)
-const bookUrl = ref('')
-const percent = ref(0)
-const overviewItems = ref([
-  { icon: 'i-mynaui:chart-bar-two', content: '今日学习', data: todayLearned, unit: '词', color: 'yellow' },
-  { icon: 'i-mynaui:chart-bar-solid', content: '累计学习', data: totalLearned, unit: '词', color: '#eb0000' },
-  { icon: 'i-mynaui:chevron-down-right-circle', content: '今日总时长', data: todayTime, unit: '分钟', color: 'yellow' },
-  { icon: 'i-mynaui:chevron-down-left-waves-solid', content: '累计时长', data: totalTime, unit: '分钟', color: '#eb0000' },
-])
-const week = ref(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'])
-const firstDay = ref(0)
+export default defineComponent({
+  name: 'MyData',
 
-onMounted(() => {
-  checkDays.value = 100
-  todayLearned.value = 100
-  totalLearned.value = 1000
-  todayTime.value = 60
-  totalTime.value = 1000
-  bookName.value = 'some book'
-  vocabularyCount.value = 500
-  bookLearned.value = 1000
-  bookTotal.value = 6000
-  bookUrl.value = '/static/vite.png'
-  percent.value = bookLearned.value / bookTotal.value * 100
-  firstDay.value = 1
+  setup() {
+    const checkDays = ref(0)
+    const todayLearned = ref(9)
+    const totalLearned = ref(0)
+    const todayTime = ref(0)
+    const totalTime = ref(0)
+    const bookName = ref('')
+    const vocabularyCount = ref(0)
+    const bookLearned = ref(0)
+    const bookTotal = ref(0)
+    const bookUrl = ref('')
+    const percent = ref(0)
+    const overviewItems = ref([
+      { icon: 'i-mynaui:chart-bar-two', content: '今日学习', data: todayLearned, unit: '词', color: 'yellow' },
+      { icon: 'i-mynaui:chart-bar-solid', content: '累计学习', data: totalLearned, unit: '词', color: '#eb0000' },
+      { icon: 'i-mynaui:chevron-down-right-circle', content: '今日总时长', data: todayTime, unit: '分钟', color: 'yellow' },
+      { icon: 'i-mynaui:chevron-down-left-waves-solid', content: '累计时长', data: totalTime, unit: '分钟', color: '#eb0000' },
+    ])
+    const week = ref(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'])
+    const firstDay = ref(0)
+
+    onMounted(() => {
+      checkDays.value = 100
+      todayLearned.value = 100
+      totalLearned.value = 1000
+      todayTime.value = 60
+      totalTime.value = 1000
+    })
+
+    // 返回逻辑
+    const handleBack = () => {
+      // 实现返回逻辑，例如跳转到上一页
+      uni.navigateBack()
+    }
+
+    return {
+      checkDays,
+      todayLearned,
+      totalLearned,
+      todayTime,
+      totalTime,
+      bookName,
+      vocabularyCount,
+      bookLearned,
+      bookTotal,
+      bookUrl,
+      percent,
+      overviewItems,
+      week,
+      firstDay,
+      handleBack,
+    }
+  },
 })
 </script>
 
 <template>
+  <!-- Back Button -->
+  <BackButton @back="handleBack" />
   <view class="dashboard">
     <view class="header">
       <text class="header-text text-sm">
