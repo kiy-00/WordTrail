@@ -49,6 +49,16 @@ export default defineComponent({
       uni.navigateBack()
     }
 
+    const updateSelectedTags = (event: Event) => {
+      const target = event.target as HTMLInputElement
+      if (target.checked) {
+        selectedTags.value.push(target.value)
+      }
+      else {
+        selectedTags.value = selectedTags.value.filter(tag => tag !== target.value)
+      }
+    }
+
     /**
      * 发布帖子
      */
@@ -110,6 +120,7 @@ export default defineComponent({
       removeImage,
       publishPost,
       handleBack,
+      updateSelectedTags,
     }
   },
 })
@@ -175,7 +186,7 @@ export default defineComponent({
       <!-- Tag Selection -->
       <view class="flex flex-col">
         <view class="flex flex-wrap gap-2">
-          <checkbox-group v-model="selectedTags">
+          <checkbox-group>
             <label
               v-for="(tag, index) in availableTags"
               :key="index"
@@ -183,14 +194,15 @@ export default defineComponent({
             >
               <checkbox
                 :value="tag"
+                :checked="selectedTags.includes(tag)"
                 class="text-red-500"
+                @change="updateSelectedTags"
               />
               <text class="text-gray-500">{{ tag }}</text>
             </label>
           </checkbox-group>
         </view>
       </view>
-
       <!-- Publish Button -->
       <button
         class="w-full rounded-lg bg-red-500 px-4 py-2 text-lg text-white font-semibold"
