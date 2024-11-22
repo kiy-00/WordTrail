@@ -123,10 +123,9 @@ export default defineComponent({
 </script>
 
 <template>
-  <view class="min-h-screen flex flex-col bg-gray-100">
-    <!-- Back Button -->
-    <BackButton @back="handleBack" />
-
+  <!-- Back Button -->
+  <BackButton @back="handleBack" />
+  <view class="min-h-screen flex flex-col frosted-glass">
     <!-- Editor Content -->
     <view class="flex-1 p-4 space-y-4">
       <!-- Image Upload Section -->
@@ -140,16 +139,16 @@ export default defineComponent({
           >
             <image :src="image" class="h-24 w-24 rounded object-cover" />
             <view
-              class="i-ci:close-sm absolute right-0 top-0 flex cursor-pointer items-center justify-center rounded-full bg-red-300 text-white"
+              class="i-ci:close-sm absolute right-0 top-0 flex cursor-pointer items-center justify-center rounded-full bg-yellow"
               @click="removeImage(index)"
             />
           </view>
           <!-- Upload Button -->
           <view
-            class="h-24 w-24 flex cursor-pointer items-center justify-center border-2 border-gray-300 rounded border-dashed"
+            class="h-24 w-24 flex cursor-pointer items-center justify-center border-2 rounded border-dashed"
             @click="chooseImages"
           >
-            <view class="i-mynaui:upload text-3xl text-gray-400" />
+            <view class="i-mynaui:upload text-3xl" />
           </view>
         </view>
       </view>
@@ -161,9 +160,9 @@ export default defineComponent({
           type="text"
           placeholder="请输入标题 (最多18字)"
           :maxlength="18"
-          class="border-gray-300 rounded-lg border-dashed px-3 py-4 text-left text-gray-700"
+          class="rounded-lg border-dashed px-3 py-4 text-left"
         >
-        <text class="mt-1 text-left text-sm text-gray-500">
+        <text class="mt-1 text-left text-sm">
           {{ title.length }}/18
         </text>
       </view>
@@ -173,7 +172,7 @@ export default defineComponent({
         <textarea
           v-model="content"
           placeholder="请输入正文内容..."
-          class="w-full border border-gray-300 rounded-lg px-3 py-1 text-left text-gray-700 focus:border-red-500 focus:outline-none"
+          class="w-full border border-gray-300 rounded-lg px-3 py-1 text-left focus:border-yellow focus:outline-none"
           rows="6"
           style="box-sizing:border-box"
         />
@@ -191,17 +190,17 @@ export default defineComponent({
               <checkbox
                 :value="tag"
                 :checked="selectedTags.includes(tag)"
-                class="text-red-500"
+                class="text-yellow"
                 @change="updateSelectedTags"
               />
-              <text class="text-gray-500">{{ tag }}</text>
+              <text>{{ tag }}</text>
             </label>
           </checkbox-group>
         </view>
       </view>
       <!-- Publish Button -->
       <button
-        class="w-full rounded-lg bg-red-500 px-4 py-2 text-lg text-white font-semibold"
+        class="text-lgfont-semibold w-full rounded-lg bg-yellow px-4 py-2 font-bold"
         @click="publishPost"
       >
         发布帖子
@@ -213,3 +212,9 @@ export default defineComponent({
 <style scoped>
 /* 可根据需要添加额外样式 */
 </style>
+
+<route lang="json">
+  {
+    "layout": "default"
+  }
+</route>

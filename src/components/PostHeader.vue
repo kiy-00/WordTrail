@@ -36,23 +36,23 @@ export default defineComponent({
 </script>
 
 <template>
-  <view class="fixed left-0 right-0 top-0 z-50 h-12 flex items-center justify-between border-b border-gray-300 bg-white px-4">
+  <view class="fixed left-0 right-0 top-0 z-50 h-12 flex items-center justify-between border-b px-4 frosted-glass">
     <!-- 左侧返回按钮 -->
     <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="onBack">
-      <view class="i-mynaui:arrow-left text-2xl text-gray-500" aria-label="返回" />
+      <view class="i-mynaui:arrow-left text-2xl" aria-label="返回" />
     </view>
 
     <!-- 用户信息 -->
     <view class="flex items-center">
       <image :src="userAvatar" class="h-8 w-8 rounded-full object-cover" />
-      <text class="ml-2 align-text-bottom text-sm text-gray-600 font-500">
+      <text class="ml-2 align-text-bottom text-sm font-500">
         {{ username }}
       </text>
     </view>
 
     <!-- 右侧分享按钮 -->
     <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="onShare">
-      <view class="i-mynaui:share text-2xl text-gray-500" aria-label="分享" />
+      <view class="i-mynaui:share text-2xl" aria-label="分享" />
     </view>
   </view>
 </template>

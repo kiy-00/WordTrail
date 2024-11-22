@@ -1,10 +1,13 @@
 <script lang="ts">
+import { defineComponent, ref } from 'vue'
+
 export default defineComponent({
   name: 'Home',
 
   setup() {
     const selectedLanguage = ref<string>('English')
     const languages = ref<string[]>(['English', 'Spanish', 'French', 'German', 'Chinese'])
+    const username = ref<string>('Anna') // 添加用户名
 
     const handleLanguageChange = (event: any) => {
       selectedLanguage.value = languages.value[event.detail.value]
@@ -19,6 +22,7 @@ export default defineComponent({
     return {
       selectedLanguage,
       languages,
+      username,
       handleLanguageChange,
       navigateTo,
     }
@@ -27,29 +31,34 @@ export default defineComponent({
 </script>
 
 <template>
-  <view class="header">
-    <image class="avatar" src="@/static/avatar/avatar.png" alt="User Avatar" />
-    <picker :value="selectedLanguage" mode="selector" :range="languages" class="language-select" @change="handleLanguageChange">
-      <view>{{ selectedLanguage }}</view>
+  <!-- Header -->
+  <view class="mb-4 w-full flex items-center justify-between">
+    <view class="flex items-center">
+      <image class="h-16 w-16 rounded-full" src="@/static/avatar/avatar.png" alt="User Avatar" />
+      <text class="ml-2 text-lg">
+        {{ username }}
+      </text>
+    </view>
+    <view class="flex items-center">
+      <view class="i-mynaui:cog-two cursor-pointer text-2xl" aria-label="设置" @click="navigateTo('/pages/user/settings')" />
+    </view>
+  </view>
+
+  <!-- Language Selector -->
+  <view class="mb-4 w-full">
+    <picker mode="selector" :range="languages" @change="handleLanguageChange">
+      <view class="border border-gray-300 rounded-lg p-2">
+        {{ selectedLanguage }}
+      </view>
     </picker>
   </view>
-  <view class="main-content">
-    <!-- 日历组件占位 -->
-    <!-- <view>
-      <uni-calendar
-        :insert="true"
-        :lunar="true"
-        start-date="2019-3-2"
-        end-date="2019-5-20"
-      />
-    </view> -->
-  </view>
-  <view class="footer">
-    <view class="buttons">
-      <button class="learn-button" @click="navigateTo('/pages/word/learn')">
+
+  <view class="footer mt-auto">
+    <view class="buttons flex flex-row">
+      <button class="mr-6 w-sm frosted-glass" @click="navigateTo('/pages/word/learn')">
         Learn
       </button>
-      <button class="review-button">
+      <button class="w-sm frosted-glass">
         Review
       </button>
     </view>
@@ -58,57 +67,10 @@ export default defineComponent({
 </template>
 
 <style scoped>
-:root {
-  font-size: 16px; /* 基础字体大小 */
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  padding: 1rem; /* 使用 rem 单位 */
-}
-
-.avatar {
-  width: 3.125rem; /* 50px 转换为 rem */
-  height: 3.125rem; /* 50px 转换为 rem */
-  border-radius: 50%;
-}
-
-.language-select {
-  margin-left: 0.625rem; /* 10px 转换为 rem */
-}
-
-.main-content {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.buttons {
-  display: flex;
-  width: 80%;
-  justify-content: space-between;
-  margin-bottom: 0.625rem; /* 10px 转换为 rem */
-}
-
-.learn-button,
-.review-button {
-  width: 48%;
-  padding: 0.625rem; /* 10px 转换为 rem */
-  font-size: 1rem; /* 使用 rem 单位 */
-}
-
-@media (max-width: 600px) {
-  .learn-button,
-  .review-button {
-    font-size: 0.875rem; /* 针对小屏幕调整字体大小 */
-  }
-}
 </style>
+
+<route lang="json">
+{
+  "layout": "home"
+}
+</route>

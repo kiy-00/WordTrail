@@ -1,8 +1,16 @@
+<script lang="ts">
+import '../uni.scss'
+</script>
+
 <template>
-  <view class="px-10 py-20 text-center">
-    <slot />
-    <view class="mx-auto mt-5 text-center text-sm opacity-25">
-      [Home Layout]
+  <view class="relative h-screen px-5 py-10 text-center" style="box-sizing:border-box">
+    <!-- 背景图片 -->
+    <view class="absolute inset-0 bgi-[home-bg-image]">
+      <!-- 毛玻璃遮罩 -->
+      <view class="absolute inset-0 bg-white bg-opacity-5 backdrop-blur-sm" />
+    </view>
+    <view class="relative z-10">
+      <slot />
     </view>
   </view>
 </template>

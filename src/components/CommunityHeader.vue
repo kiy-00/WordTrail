@@ -53,68 +53,68 @@ export default defineComponent({
 </script>
 
 <template>
-  <view class="relative h-12 flex items-center justify-between border-b border-gray-300 bg-white px-4">
+  <view class="relative h-12 flex items-center justify-between border-b border-gray-300 px-4 frosted-glass">
     <!-- 左侧返回按钮 -->
     <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="onBack">
-      <view class="i-mynaui:arrow-left text-2xl text-gray-500" />
+      <view class="i-mynaui:arrow-left text-2xl" />
     </view>
 
     <!-- 中部标签 -->
     <view class="flex flex-1 justify-center">
       <view
-        class="relative mx-2 cursor-pointer text-base text-gray-500 tab"
-        :class="activeTab === 'recommend' ? 'text-red font-bold' : ''"
+        class="relative mx-2 cursor-pointer text-base tab"
+        :class="activeTab === 'recommend' ? 'text-yellow font-bold' : ''"
         @click="selectTab('recommend')"
       >
         推荐
         <view
           v-if="activeTab === 'recommend'"
-          class="absolute bottom-[-5px] left-1/2 h-0.5 w-5 transform bg-red -translate-x-1/2"
+          class="absolute bottom-[-5px] left-1/2 h-0.5 w-5 transform bg-yellow -translate-x-1/2"
         />
       </view>
       <view
-        class="relative mx-2 cursor-pointer text-base text-gray-500 tab"
-        :class="activeTab === 'my' ? 'text-red font-bold' : ''"
+        class="relative mx-2 cursor-pointer text-base tab"
+        :class="activeTab === 'my' ? 'text-yellow font-bold' : ''"
         @click="selectTab('my')"
       >
         我的
         <view
           v-if="activeTab === 'my'"
-          class="absolute bottom-[-5px] left-1/2 h-0.5 w-5 transform bg-red -translate-x-1/2"
+          class="absolute bottom-[-5px] left-1/2 h-0.5 w-5 transform bg-yellow -translate-x-1/2"
         />
       </view>
       <!-- 新增 收藏 选项卡 -->
       <view
-        class="relative mx-2 cursor-pointer text-base text-gray-500 tab"
-        :class="activeTab === 'favorites' ? 'text-red font-bold' : ''"
+        class="relative mx-2 cursor-pointer text-base tab"
+        :class="activeTab === 'favorites' ? 'text-yellow font-bold' : ''"
         @click="selectTab('favorites')"
       >
         收藏
         <view
           v-if="activeTab === 'favorites'"
-          class="absolute bottom-[-5px] left-1/2 h-0.5 w-5 transform bg-red -translate-x-1/2"
+          class="absolute bottom-[-5px] left-1/2 h-0.5 w-5 transform bg-yellow -translate-x-1/2"
         />
       </view>
     </view>
 
     <!-- 右侧搜索按钮 -->
     <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
-      <view class="i-mynaui:search text-2xl text-gray-500" />
+      <view class="i-mynaui:search text-2xl" />
     </view>
 
     <!-- 搜索框 -->
     <transition name="fade">
-      <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-20 z-50 bg-transparent px-4">
-        <view class="flex items-center rounded-lg bg-white p-2">
-          <view class="i-mynaui:search mr-2 text-xl text-gray-500" />
+      <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-20 px-4 frosted-glass">
+        <view class="flex items-center rounded-lg p-2 frosted-glass">
+          <view class="i-mynaui:search mr-2 text-xl" />
           <input
             v-model="searchQuery"
             type="text"
             placeholder="搜索..."
-            class="flex-1 rounded-sm bg-transparent text-base text-gray-600 outline-none"
+            class="flex-1 rounded-sm bg-transparent text-base outline-none"
             @keydown.enter="onSearch"
           >
-          <view class="i-ci:close-md ml-2 cursor-pointer text-xl text-gray-500" @click="toggleSearch" />
+          <view class="i-ci:close-md ml-2 cursor-pointer text-xl" @click="toggleSearch" />
         </view>
       </view>
     </transition>

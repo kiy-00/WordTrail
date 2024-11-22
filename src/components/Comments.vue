@@ -32,7 +32,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <view class="mb-4 border-red-3 border-b-dashed pb-4">
+  <view class="mb-4 border-white border-b-dashed pb-4">
     <!-- 主评论 -->
     <CommentsCard :comment="comment" :root-comment="comment" />
 

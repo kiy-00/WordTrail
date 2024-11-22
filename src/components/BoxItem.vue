@@ -21,21 +21,25 @@ export default defineComponent({
       required: true,
     },
   },
+  methods: {
+    navigate() {
+      uni.navigateTo({ url: this.url })
+    },
+  },
 })
 </script>
 
 <template>
-  <view class="mb-4 rounded bg-coolgray px-4 py-2">
-    <navigator :url="url" class="cursor-pointer">
-      <view :class="icon" />
-      <text class="link-text">
-        {{ text }}
-      </text>
-      <text class="link-text-right">
-        {{ value }}
-      </text>
+  <view class="mb-4 rounded-lg px-4 py-4 frosted-glass">
+    <view class="flex flex-row cursor-pointer items-center justify-between" @click="navigate">
+      <view class="flex flex-row items-center">
+        <view :class="icon" class="mr-3" />
+        <text class="flex-1">
+          {{ text }}
+        </text>
+      </view>
       <view class="i-mynaui:chevron-right" />
-    </navigator>
+    </view>
   </view>
 </template>
 

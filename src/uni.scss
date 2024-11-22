@@ -74,3 +74,23 @@ $uni-color-subtitle: #555; // 二级标题颜色
 $uni-font-size-subtitle: 18px;
 $uni-color-paragraph: #3f536e; // 文章段落颜色
 $uni-font-size-paragraph: 15px;
+
+/* 默认（浅色主题） */
+:root {
+  --home-bg-image: url('/static/background/light-home-bg.png');
+  --user-bg-image: url('/static/background/light-user-bg.png');
+}
+
+/* 深色主题 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --home-bg-image: url('/static/background/dark-home-bg.png');
+    --user-bg-image: url('/static/background/dark-user-bg.png');
+    uni-button, uni-button[type='default'] {
+      color: #fff;
+    }
+  }
+
+}
+
+

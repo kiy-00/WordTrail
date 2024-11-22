@@ -90,6 +90,7 @@
     "@uni-helper/volar-service-uni-pages": "^0.2.28",
     "@unocss/eslint-config": "^0.64.0",
     "@unocss/preset-icons": "^0.64.0",
+    "@unocss/transformer-directives": "^0.64.1",
     "@vue/tsconfig": "^0.5.1",
     "eslint": "^9.14.0",
     "lint-staged": "^15.2.10",

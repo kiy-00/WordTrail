@@ -58,7 +58,7 @@ export default defineComponent({
 
 <template>
   <view
-    class="post-card relative mb-1 border border-gray-300 rounded-lg bg-white p-2"
+    class="post-card relative mb-1 rounded-lg p-2 frosted-glass"
     @click="navigateToDetail"
   >
     <!-- 删除按钮，仅在“我的”帖子中显示 -->
@@ -79,7 +79,7 @@ export default defineComponent({
         class="post-image mt-2 h-40 w-full rounded-lg object-cover"
       />
       <!-- 添加标题 -->
-      <text class="title mt-2 text-base text-gray-600 font-500">
+      <text class="title mt-2 text-base">
         {{ post.title }}
       </text>
     </view>
@@ -88,10 +88,10 @@ export default defineComponent({
     <view class="post-info mb-4 flex items-center">
       <image :src="post.userAvatar" class="avatar h-10 w-10 rounded-full" />
       <view class="user-info ml-3 flex flex-col items-start">
-        <text class="username text-sm text-gray-600">
+        <text class="username text-sm">
           {{ post.username }}
         </text>
-        <text class="publish-time text-sm text-gray-500">
+        <text class="publish-time text-sm">
           {{ post.publishTime }}
         </text>
       </view>
@@ -102,16 +102,16 @@ export default defineComponent({
       <!-- 点赞部分 -->
       <view class="flex items-center">
         <view
-          class="cursor-pointer text-xl text-red"
-          :class="isLiked ? 'i-mynaui:heart-solid' : 'i-mynaui:heart'"
+          class="cursor-pointer text-xl"
+          :class="isLiked ? 'i-mynaui:heart-solid text-red' : 'i-mynaui:heart'"
           @click.stop="toggleLike"
         />
-        <text class="likes ml-1 text-sm" :class="isLiked ? 'text-red' : 'text-gray-500'">
+        <text class="likes ml-1 text-sm">
           {{ likes }}
         </text>
       </view>
       <!-- 仅在“我的”帖子中显示状态 -->
-      <view v-if="isMyPost && post.status" class="text-xs text-gray-600">
+      <view v-if="isMyPost && post.status" class="text-xs">
         {{ post.status }}
       </view>
     </view>
@@ -119,4 +119,5 @@ export default defineComponent({
 </template>
 
 <style scoped>
+/* UnoCSS 处理所有样式使用实用类 */
 </style>

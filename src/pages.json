@@ -3,31 +3,37 @@
     {
       "path": "pages/home/home",
       "type": "home",
+      "layout": "home",
       "style": {}
     },
     {
       "path": "pages/community/community",
       "type": "page",
+      "layout": "default",
       "style": {}
     },
     {
       "path": "pages/community/post",
       "type": "page",
+      "layout": "default",
       "style": {}
     },
     {
       "path": "pages/community/posteditor",
       "type": "page",
+      "layout": "default",
       "style": {}
     },
     {
       "path": "pages/user/mycontent",
       "type": "page",
+      "layout": "default",
       "style": {}
     },
     {
       "path": "pages/user/mydata",
       "type": "page",
+      "layout": "default",
       "style": {}
     },
     {

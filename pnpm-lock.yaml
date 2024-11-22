@@ -113,7 +113,7 @@ importers:
         version: 1.0.0-alpha.6(@uni-helper/uni-app-types@1.0.0-alpha.6(typescript@5.5.4)(vue@3.4.38(typescript@5.5.4)))(@uni-helper/uni-cloud-types@1.0.0-alpha.6(typescript@5.5.4)(vue@3.4.38(typescript@5.5.4)))(@uni-helper/uni-ui-types@1.0.0-alpha.6(@uni-helper/uni-app-types@1.0.0-alpha.6(typescript@5.5.4)(vue@3.4.38(typescript@5.5.4)))(typescript@5.5.4)(vue@3.4.38(typescript@5.5.4)))(typescript@5.5.4)(vue@3.4.38(typescript@5.5.4))
       '@uni-helper/unocss-preset-uni':
         specifier: ^0.2.10
-        version: 0.2.10(@unocss/preset-mini@0.64.0)(@unocss/rule-utils@0.64.0)(@unocss/vite@0.64.0(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))(unocss-applet@0.8.5(@unocss/core@0.64.0)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))))(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))
+        version: 0.2.10(@unocss/preset-mini@0.64.0)(@unocss/rule-utils@0.64.1)(@unocss/vite@0.64.0(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))(unocss-applet@0.8.5(@unocss/core@0.64.1)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))))(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))
       '@uni-helper/vite-plugin-uni-components':
         specifier: ^0.1.0
         version: 0.1.0(rollup@4.24.4)
@@ -135,6 +135,9 @@ importers:
       '@unocss/preset-icons':
         specifier: ^0.64.0
         version: 0.64.0
+      '@unocss/transformer-directives':
+        specifier: ^0.64.1
+        version: 0.64.1
       '@vue/tsconfig':
         specifier: ^0.5.1
         version: 0.5.1
@@ -2168,6 +2171,9 @@ packages:
   '@unocss/core@0.64.0':
     resolution: {integrity: sha512-Qb8wWPYNlTagCdJGzULew+e3NMM8Bd7fr38lDLgrMj+njop+wzkSe1ZZOyMMH9yHSq/Rznn5eCjnyzyHwxGslQ==}
 
+  '@unocss/core@0.64.1':
+    resolution: {integrity: sha512-D1ULd70a24/k6kGyHCIijbrrIn9UjFUEBg2R4xKX2/ViQb1k2MIgOs4VS20MkJX6kbZXqqm/zAFHzDhsQGIhBA==}
+
   '@unocss/eslint-config@0.64.0':
     resolution: {integrity: sha512-i2ce8Ydbb31BLjMEhUCgB6OqBwtXuXbJXsuzny+AuSQlFxiWSY1GkA0GGt/73c85Wpa9f4lcH/AOCkjron3XoQ==}
     engines: {node: '>=14'}
@@ -2219,6 +2225,10 @@ packages:
     resolution: {integrity: sha512-R5b/uspq6XsmpEqhxSzOOePHsS+pdxya+0pkQw7m6thsUxNDL7kVDpBiz2iNX5lnwagvhyhUWYu85a8XmZ8ymw==}
     engines: {node: '>=14'}
 
+  '@unocss/rule-utils@0.64.1':
+    resolution: {integrity: sha512-h+Du0lezKHmdsEsGQGAtGrwrTrU+Av4eij46UzpzuNWFq0mAouBu8m/lgBI1AcY9B0Jg3EJalkOgA06tAKS8jg==}
+    engines: {node: '>=14'}
+
   '@unocss/transformer-attributify-jsx@0.64.0':
     resolution: {integrity: sha512-/kG7NFmqMCftK5DJUgMUbe9SWRJt20Z55o36aaCkBcEsrTSYBmWYDyIJPZa3TxsjO8H1qDekRVu7CgDxwlxMEQ==}
 
@@ -2227,6 +2237,9 @@ packages:
 
   '@unocss/transformer-directives@0.64.0':
     resolution: {integrity: sha512-+e2bDEQMEsfq4KZ2R+GQNrEv0bL3E1KbXGPQXUiMGitmZzzagDfIBk9VTP3gNhU+hgTaWtjXlReeap1eSmwKGQ==}
+
+  '@unocss/transformer-directives@0.64.1':
+    resolution: {integrity: sha512-6yWZh7YxYTaNSdATkGpP+aQ3aTRLNo4URDmLQKB3uaQbF0Ae5dLlxXWHZ26VIpKkQ3+hME4TRxEptTR0/ag7nw==}
 
   '@unocss/transformer-variant-group@0.64.0':
     resolution: {integrity: sha512-c4CN+W8ShBhGIma3KHHcBe7CRljRwZ0f5UamRrUIMs28a2jfa1TlPlr/4Ke5b6icr0mwTGajJEUaPanOK0Fp1A==}
@@ -8309,12 +8322,12 @@ snapshots:
       typescript: 5.5.4
       vue: 3.4.38(typescript@5.5.4)
 
-  '@uni-helper/unocss-preset-uni@0.2.10(@unocss/preset-mini@0.64.0)(@unocss/rule-utils@0.64.0)(@unocss/vite@0.64.0(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))(unocss-applet@0.8.5(@unocss/core@0.64.0)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))))(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))':
+  '@uni-helper/unocss-preset-uni@0.2.10(@unocss/preset-mini@0.64.0)(@unocss/rule-utils@0.64.1)(@unocss/vite@0.64.0(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))(unocss-applet@0.8.5(@unocss/core@0.64.1)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))))(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))':
     dependencies:
       '@uni-helper/uni-env': 0.1.7
-      '@unocss/rule-utils': 0.64.0
+      '@unocss/rule-utils': 0.64.1
       unocss: 0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))
-      unocss-applet: 0.8.5(@unocss/core@0.64.0)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))
+      unocss-applet: 0.8.5(@unocss/core@0.64.1)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4)))
     optionalDependencies:
       '@unocss/preset-mini': 0.64.0
       '@unocss/vite': 0.64.0(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))
@@ -8383,21 +8396,21 @@ snapshots:
       vscode-languageserver-textdocument: 1.0.12
       yaml-language-server: 1.15.0
 
-  '@unocss-applet/preset-applet@0.8.5(@unocss/core@0.64.0)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)':
+  '@unocss-applet/preset-applet@0.8.5(@unocss/core@0.64.1)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)':
     optionalDependencies:
-      '@unocss/core': 0.64.0
+      '@unocss/core': 0.64.1
       '@unocss/preset-mini': 0.64.0
       '@unocss/preset-uno': 0.64.0
 
-  '@unocss-applet/preset-rem-rpx@0.8.5(@unocss/core@0.64.0)':
+  '@unocss-applet/preset-rem-rpx@0.8.5(@unocss/core@0.64.1)':
     dependencies:
-      '@unocss/core': 0.64.0
+      '@unocss/core': 0.64.1
 
-  '@unocss-applet/transformer-attributify@0.8.5(@unocss/core@0.64.0)':
+  '@unocss-applet/transformer-attributify@0.8.5(@unocss/core@0.64.1)':
     dependencies:
       magic-string: 0.30.12
     optionalDependencies:
-      '@unocss/core': 0.64.0
+      '@unocss/core': 0.64.1
 
   '@unocss/astro@0.64.0(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))':
     dependencies:
@@ -8438,6 +8451,8 @@ snapshots:
       - supports-color
 
   '@unocss/core@0.64.0': {}
+
+  '@unocss/core@0.64.1': {}
 
   '@unocss/eslint-config@0.64.0(eslint@9.14.0(jiti@1.21.6))(typescript@5.5.4)':
     dependencies:
@@ -8536,6 +8551,11 @@ snapshots:
       '@unocss/core': 0.64.0
       magic-string: 0.30.12
 
+  '@unocss/rule-utils@0.64.1':
+    dependencies:
+      '@unocss/core': 0.64.1
+      magic-string: 0.30.12
+
   '@unocss/transformer-attributify-jsx@0.64.0':
     dependencies:
       '@unocss/core': 0.64.0
@@ -8548,6 +8568,12 @@ snapshots:
     dependencies:
       '@unocss/core': 0.64.0
       '@unocss/rule-utils': 0.64.0
+      css-tree: 3.0.1
+
+  '@unocss/transformer-directives@0.64.1':
+    dependencies:
+      '@unocss/core': 0.64.1
+      '@unocss/rule-utils': 0.64.1
       css-tree: 3.0.1
 
   '@unocss/transformer-variant-group@0.64.0':
@@ -12216,11 +12242,11 @@ snapshots:
 
   universalify@2.0.1: {}
 
-  unocss-applet@0.8.5(@unocss/core@0.64.0)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))):
+  unocss-applet@0.8.5(@unocss/core@0.64.1)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)(unocss@0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))):
     dependencies:
-      '@unocss-applet/preset-applet': 0.8.5(@unocss/core@0.64.0)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)
-      '@unocss-applet/preset-rem-rpx': 0.8.5(@unocss/core@0.64.0)
-      '@unocss-applet/transformer-attributify': 0.8.5(@unocss/core@0.64.0)
+      '@unocss-applet/preset-applet': 0.8.5(@unocss/core@0.64.1)(@unocss/preset-mini@0.64.0)(@unocss/preset-uno@0.64.0)
+      '@unocss-applet/preset-rem-rpx': 0.8.5(@unocss/core@0.64.1)
+      '@unocss-applet/transformer-attributify': 0.8.5(@unocss/core@0.64.1)
       unocss: 0.64.0(postcss@8.4.47)(rollup@4.24.4)(vite@5.4.10(@types/node@22.9.0)(sass-embedded@1.81.0)(terser@5.36.0))(vue@3.4.38(typescript@5.5.4))
     optionalDependencies:
       '@unocss/preset-uno': 0.64.0

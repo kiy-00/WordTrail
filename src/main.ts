@@ -1,7 +1,7 @@
 import { createSSRApp } from 'vue'
 import App from './App.vue'
 import 'uno.css'
-// 引入 UniUI 的样式
+import './uni.scss'
 
 export function createApp() {
   const app = createSSRApp(App)

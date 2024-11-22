@@ -35,7 +35,7 @@ export default defineComponent({
         })
       }
       // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // await new Promise(resolve => setTimeout(resolve, 1000))
       allRecommendedPosts.value.push(...newPosts)
     }
 
@@ -59,7 +59,7 @@ export default defineComponent({
         })
       }
       // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // await new Promise(resolve => setTimeout(resolve, 1000))
       allMyPosts.value.push(...newPosts)
     }
 
@@ -82,7 +82,7 @@ export default defineComponent({
         })
       }
       // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // await new Promise(resolve => setTimeout(resolve, 1000))
       allFavoritePosts.value.push(...newPosts)
     }
 
@@ -240,7 +240,7 @@ export default defineComponent({
   <!-- 悬浮按钮 -->
   <view class="fixed bottom-4 right-4">
     <button
-      class="h-16 w-16 flex items-center justify-center rounded-full bg-red-500 text-white shadow-lg"
+      class="h-16 w-16 flex items-center justify-center rounded-full bg-yellow text-white shadow-lg"
       @click="goToEdit"
     >
       <view class="i-mynaui:pen text-2xl" />
@@ -254,3 +254,9 @@ export default defineComponent({
   flex: 1;
 }
 </style>
+
+<route lang="json">
+  {
+    "layout": "default"
+  }
+</route>
