@@ -7,19 +7,25 @@ export default defineComponent({
   setup() {
     const settingsItems = ref([
       {
+        key: 1,
         url: '/pages/user/mydata',
         icon: 'i-mynaui:image-circle',
         text: '外观设置',
+        value: 'appearance',
       },
       {
+        key: 2,
         url: '/pages/user/mycontent',
         icon: 'i-mynaui:config-vertical',
         text: '学习设置',
+        value: 'learning',
       },
       {
+        key: 3,
         url: '/pages/user/settings',
         icon: 'i-mynaui:tool',
         text: '更多设置',
+        value: 'more',
       },
     ])
     // 返回逻辑
