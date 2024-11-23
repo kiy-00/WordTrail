@@ -74,6 +74,7 @@ export default defineComponent({
         :url="item.url"
         :icon="item.icon"
         :text="item.text"
+        :value="item.value"
       />
     </view>
   </view>
