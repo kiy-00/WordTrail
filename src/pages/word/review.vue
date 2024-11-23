@@ -1,3 +1,4 @@
+<!-- review.vue -->
 <script lang="ts">
 import { defineComponent } from 'vue'
 
@@ -140,16 +141,17 @@ export default defineComponent({
     <view class="font-verdana mb-2 text-left text-4xl font-bold">
       {{ currentWord.word }}
     </view>
-    <view class="mb-3 text-left text-lg">
+    <view class="mb-3 text-left text-lg text-[#809bae]">
       {{ currentWord.pronunciation }}
     </view>
     <view class="font-verdana mt-5 rounded-lg bg-white/20 p-2 text-left">
-      <text class="text-xl">
-        {{ currentWord.example }}
+      <text class="text-xl text-[#d6e6ee]">
+        <br>
       </text>
-      <br>
-      <text class="text-lg">
-        {{ currentWord.exampleTranslation }}
+    </view>
+    <view class="font-verdana mt-5 rounded-lg bg-white/20 p-2 text-left">
+      <text class="text-xl text-[#d6e6ee]">
+        <br>
       </text>
     </view>
   </scroll-view>
@@ -158,7 +160,7 @@ export default defineComponent({
   <view class="flex items-center justify-around py-7">
     <!-- Known Button -->
     <view class="flex flex-col cursor-pointer items-center" @click="onNextWord">
-      <text class="text-base font-sans">
+      <text class="text-base text-white font-sans">
         认识
       </text>
       <view class="mt-1 h-1 w-5 rounded bg-[#4caf50]" />
@@ -166,7 +168,7 @@ export default defineComponent({
 
     <!-- Unfamiliar Button -->
     <view class="flex flex-col cursor-pointer items-center" @click="onNextWord">
-      <text class="text-base font-sans">
+      <text class="text-base text-white font-sans">
         模糊
       </text>
       <view class="mt-1 h-1 w-5 rounded bg-[#d2a83b]" />
@@ -174,7 +176,7 @@ export default defineComponent({
 
     <!-- Forgotten Button -->
     <view class="flex flex-col cursor-pointer items-center" @click="onNextWord">
-      <text class="text-base font-sans">
+      <text class="text-base text-white font-sans">
         忘记了
       </text>
       <view class="mt-1 h-1 w-5 rounded bg-[#f44336]" />
@@ -186,7 +188,7 @@ export default defineComponent({
 </style>
 
 <route lang="json">
-  {
-    "layout": "default"
-  }
+{
+  "layout": "default"
+}
 </route>

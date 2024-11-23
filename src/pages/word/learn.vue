@@ -146,7 +146,7 @@ export default defineComponent({
     <view v-for="(definition, index) in currentWord.definitions" :key="index" class="font-verdana mb-1 text-left text-lg">
       <text>{{ definition }}</text>
     </view>
-    <view class="font-verdana mt-5 rounded-lg p-4 text-left frosted-glass">
+    <view class="font-verdana mt-5 rounded-lg p-5 text-left frosted-glass">
       <text class="text-xl">
         {{ currentWord.example }}
       </text>
