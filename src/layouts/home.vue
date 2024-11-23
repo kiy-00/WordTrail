@@ -1,7 +1,3 @@
-<script lang="ts">
-import '../uni.scss'
-</script>
-
 <template>
   <view class="relative min-h-screen px-5 py-10 text-center" style="box-sizing:border-box">
     <!-- 背景图片 -->
