@@ -102,22 +102,24 @@ export default defineComponent({
       <view class="i-mynaui:search text-2xl" />
     </view>
 
-    <!-- 搜索框 -->
-    <transition name="fade">
-      <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-20 px-4 frosted-glass">
-        <view class="flex items-center rounded-lg p-2 frosted-glass">
-          <view class="i-mynaui:search mr-2 text-xl" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="搜索..."
-            class="flex-1 rounded-sm bg-transparent text-base outline-none"
-            @keydown.enter="onSearch"
-          >
-          <view class="i-ci:close-md ml-2 cursor-pointer text-xl" @click="toggleSearch" />
+    <!-- 使用 Teleport 将搜索框移出当前层级 -->
+    <Teleport to="body">
+      <transition name="fade">
+        <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-20 z-1000 px-4 frosted-glass">
+          <view class="flex items-center p-2">
+            <view class="i-mynaui:search mr-2 text-xl" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="搜索..."
+              class="flex-1 rounded-sm bg-transparent text-base outline-none"
+              @keydown.enter="onSearch"
+            >
+            <view class="i-ci:close-md ml-2 cursor-pointer text-xl" @click="toggleSearch" />
+          </view>
         </view>
-      </view>
-    </transition>
+      </transition>
+    </Teleport>
   </view>
 </template>
 
@@ -136,7 +138,7 @@ export default defineComponent({
   }
 }
 
-.fadeIn {
+.animate-fadeIn {
   animation: fadeIn 0.3s ease-in-out forwards;
 }
 </style>

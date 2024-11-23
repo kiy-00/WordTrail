@@ -1,6 +1,7 @@
+<!-- PostEditor.vue -->
 <script lang="ts">
 import type { Post } from '@/types/Post'
-import { defineComponent, ref } from 'vue'
+import { computed, defineComponent, ref } from 'vue'
 
 export default defineComponent({
   name: 'PostEditor',
@@ -106,6 +107,11 @@ export default defineComponent({
       selectedTags.value = []
     }
 
+    // 计算 justify-content 的类
+    const justifyClass = computed(() => {
+      return images.value.length >= 3 ? 'justify-between' : 'justify-start'
+    })
+
     return {
       images,
       title,
@@ -117,6 +123,7 @@ export default defineComponent({
       publishPost,
       handleBack,
       updateSelectedTags,
+      justifyClass, // 返回计算属性
     }
   },
 })
@@ -125,19 +132,19 @@ export default defineComponent({
 <template>
   <!-- Back Button -->
   <BackButton @back="handleBack" />
-  <view class="min-h-screen flex flex-col frosted-glass">
+  <view class="flex flex-col frosted-glass">
     <!-- Editor Content -->
     <view class="flex-1 p-4 space-y-4">
       <!-- Image Upload Section -->
       <view class="flex flex-col">
-        <view class="flex flex-wrap justify-between">
+        <view class="flex flex-wrap gap-2" :class="[justifyClass]">
           <!-- Display Uploaded Images -->
           <view
             v-for="(image, index) in images"
             :key="index"
-            class="relative"
+            class="relative w-23"
           >
-            <image :src="image" class="h-24 w-24 rounded object-cover" />
+            <image :src="image" class="h-23 w-23 rounded object-cover" />
             <view
               class="i-ci:close-sm absolute right-0 top-0 flex cursor-pointer items-center justify-center rounded-full bg-yellow"
               @click="removeImage(index)"
@@ -145,7 +152,7 @@ export default defineComponent({
           </view>
           <!-- Upload Button -->
           <view
-            class="h-24 w-24 flex cursor-pointer items-center justify-center border-2 rounded border-dashed"
+            class="h-23 w-23 flex cursor-pointer items-center justify-center border-2 rounded border-dashed"
             @click="chooseImages"
           >
             <view class="i-mynaui:upload text-3xl" />
@@ -168,7 +175,7 @@ export default defineComponent({
       </view>
 
       <!-- Content Editor -->
-      <view class="flex flex-col">
+      <view class="h-50 flex flex-col">
         <textarea
           v-model="content"
           placeholder="请输入正文内容..."
@@ -200,7 +207,7 @@ export default defineComponent({
       </view>
       <!-- Publish Button -->
       <button
-        class="text-lgfont-semibold w-full rounded-lg bg-yellow px-4 py-2 font-bold"
+        class="w-full rounded-lg bg-yellow px-4 py-2 text-lg font-bold font-semibold"
         @click="publishPost"
       >
         发布帖子
@@ -214,7 +221,7 @@ export default defineComponent({
 </style>
 
 <route lang="json">
-  {
-    "layout": "default"
-  }
+{
+  "layout": "default"
+}
 </route>

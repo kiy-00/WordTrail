@@ -58,7 +58,7 @@ export default defineComponent({
 
 <template>
   <view
-    class="post-card relative mb-1 rounded-lg p-2 frosted-glass"
+    class="post-card mb-1 rounded-lg p-2 frosted-glass"
     @click="navigateToDetail"
   >
     <!-- 删除按钮，仅在“我的”帖子中显示 -->

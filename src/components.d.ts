@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     BackButton: typeof import('./components/BackButton.vue')['default']
     BoxItem: typeof import('./components/BoxItem.vue')['default']
+    Calendar: typeof import('./components/Calendar.vue')['default']
     CalendarDate: typeof import('./components/CalendarDate.vue')['default']
     Comments: typeof import('./components/Comments.vue')['default']
     CommentsCard: typeof import('./components/CommentsCard.vue')['default']

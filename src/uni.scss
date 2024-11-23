@@ -81,6 +81,25 @@ $uni-font-size-paragraph: 15px;
   --user-bg-image: url('/static/background/light-user-bg.png');
 }
 
+ /* 默认（浅色模式） */
+ .sign-in-button {
+  width: 80px;
+  height: 80px;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5));
+  box-shadow:
+    0 0 30px rgba(255, 0, 0, 0.7),    /* 亮红色阴影 */
+    0 0 40px rgba(0, 255, 0, 0.7),    /* 亮绿色阴影 */
+    0 0 50px rgba(0, 0, 255, 0.7);    /* 亮蓝色阴影 */
+  opacity: 0.95;                        /* 提高透明度 */
+
+
+  font-size: 16px;
+  text-align: center;
+  line-height: 80px;
+}
+
 /* 深色主题 */
 @media (prefers-color-scheme: dark) {
   :root {
@@ -90,7 +109,14 @@ $uni-font-size-paragraph: 15px;
       color: #fff;
     }
   }
-
+  .sign-in-button {
+    background: radial-gradient(circle at center, rgba(50, 50, 100, 0.8), rgba(0, 0, 50, 0.9)); /* 深蓝紫色渐变 */
+    box-shadow:
+      inset 0 0 20px rgb(87, 87, 157),  /* 午夜蓝内阴影 */
+      0 0 30px rgba(72, 61, 139, 0.5);     /* 暗紫色外阴影 */
+    opacity: 0.9;
+    color: #811899;
+  }
 }
 
 

@@ -5,12 +5,21 @@ export default defineComponent({
   name: 'Home',
 
   setup() {
-    const selectedLanguage = ref<string>('English')
-    const languages = ref<string[]>(['English', 'Spanish', 'French', 'German', 'Chinese'])
+    const languages = ref<{ name: string, icon: string }[]>([
+      { name: 'English', icon: 'i-circle-flags:us' },
+      { name: 'Spanish', icon: 'i-circle-flags:es' },
+      { name: 'French', icon: 'i-circle-flags:fr' },
+      { name: 'German', icon: 'i-circle-flags:de' },
+      { name: 'Chinese', icon: 'i-circle-flags:cn' },
+    ])
+    const selectedLanguage = ref<string>('English') // 当前选中的语言
     const username = ref<string>('Anna') // 添加用户名
 
+    const signInDays = ref<number>(0) // 累计签到天数
+
     const handleLanguageChange = (event: any) => {
-      selectedLanguage.value = languages.value[event.detail.value]
+      const index = event.detail.value
+      selectedLanguage.value = languages.value[index].name
     }
 
     const navigateTo = (page: string) => {
@@ -25,6 +34,7 @@ export default defineComponent({
       username,
       handleLanguageChange,
       navigateTo,
+      signInDays,
     }
   },
 })
@@ -45,28 +55,36 @@ export default defineComponent({
   </view>
 
   <!-- Language Selector -->
-  <view class="mb-4 w-full">
-    <picker mode="selector" :range="languages" @change="handleLanguageChange">
-      <view class="border border-gray-300 rounded-lg p-2">
+  <view class="mb-4 w-1/2 flex items-center rounded-lg px-4 py-2 frosted-glass">
+    <view :class="languages.find(lang => lang.name === selectedLanguage)?.icon" class="text-lg" />
+    <picker mode="selector" :range="languages.map(lang => lang.name)" class="ml-2 flex-1" @change="handleLanguageChange">
+      <text>
         {{ selectedLanguage }}
-      </view>
+      </text>
     </picker>
+    <view class="i-mynaui:chevron-down ml-2" />
   </view>
 
-  <view class="footer mt-auto">
-    <view class="buttons flex flex-row">
-      <button class="mr-6 w-sm frosted-glass" @click="navigateTo('/pages/word/learn')">
-        Learn
-      </button>
-      <button class="w-sm frosted-glass">
-        Review
-      </button>
-    </view>
-    <TabBar />
+  <!-- Calendar -->
+  <!-- 签到日历 -->
+  <Calendar v-model:sign-in-days="signInDays" class="mb-4" />
+
+  <!-- Learn and Review Buttons -->
+
+  <view class="fixed bottom-20 left-5 right-5 flex justify-around">
+    <button class="mr-6 w-sm frosted-glass" @click="navigateTo('/pages/word/learn')">
+      Learn
+    </button>
+    <button class="w-sm frosted-glass">
+      Review
+    </button>
   </view>
+
+  <TabBar />
 </template>
 
 <style scoped>
+
 </style>
 
 <route lang="json">

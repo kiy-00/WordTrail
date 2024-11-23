@@ -3,7 +3,7 @@ import '../uni.scss'
 </script>
 
 <template>
-  <view class="relative h-screen px-5 py-10 text-center" style="box-sizing:border-box">
+  <view class="relative min-h-screen px-5 py-10 text-center" style="box-sizing:border-box">
     <!-- 背景图片 -->
     <view class="absolute inset-0 bgi-[user-bg-image]">
       <!-- 毛玻璃遮罩 -->
