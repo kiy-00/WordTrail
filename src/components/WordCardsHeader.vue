@@ -1,106 +1,103 @@
 <script lang="ts">
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
-    currentCard: {
-      type: Number,
-      default: 0,
-    },
-    totalCards: {
-      type: Number,
-      default: 10,
-    },
+    currentCard: { type: Number, default: 0 },
+    totalCards: { type: Number, default: 10 },
+    word: { type: String, required: true },
+  },
+  data() {
+    return {
+      isCollected: false,
+    }
   },
   methods: {
-    onBack() {
-      uni.navigateBack({
-        delta: 1,
+    onBack(): void {
+      uni.navigateTo({
+        url: '/pages/home/home',
       })
     },
-    onCollect() {
-      // eslint-disable-next-line no-alert
-      alert('Collect button clicked')
-      // Placeholder for collect functionality
+    async onCollect(): Promise<void> {
+      if (!this.isCollected) {
+        // 假设后端有一个收藏单词的 API，替换为实际的接口
+        setTimeout(() => {
+          this.isCollected = !this.isCollected // 切换状态
+          uni.showToast({
+            title: '成功收藏该生词',
+            icon: 'success',
+            duration: 2000,
+          })
+        }, 500) // 模拟延迟
+      }
+      else {
+        // 假设后端有一个取消收藏单词的 API，替换为实际的接口
+        setTimeout(() => {
+          this.isCollected = !this.isCollected // 切换状态
+          uni.showToast({
+            title: '成功移出生词本',
+            icon: 'success',
+            duration: 2000,
+          })
+        }, 500) // 模拟延迟
+      }
     },
-    onDelete() {
-      // eslint-disable-next-line no-alert
-      alert('Delete button clicked')
-      // Placeholder for delete functionality
+    async onMarkAsKnown(): Promise<void> {
+      // 假设后端有一个标熟单词的 API，替换为实际的接口
+      setTimeout(() => {
+        uni.showToast({
+          title: '成功标熟该生词',
+          icon: 'success',
+          duration: 2000,
+        })
+      }, 500) // 模拟延迟
     },
-    onMoreInfo() {
-      // eslint-disable-next-line no-alert
-      alert('More-info button clicked')
-      // Placeholder for more-info functionality
+    onMoreInfo(): void {
+      uni.showActionSheet({
+        itemList: ['操作1', '操作2', '操作3'],
+        success: (res) => {
+          switch (res.tapIndex) {
+            case 0:
+              uni.showToast({ title: '成功进行操作1', icon: 'success' })
+              break
+            case 1:
+              uni.showToast({ title: '成功进行操作2', icon: 'success' })
+              break
+            case 2:
+              uni.showToast({ title: '成功进行操作3', icon: 'success' })
+              break
+          }
+        },
+        fail: () => {
+          uni.showToast({ title: '取消操作', icon: 'none' })
+        },
+      })
     },
   },
-}
+})
 </script>
 
 <template>
-  <view class="header">
-    <view class="header-left">
-      <view class="icon-container" @click="onBack">
-        <Icon icon="mynaui:arrow-left" class="icon" />
+  <view class="fixed left-0 right-0 top-0 z-50 flex items-center justify-between bg-white bg-opacity-20 px-5 py-3 frosted-glass">
+    <view class="flex items-center gap-4">
+      <view class="flex cursor-pointer items-center justify-center" @click="onBack">
+        <view class="i-mynaui:arrow-left text-2xl text-white" />
       </view>
-      <text class="progress">
+      <text class="text-lg text-white font-sans">
         {{ currentCard }} / {{ totalCards }}
       </text>
     </view>
 
-    <view class="header-right">
-      <view class="icon-container" @click="onCollect">
-        <Icon icon="mynaui:star" class="icon" />
+    <view class="flex items-center gap-4">
+      <view class="flex cursor-pointer items-center justify-center" @click="onCollect">
+        <view :class="isCollected ? 'i-mynaui:star-solid text-yellow' : 'i-mynaui:star'" class="text-2xl text-white" />
       </view>
-      <view class="icon-container" @click="onDelete">
-        <Icon icon="mynaui:trash" class="icon" />
+      <view class="flex cursor-pointer items-center justify-center" @click="onMarkAsKnown">
+        <view class="i-mynaui:trash text-2xl text-white" />
       </view>
-      <view class="icon-container" @click="onMoreInfo">
-        <Icon icon="mynaui:dots" class="icon" />
+      <view class="flex cursor-pointer items-center justify-center" @click="onMoreInfo">
+        <view class="i-mynaui:dots text-2xl text-white" />
       </view>
     </view>
   </view>
 </template>
-
-<style scoped>
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: white;
-  height: 50px;
-  width: 100%;
-  padding-top: 20px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 15px; /* Space between icons */
-  margin-left: 20px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 15px; /* Space between icons */
-  margin-right: 20px;
-}
-
-.icon-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.icon {
-  font-size: 24px;
-  color: white; /* Icon color */
-}
-
-.progress {
-  font-family: Arial, sans-serif;
-  font-size: 16px;
-  color: white;
-  flex: 1;
-}
-</style>

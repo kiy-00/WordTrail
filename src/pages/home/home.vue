@@ -75,7 +75,7 @@ export default defineComponent({
     <button class="mr-6 w-sm frosted-glass" @click="navigateTo('/pages/word/learn')">
       Learn
     </button>
-    <button class="w-sm frosted-glass">
+    <button class="w-sm frosted-glass" @click="navigateTo('/pages/word/review')">
       Review
     </button>
   </view>

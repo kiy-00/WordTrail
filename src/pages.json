@@ -44,11 +44,13 @@
     {
       "path": "pages/word/learn",
       "type": "page",
+      "layout": "default",
       "style": {}
     },
     {
       "path": "pages/word/review",
       "type": "page",
+      "layout": "default",
       "style": {}
     },
     {
