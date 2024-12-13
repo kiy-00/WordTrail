@@ -210,13 +210,17 @@ export default defineComponent({
         >
       </view>
 
-      <view class="mt-2.5 flex items-center">
-        <checkbox v-model="agreePrivacy">
-          同意隐私协议
-        </checkbox>
-        <button class="ml-2 text-blue-500" @click="openPrivacyModal">
-          查看详情
-        </button>
+      <!-- 用户隐私协议 -->
+      <view class="mt-2.5 flex flex-col">
+        <checkbox-group>
+          <label class="flex items-center space-x-2">
+            <checkbox v-model="agreePrivacy" class="text-yellow" />
+            <text>同意隐私协议</text>
+            <button class="ml-2 text-blue-500" @click="openPrivacyModal">
+              查看详情
+            </button>
+          </label>
+        </checkbox-group>
       </view>
 
       <!-- 隐私协议弹框 -->
