@@ -8,6 +8,7 @@ interface NavigateToOptions {
        "/pages/community/community" |
        "/pages/community/post" |
        "/pages/community/posteditor" |
+       "/pages/user/login" |
        "/pages/user/mycontent" |
        "/pages/user/mydata" |
        "/pages/user/settings" |

@@ -14,6 +14,7 @@ declare module 'vue' {
     Comments: typeof import('./components/Comments.vue')['default']
     CommentsCard: typeof import('./components/CommentsCard.vue')['default']
     CommunityHeader: typeof import('./components/CommunityHeader.vue')['default']
+    CustomInput: typeof import('./components/CustomInput.vue')['default']
     OverviewContent: typeof import('./components/OverviewContent.vue')['default']
     PostCard: typeof import('./components/PostCard.vue')['default']
     PostHeader: typeof import('./components/PostHeader.vue')['default']

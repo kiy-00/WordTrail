@@ -25,6 +25,11 @@
       "style": {}
     },
     {
+      "path": "pages/user/login",
+      "type": "page",
+      "style": {}
+    },
+    {
       "path": "pages/user/mycontent",
       "type": "page",
       "layout": "default",
