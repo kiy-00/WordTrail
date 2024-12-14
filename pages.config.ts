@@ -3,6 +3,10 @@ import { defineUniPages } from '@uni-helper/vite-plugin-uni-pages'
 export default defineUniPages({
   pages: [
     {
+      path: 'pages/user/login',
+      type: 'home',
+    },
+    {
       path: 'pages/home/home',
       type: 'home',
     },

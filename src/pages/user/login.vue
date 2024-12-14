@@ -1,5 +1,25 @@
 <script lang="ts">
+import { API_BASE_URL } from '@/config/api'
 import { defineComponent, ref } from 'vue'
+
+interface LoginResponse {
+  message: string
+  token: string // 假设登录接口返回一个 token
+}
+
+interface RegisterResponse {
+  message: string
+  user: {
+    username: string
+    email: string
+    id: number
+    created_at: string
+  }
+}
+
+interface FailedResponse {
+  error: string
+}
 
 export default defineComponent({
   name: 'Login',
@@ -12,7 +32,7 @@ export default defineComponent({
     const agreePrivacy = ref<boolean>(false)
     const showPrivacyModal = ref<boolean>(false) // 新增，控制隐私协议弹框
 
-    const handleAction = () => {
+    const handleAction = async () => {
       // 检查必填字段
       if (!account.value) {
         uni.showToast({
@@ -40,6 +60,8 @@ export default defineComponent({
       }
 
       if (agreePrivacy.value) {
+        // eslint-disable-next-line no-console
+        console.log('agreePrivacy:', agreePrivacy.value)
         if (currentTab.value === 'register' && password.value !== confirmPassword.value) {
           uni.showToast({
             title: '密码不一致',
@@ -48,24 +70,93 @@ export default defineComponent({
           })
           return
         }
-        if (currentTab.value === 'login') {
-          uni.showToast({
-            title: '登录成功',
-            icon: 'success',
-            mask: true,
-          })
-        }
-        else {
-          uni.showToast({
-            title: '注册成功',
-            icon: 'success',
-            mask: true,
-          })
-        }
       }
       else {
+        // eslint-disable-next-line no-console
+        console.log('agreePrivacy:', agreePrivacy.value)
         uni.showToast({
           title: '请先同意隐私协议',
+          icon: 'none',
+          mask: true,
+        })
+      }
+
+      try {
+        if (currentTab.value === 'login') {
+          // 登录逻辑
+          const response = await uni.request({
+            url: `${API_BASE_URL}/auth/login`,
+            method: 'POST',
+            data: {
+              username: account.value,
+              password: password.value,
+            },
+          })
+
+          if (response.statusCode === 200) {
+            const data = response.data as LoginResponse
+
+            uni.showToast({
+              title: data.message,
+              icon: 'success',
+              mask: true,
+            })
+
+            const token = data.token // 假设后端返回 token
+            uni.setStorageSync('authToken', token) // 存储 token
+            uni.redirectTo({ url: '/pages/home/home' }) // 跳转到首页
+            // eslint-disable-next-line no-console
+            console.log('登录后端响应数据:', data) // 日志记录
+          }
+          else {
+            const data = response.data as FailedResponse
+
+            uni.showToast({
+              title: data.error,
+              icon: 'none',
+              mask: true,
+            })
+          }
+        }
+        else if (currentTab.value === 'register') {
+          // 注册逻辑
+          const response = await uni.request({
+            url: `${API_BASE_URL}/auth/register`,
+            method: 'POST',
+            data: {
+              username: account.value,
+              password: password.value,
+              email: account.value, // 假设注册需要 email
+            },
+          })
+
+          if (response.statusCode === 201) {
+            const data = response.data as RegisterResponse
+
+            uni.showToast({
+              title: data.message,
+              icon: 'success',
+              mask: true,
+            })
+
+            // 注册成功后可选择跳转到登录页
+            uni.redirectTo({ url: '/pages/user/login' }) // 替换为实际登录页路径
+          }
+          else {
+            const data = response.data as FailedResponse
+
+            uni.showToast({
+              title: data.error,
+              icon: 'none',
+              mask: true,
+            })
+          }
+        }
+      }
+      catch (error) {
+        console.error('Request failed:', error) // 打印错误信息用于调试
+        uni.showToast({
+          title: '网络问题，请稍后重试',
           icon: 'none',
           mask: true,
         })
@@ -212,20 +303,17 @@ export default defineComponent({
 
       <!-- 用户隐私协议 -->
       <view class="mt-2.5 flex flex-col">
-        <checkbox-group>
-          <label class="flex items-center space-x-2">
-            <checkbox
-              value="agreePrivacy"
-              :checked="agreePrivacy"
-              class="text-yellow"
-              @change="agreePrivacy = !agreePrivacy"
-            />
-            <text>同意隐私协议</text>
-            <button class="ml-2 text-blue-500" @click="openPrivacyModal">
-              查看详情
-            </button>
-          </label>
-        </checkbox-group>
+        <label class="flex items-center space-x-2">
+          <checkbox
+            v-model="agreePrivacy"
+            class="text-yellow"
+            @change="console.log('Privacy agreed:', agreePrivacy)"
+          />
+          <text>同意隐私协议</text>
+          <button class="ml-2 text-blue-500" @click="openPrivacyModal">
+            查看详情
+          </button>
+        </label>
       </view>
 
       <!-- 隐私协议弹框 -->

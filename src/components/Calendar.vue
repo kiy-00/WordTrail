@@ -1,5 +1,15 @@
 <script lang="ts">
+import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
+
+interface checkinResponse {
+  message: string
+  checkinDays: number // 假设登录接口返回一个 token
+}
+
+interface failedCheckinResponse {
+  error: string
+}
 
 export default defineComponent({
   name: 'Calendar',
@@ -53,22 +63,60 @@ export default defineComponent({
     }
 
     // 签到函数
-    const handleSignIn = () => {
-      const today = currentDate.value.getDate()
-      if (!signInDates.value.includes(today)) {
-        signInDates.value.push(today)
-        signInDays.value = signInDates.value.length
-        emit('update:signInDays', signInDays.value)
+    const handleSignIn = async () => {
+      try {
+        // eslint-disable-next-line no-console
+        console.log('发送签到请求到后端') // 日志记录：发送请求
 
-        // 添加闪光效果
-        isFlashing.value = true
-        setTimeout(() => {
-          isFlashing.value = false
-        }, 500) // 动画持续时间 0.5 秒
+        // 发送签到请求到后端
+        const response = await uni.request({
+          url: `${API_BASE_URL}/user/checkin`, // 替换为实际后端接口地址
+          method: 'POST',
+          header: {
+            Authorization: `Bearer ${uni.getStorageSync('authToken')}`, // 添加 token，确保用户已登录
+          },
+        })
+
+        // eslint-disable-next-line no-console
+        console.log('后端响应数据:', response) // 日志记录：完整响应
+
+        if (response.statusCode === 200) {
+          // 成功签到
+          const data = response.data as checkinResponse
+          signInDays.value = data.checkinDays // 更新签到天数
+          emit('update:signInDays', signInDays.value)
+
+          // 添加当天日期到签到日期列表
+          const today = currentDate.value.getDate()
+          if (!signInDates.value.includes(today)) {
+            signInDates.value.push(today)
+          }
+
+          uni.showToast({
+            title: data.message,
+            icon: 'success',
+          })
+
+          // 添加闪光效果
+          isFlashing.value = true
+          setTimeout(() => {
+            isFlashing.value = false
+          }, 500) // 动画持续时间 0.5 秒
+        }
+        else {
+          // 失败响应（例如，今天已签到）
+          const errorData = response.data as failedCheckinResponse
+          uni.showToast({
+            title: errorData.error || '签到失败',
+            icon: 'none',
+          })
+        }
       }
-      else {
+      catch (error) {
+        // 网络错误或其他异常
+        console.error('签到失败:', error)
         uni.showToast({
-          title: '今天已签到',
+          title: '网络问题，请稍后重试',
           icon: 'none',
         })
       }

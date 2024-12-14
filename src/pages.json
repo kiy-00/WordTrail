@@ -1,6 +1,11 @@
 {
   "pages": [
     {
+      "path": "pages/user/login",
+      "type": "home",
+      "style": {}
+    },
+    {
       "path": "pages/home/home",
       "type": "home",
       "layout": "home",
@@ -22,11 +27,6 @@
       "path": "pages/community/posteditor",
       "type": "page",
       "layout": "default",
-      "style": {}
-    },
-    {
-      "path": "pages/user/login",
-      "type": "page",
       "style": {}
     },
     {
