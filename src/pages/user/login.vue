@@ -190,7 +190,7 @@ export default defineComponent({
 <template>
   <view class="frosted-glass-bg min-h-screen flex flex-col items-center justify-center p-5">
     <!-- 应用 Logo -->
-    <image src="@/assets/logo.png" class="mb-8 h-32 w-32" />
+    <image src="/static/logo.svg" class="mb-8 h-32 w-32" />
 
     <!-- 登录/注册表单容器 -->
     <view class="max-w-md w-full rounded-lg p-6 frosted-glass">
@@ -344,21 +344,10 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.frosted-glass-bg {
-  background: url('@/assets/background.jpg') no-repeat center center fixed;
-  background-size: cover;
-}
-
-.frosted-glass {
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-}
-
-input {
-  margin-bottom: 16px;
-}
-
-button {
-  margin-top: 24px;
-}
 </style>
+
+<route lang="json">
+  {
+    "layout": "default"
+  }
+</route>
