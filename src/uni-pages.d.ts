@@ -11,7 +11,10 @@ interface NavigateToOptions {
        "/pages/community/posteditor" |
        "/pages/user/mycontent" |
        "/pages/user/mydata" |
+       "/pages/user/mylexicon" |
+       "/pages/user/selectlexicon" |
        "/pages/user/settings" |
+       "/pages/word/detail" |
        "/pages/word/learn" |
        "/pages/word/review" |
        "/pages/word/wordcards";

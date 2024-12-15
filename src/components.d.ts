@@ -15,10 +15,15 @@ declare module 'vue' {
     CommentsCard: typeof import('./components/CommentsCard.vue')['default']
     CommunityHeader: typeof import('./components/CommunityHeader.vue')['default']
     CustomInput: typeof import('./components/CustomInput.vue')['default']
+    LexiconBox: typeof import('./components/LexiconBox.vue')['default']
+    LexionBox: typeof import('./components/LexionBox.vue')['default']
     OverviewContent: typeof import('./components/OverviewContent.vue')['default']
     PostCard: typeof import('./components/PostCard.vue')['default']
     PostHeader: typeof import('./components/PostHeader.vue')['default']
     TabBar: typeof import('./components/TabBar.vue')['default']
+    WaitingCard: typeof import('./components/WaitingCard.vue')['default']
+    WordBox: typeof import('./components/WordBox.vue')['default']
+    WordCardContent: typeof import('./components/WordCardContent.vue')['default']
     WordCardsHeader: typeof import('./components/WordCardsHeader.vue')['default']
   }
 }

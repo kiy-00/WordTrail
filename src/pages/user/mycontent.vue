@@ -14,7 +14,7 @@ export default defineComponent({
     // 定义设置项数组
     const settingsItems = ref([
       {
-        url: '/pages/user/mycontent',
+        url: '/pages/user/mylexicon',
         icon: 'i-mynaui:book-open',
         text: '在学词书',
         value: bookLearned,

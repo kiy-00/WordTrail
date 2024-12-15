@@ -42,7 +42,24 @@
       "style": {}
     },
     {
+      "path": "pages/user/mylexicon",
+      "type": "page",
+      "layout": "default",
+      "style": {}
+    },
+    {
+      "path": "pages/user/selectlexicon",
+      "type": "page",
+      "layout": "default",
+      "style": {}
+    },
+    {
       "path": "pages/user/settings",
+      "type": "page",
+      "style": {}
+    },
+    {
+      "path": "pages/word/detail",
       "type": "page",
       "style": {}
     },

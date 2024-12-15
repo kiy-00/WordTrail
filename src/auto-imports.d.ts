@@ -7,6 +7,10 @@
 export {}
 declare global {
   const EffectScope: typeof import('vue')['EffectScope']
+  const LanguageStorage: typeof import('./utils/languageStorage')['LanguageStorage']
+  const LexiconStorage: typeof import('./utils/lexiconStorage')['LexiconStorage']
+  const SUPPORTED_LANGUAGES: typeof import('./utils/languageStorage')['SUPPORTED_LANGUAGES']
+  const UserStorage: typeof import('./utils/userStorage')['UserStorage']
   const asyncComputed: typeof import('@vueuse/core')['asyncComputed']
   const autoResetRef: typeof import('@vueuse/core')['autoResetRef']
   const computed: typeof import('vue')['computed']
@@ -323,6 +327,10 @@ declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly LanguageStorage: UnwrapRef<typeof import('./utils/languageStorage')['LanguageStorage']>
+    readonly LexiconStorage: UnwrapRef<typeof import('./utils/lexiconStorage')['LexiconStorage']>
+    readonly SUPPORTED_LANGUAGES: UnwrapRef<typeof import('./utils/languageStorage')['SUPPORTED_LANGUAGES']>
+    readonly UserStorage: UnwrapRef<typeof import('./utils/userStorage')['UserStorage']>
     readonly asyncComputed: UnwrapRef<typeof import('@vueuse/core')['asyncComputed']>
     readonly autoResetRef: UnwrapRef<typeof import('@vueuse/core')['autoResetRef']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>

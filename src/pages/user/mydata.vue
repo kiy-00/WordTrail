@@ -39,6 +39,12 @@ export default defineComponent({
       uni.navigateBack()
     }
 
+    const handleSwitchLexicon = () => {
+      uni.navigateTo({
+        url: '/pages/user/selectlexicon',
+      })
+    }
+
     return {
       checkDays,
       todayLearned,
@@ -55,6 +61,7 @@ export default defineComponent({
       week,
       firstDay,
       handleBack,
+      handleSwitchLexicon,
     }
   },
 })
@@ -73,7 +80,10 @@ export default defineComponent({
     <text class="ml-2 font-bold">
       正在学习
     </text>
-    <button class="action-button mr-0 h-8 rounded-lg bg-yellow p-2 text-align-center text-sm font-bold">
+    <button
+      class="action-button mr-0 h-8 rounded-lg bg-yellow p-2 text-align-center text-sm font-bold"
+      @click="handleSwitchLexicon"
+    >
       换本词书
     </button>
   </view>

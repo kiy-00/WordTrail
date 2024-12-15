@@ -188,153 +188,177 @@ export default defineComponent({
 </script>
 
 <template>
-  <view class="p-5">
-    <!-- 标签栏 -->
-    <view class="mb-4 flex border-b">
-      <button
-        :class="{ 'text-blue-500 border-b-2 border-blue-500': currentTab === 'login' }"
-        class="flex-1 py-2 text-center focus:outline-none"
-        @click="currentTab = 'login'"
-      >
-        登录
-      </button>
-      <button
-        :class="{ 'text-blue-500 border-b-2 border-blue-500': currentTab === 'register' }"
-        class="flex-1 py-2 text-center focus:outline-none"
-        @click="currentTab = 'register'"
-      >
-        注册
-      </button>
-    </view>
+  <view class="frosted-glass-bg min-h-screen flex flex-col items-center justify-center p-5">
+    <!-- 应用 Logo -->
+    <image src="@/assets/logo.png" class="mb-8 h-32 w-32" />
 
-    <!-- 登录/注册表单 -->
-    <view>
-      <!-- 标签栏内的登录内容 -->
-      <view v-if="currentTab === 'login'">
-        <!-- 登录方式选择 -->
-        <view class="mb-4 flex">
-          <button :class="{ 'text-blue-500': loginMethod === 'email' }" class="flex-1" @click="loginMethod = 'email'">
-            邮箱
+    <!-- 登录/注册表单容器 -->
+    <view class="max-w-md w-full rounded-lg p-6 frosted-glass">
+      <view class="p-5">
+        <!-- 标签栏 -->
+        <view class="mb-4 flex border-b">
+          <button
+            :class="{ 'text-blue-500 border-b-2 border-blue-500': currentTab === 'login' }"
+            class="flex-1 py-2 text-center focus:outline-none"
+            @click="currentTab = 'login'"
+          >
+            登录
           </button>
-          <button :class="{ 'text-blue-500': loginMethod === 'phone' }" class="flex-1" @click="loginMethod = 'phone'">
-            电话号码
-          </button>
-          <button :class="{ 'text-blue-500': loginMethod === 'id' }" class="flex-1" @click="loginMethod = 'id'">
-            ID
+          <button
+            :class="{ 'text-blue-500 border-b-2 border-blue-500': currentTab === 'register' }"
+            class="flex-1 py-2 text-center focus:outline-none"
+            @click="currentTab = 'register'"
+          >
+            注册
           </button>
         </view>
 
-        <!-- 共享账号输入框 -->
-        <input
-          v-if="loginMethod === 'email'"
-          v-model="account"
-          placeholder="请输入邮箱"
-          class="mb-2 w-full border rounded p-2"
-        >
-        <input
-          v-else-if="loginMethod === 'phone'"
-          v-model="account"
-          placeholder="请输入电话号码"
-          class="mb-2 w-full border rounded p-2"
-        >
-        <input
-          v-else
-          v-model="account"
-          placeholder="请输入ID"
-          class="mb-2 w-full border rounded p-2"
-        >
+        <!-- 登录/注册表单 -->
+        <view>
+          <!-- 标签栏内的登录内容 -->
+          <view v-if="currentTab === 'login'">
+            <!-- 登录方式选择 -->
+            <view class="mb-4 flex">
+              <button :class="{ 'text-blue-500': loginMethod === 'email' }" class="flex-1" @click="loginMethod = 'email'">
+                邮箱
+              </button>
+              <button :class="{ 'text-blue-500': loginMethod === 'phone' }" class="flex-1" @click="loginMethod = 'phone'">
+                电话号码
+              </button>
+              <button :class="{ 'text-blue-500': loginMethod === 'id' }" class="flex-1" @click="loginMethod = 'id'">
+                ID
+              </button>
+            </view>
 
-        <input
-          v-model="password"
-          placeholder="请输入密码"
-          type="safe-password"
-          class="mb-2 w-full border rounded p-2"
-        >
-      </view>
+            <!-- 共享账号输入框 -->
+            <input
+              v-if="loginMethod === 'email'"
+              v-model="account"
+              placeholder="请输入邮箱"
+              class="mb-2 w-full border rounded p-2"
+            >
+            <input
+              v-else-if="loginMethod === 'phone'"
+              v-model="account"
+              placeholder="请输入电话号码"
+              class="mb-2 w-full border rounded p-2"
+            >
+            <input
+              v-else
+              v-model="account"
+              placeholder="请输入ID"
+              class="mb-2 w-full border rounded p-2"
+            >
 
-      <!-- 标签栏内的注册内容 -->
-      <view v-else>
-        <!-- 注册方式选择 -->
-        <view class="mb-4 flex">
-          <button :class="{ 'text-blue-500': loginMethod === 'email' }" class="flex-1" @click="loginMethod = 'email'">
-            邮箱
-          </button>
-          <button :class="{ 'text-blue-500': loginMethod === 'phone' }" class="flex-1" @click="loginMethod = 'phone'">
-            电话号码
-          </button>
-          <button :class="{ 'text-blue-500': loginMethod === 'id' }" class="flex-1" @click="loginMethod = 'id'">
-            ID
-          </button>
+            <input
+              v-model="password"
+              placeholder="请输入密码"
+              type="safe-password"
+              class="mb-2 w-full border rounded p-2"
+            >
+          </view>
+
+          <!-- 标签栏内的注册内容 -->
+          <view v-else>
+            <!-- 注册方式选择 -->
+            <view class="mb-4 flex">
+              <button :class="{ 'text-blue-500': loginMethod === 'email' }" class="flex-1" @click="loginMethod = 'email'">
+                邮箱
+              </button>
+              <button :class="{ 'text-blue-500': loginMethod === 'phone' }" class="flex-1" @click="loginMethod = 'phone'">
+                电话号码
+              </button>
+              <button :class="{ 'text-blue-500': loginMethod === 'id' }" class="flex-1" @click="loginMethod = 'id'">
+                ID
+              </button>
+            </view>
+
+            <!-- 共享账号输入框 -->
+            <input
+              v-if="loginMethod === 'email'"
+              v-model="account"
+              placeholder="请输入邮箱"
+              class="mb-2 w-full border rounded p-2"
+            >
+            <input
+              v-else-if="loginMethod === 'phone'"
+              v-model="account"
+              placeholder="请输入电话号码"
+              class="mb-2 w-full border rounded p-2"
+            >
+            <input
+              v-else
+              v-model="account"
+              placeholder="请输入ID"
+              class="mb-2 w-full border rounded p-2"
+            >
+
+            <input
+              v-model="password"
+              placeholder="请输入密码"
+              type="safe-password"
+              class="mb-2 w-full border rounded p-2"
+            >
+            <input
+              v-model="confirmPassword"
+              placeholder="请再次输入密码"
+              type="safe-password"
+              class="mb-2 w-full border rounded p-2"
+            >
+          </view>
+
+          <!-- 用户隐私协议 -->
+          <view class="mt-2.5 flex flex-col">
+            <label class="flex items-center space-x-2">
+              <checkbox
+                v-model="agreePrivacy"
+                class="text-yellow"
+                @change="console.log('Privacy agreed:', agreePrivacy)"
+              />
+              <text>同意隐私协议</text>
+              <button class="ml-2 text-blue-500" @click="openPrivacyModal">
+                查看详情
+              </button>
+            </label>
+          </view>
+
+          <!-- 隐私协议弹框 -->
+          <view v-if="showPrivacyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <view class="w-3/4 rounded bg-white p-5">
+              <text>这里是隐私协议的详细内容。</text>
+              <button class="mt-4 w-full rounded bg-blue-500 p-2 text-white" @click="closePrivacyModal">
+                我已知晓
+              </button>
+            </view>
+          </view>
+
+          <view class="mt-5">
+            <button class="mt-2.5 w-full rounded bg-blue-500 p-2.5 text-white" @click="handleAction">
+              {{ currentTab === 'login' ? '登录' : '注册' }}
+            </button>
+          </view>
         </view>
-
-        <!-- 共享账号输入框 -->
-        <input
-          v-if="loginMethod === 'email'"
-          v-model="account"
-          placeholder="请输入邮箱"
-          class="mb-2 w-full border rounded p-2"
-        >
-        <input
-          v-else-if="loginMethod === 'phone'"
-          v-model="account"
-          placeholder="请输入电话号码"
-          class="mb-2 w-full border rounded p-2"
-        >
-        <input
-          v-else
-          v-model="account"
-          placeholder="请输入ID"
-          class="mb-2 w-full border rounded p-2"
-        >
-
-        <input
-          v-model="password"
-          placeholder="请输入密码"
-          type="safe-password"
-          class="mb-2 w-full border rounded p-2"
-        >
-        <input
-          v-model="confirmPassword"
-          placeholder="请再次输入密码"
-          type="safe-password"
-          class="mb-2 w-full border rounded p-2"
-        >
-      </view>
-
-      <!-- 用户隐私协议 -->
-      <view class="mt-2.5 flex flex-col">
-        <label class="flex items-center space-x-2">
-          <checkbox
-            v-model="agreePrivacy"
-            class="text-yellow"
-            @change="console.log('Privacy agreed:', agreePrivacy)"
-          />
-          <text>同意隐私协议</text>
-          <button class="ml-2 text-blue-500" @click="openPrivacyModal">
-            查看详情
-          </button>
-        </label>
-      </view>
-
-      <!-- 隐私协议弹框 -->
-      <view v-if="showPrivacyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <view class="w-3/4 rounded bg-white p-5">
-          <text>这里是隐私协议的详细内容。</text>
-          <button class="mt-4 w-full rounded bg-blue-500 p-2 text-white" @click="closePrivacyModal">
-            我已知晓
-          </button>
-        </view>
-      </view>
-
-      <view class="mt-5">
-        <button class="mt-2.5 w-full rounded bg-blue-500 p-2.5 text-white" @click="handleAction">
-          {{ currentTab === 'login' ? '登录' : '注册' }}
-        </button>
       </view>
     </view>
   </view>
 </template>
 
 <style scoped>
-  /* 删除现有样式 */
+.frosted-glass-bg {
+  background: url('@/assets/background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.frosted-glass {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+input {
+  margin-bottom: 16px;
+}
+
+button {
+  margin-top: 24px;
+}
 </style>
