@@ -30,11 +30,11 @@ export interface FailedResponse {
 }
 
 export const WordAPI = {
-  getLearnWords: async (lexiconName: string): Promise<Word[]> => {
+  getLearnWords: async (lexiconId: string): Promise<Word[]> => {
     return new Promise((resolve, reject) => {
       const token = uni.getStorageSync('token')
       uni.request({
-        url: `${API_BASE_URL}/api/studyplan/learnwords/${lexiconName}`,
+        url: `${API_BASE_URL}/api/studyplan/learnwords/${lexiconId}`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${token}`,

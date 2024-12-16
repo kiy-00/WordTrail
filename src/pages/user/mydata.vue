@@ -276,7 +276,6 @@ export default defineComponent({
   <!-- 在合适的位置添加图表容器 -->
   <div ref="chartRef" class="chart-container" style="width: 100%; height: 300px;" />
 
-  <!-- 调试信息面板
   <view v-if="debugVisible" class="fixed right-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
     <view class="mb-2 flex items-center justify-between">
       <text class="font-bold">
@@ -289,7 +288,7 @@ export default defineComponent({
     <view v-else class="text-gray-500">
       加载中...
     </view>
-  </view> -->
+  </view>
 </template>
 
 <style scoped>

@@ -1,10 +1,11 @@
 <script lang="ts">
 import type { LexiconStatus } from '@/components/LexiconBox.vue'
 import type { Lexicon } from '@/types/Lexicon'
+import { API_BASE_URL } from '@/config/api'
 import { LexiconAPI } from '@/types/Lexicon'
 import { LanguageStorage } from '@/utils/languageStorage'
 import { LexiconStorage } from '@/utils/lexiconStorage'
-import { defineComponent, onMounted, ref } from 'vue' // 删除未使用的 watch
+import { defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
   name: 'SelectLexicon',
@@ -108,45 +109,49 @@ export default defineComponent({
 
     // 执行词书切换
     const switchLexicon = async (lexicon: Lexicon) => {
-      uni.showModal({
-        title: '📚 确认选择',
-        content: `确定要选择「${lexicon.bookName}」作为您的词书吗？`,
-        success: (res) => {
-          if (res.confirm) {
-            try {
-              // 保存词书信息并立即验证
-              LexiconStorage.setCurrentLexicon({
-                id: lexicon.id,
-                name: lexicon.bookName,
-              })
+      try {
+        const token = uni.getStorageSync('token')
+        const response = await uni.request({
+          url: `${API_BASE_URL}/api/lexicon/select`,
+          method: 'POST',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+          data: {
+            lexiconId: lexicon.id,
+          },
+        })
 
-              // 立即验证是否保存成功
-              const savedLexicon = LexiconStorage.getCurrentLexicon()
-              if (savedLexicon && savedLexicon.id === lexicon.id) {
-                uni.showToast({
-                  title: '🎉 选择成功！',
-                  icon: 'success',
-                  duration: 1500,
-                  success: () => {
-                    setTimeout(() => {
-                      uni.navigateBack()
-                    }, 1500)
-                  },
-                })
-              }
-              else {
-                throw new Error('词书保存验证失败')
-              }
-            }
-            catch {
-              uni.showToast({
-                title: '保存失败，请重试',
-                icon: 'none',
-              })
-            }
-          }
-        },
-      })
+        if (response.statusCode === 200) {
+          // 保存词书信息并立即验证
+          LexiconStorage.setCurrentLexicon({
+            id: lexicon.id,
+            name: lexicon.bookName,
+          })
+          uni.showToast({
+            title: '🎉 选择成功！',
+            icon: 'success',
+            duration: 1500,
+            success: () => {
+              setTimeout(() => {
+                uni.navigateBack()
+              }, 1500)
+            },
+          })
+        }
+        else {
+          uni.showToast({
+            title: '选择失败，词书不存在',
+            icon: 'none',
+          })
+        }
+      }
+      catch {
+        uni.showToast({
+          title: '选择失败，请重试',
+          icon: 'none',
+        })
+      }
     }
 
     // 切换词书的处理函数

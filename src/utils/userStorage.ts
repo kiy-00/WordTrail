@@ -11,12 +11,12 @@ export const UserStorage = {
   setCurrentUser(user: UserInfo): void {
     // 只存储需要的信息
     const userToStore = {
-      userId: user.userId,
+      // userId: user.userId,
       username: user.username,
-      avatarUrl: user.avatarUrl,
+      // avatarUrl: user.avatarUrl,
       email: user.email,
-      status: user.status,
-      createTime: user.createTime,
+      // status: user.status,
+      // createTime: user.createTime,
     }
     uni.setStorageSync(USER_INFO_KEY, JSON.stringify(userToStore))
   },
@@ -25,8 +25,8 @@ export const UserStorage = {
     uni.removeStorageSync(USER_INFO_KEY)
   },
 
-  isUserBanned(): boolean {
-    const user = this.getCurrentUser()
-    return user?.status === 1
-  },
+  // isUserBanned(): boolean {
+  //   const user = this.getCurrentUser()
+  //   return user?.status === 1
+  // },
 }
