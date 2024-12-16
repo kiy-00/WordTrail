@@ -7,6 +7,15 @@ interface checkinResponse {
   checkinDays: number // 假设登录接口返回一个 token
 }
 
+interface checkinDaysResponse {
+  checkinDays: number
+}
+
+interface checkinDatesResponse {
+  message: string
+  checkinDates: string[] // 签到日期
+}
+
 interface failedCheckinResponse {
   error: string
 }
@@ -131,8 +140,53 @@ export default defineComponent({
       })
     }
 
+    // 获取连续签到天数
+    const fetchCheckinDays = async () => {
+      try {
+        const response = await uni.request({
+          url: `${API_BASE_URL}/user/checkin-days`, // 替换为实际后端接口地址
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${uni.getStorageSync('token')}`, // 添加 token，确保用户已登录
+          },
+        })
+
+        const data = response.data as checkinDaysResponse
+        signInDays.value = data.checkinDays
+      }
+      catch (error) {
+        console.error(error)
+      }
+    }
+
+    // 获取当前月的签到日期
+    const fetchCheckinDates = async () => {
+      try {
+        const year = currentDate.value.getFullYear()
+        const month = currentDate.value.getMonth() + 1 // JavaScript 的月份从 0 开始
+
+        const response = await uni.request({
+          url: `${API_BASE_URL}/user/checkin-dates?year=${year}&month=${month}`, // 替换为实际后端接口地址
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${uni.getStorageSync('token')}`, // 添加 token，确保用户已登录
+          },
+        })
+
+        const data = response.data as checkinDatesResponse
+
+        // 将签到日期字符串转换为日期数字
+        signInDates.value = data.checkinDates.map(date => new Date(date).getDate())
+      }
+      catch (error) {
+        console.error(error)
+      }
+    }
+
     onMounted(() => {
       calculateDays()
+      fetchCheckinDays()
+      fetchCheckinDates()
     })
 
     return {
