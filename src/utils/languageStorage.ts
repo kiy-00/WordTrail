@@ -8,21 +8,21 @@ export interface LanguageInfo {
 
 export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
   {
-    name: 'English',
+    name: 'en',
     displayName: 'English',
     icon: 'i-circle-flags:us',
     emoji: '🇺🇸',
     successMessage: 'Now learning English',
   },
   {
-    name: 'French',
+    name: 'fr',
     displayName: 'Français',
     icon: 'i-circle-flags:fr',
     emoji: '🇫🇷',
     successMessage: 'Maintenant en train d\'apprendre le français',
   },
   {
-    name: 'German',
+    name: 'de',
     displayName: 'Deutsch',
     icon: 'i-circle-flags:de',
     emoji: '🇩🇪',

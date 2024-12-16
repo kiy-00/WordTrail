@@ -1,30 +1,32 @@
-export interface UserInfo {
-  username: string
-  avatar?: string
-  // 后续可以添加更多用户信息字段
-}
+import type { UserInfo } from '@/types/User'
+
+const USER_INFO_KEY = 'user_info'
 
 export const UserStorage = {
   getCurrentUser(): UserInfo | null {
-    try {
-      const userInfo = uni.getStorageSync('userInfo')
-      return userInfo ? JSON.parse(userInfo) : null
-    }
-    catch {
-      return null
-    }
+    const userInfo = uni.getStorageSync(USER_INFO_KEY)
+    return userInfo ? JSON.parse(userInfo) : null
   },
 
-  setUserInfo(userInfo: UserInfo): void {
-    try {
-      uni.setStorageSync('userInfo', JSON.stringify(userInfo))
+  setCurrentUser(user: UserInfo): void {
+    // 只存储需要的信息
+    const userToStore = {
+      userId: user.userId,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      email: user.email,
+      status: user.status,
+      createTime: user.createTime,
     }
-    catch (error) {
-      console.error('保存用户信息失败:', error)
-    }
+    uni.setStorageSync(USER_INFO_KEY, JSON.stringify(userToStore))
   },
 
-  clearUserInfo(): void {
-    uni.removeStorageSync('userInfo')
+  clearCurrentUser(): void {
+    uni.removeStorageSync(USER_INFO_KEY)
+  },
+
+  isUserBanned(): boolean {
+    const user = this.getCurrentUser()
+    return user?.status === 1
   },
 }

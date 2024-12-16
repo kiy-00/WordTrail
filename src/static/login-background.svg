@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 800">
+  <!-- 定义渐变 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFF8DC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFEFD5;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 装饰性波浪渐变 -->
+    <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FFE4B5;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#FFDEAD;stop-opacity:0.1" />
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="400" height="800" fill="url(#bgGradient)" />
+  
+  <!-- 右上角装饰 -->
+  <path d="M300,0 Q400,0 400,100 L400,0 Z" 
+        fill="url(#waveGradient)" />
+  
+  <!-- 左下角装饰 -->
+  <path d="M0,700 Q0,800 100,800 L0,800 Z" 
+        fill="url(#waveGradient)" />
+  
+  <!-- 细微的装饰线条 -->
+  <g stroke="#FFE4B5" stroke-width="1" opacity="0.2">
+    <line x1="50" y1="200" x2="350" y2="200" />
+    <line x1="50" y1="600" x2="350" y2="600" />
+  </g>
+  
+  <!-- 点缀的圆形 -->
+  <circle cx="50" cy="400" r="100" fill="#FFF8DC" opacity="0.2" />
+  <circle cx="350" cy="400" r="80" fill="#FFEFD5" opacity="0.2" />
+</svg>

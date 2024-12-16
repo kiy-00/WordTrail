@@ -3,22 +3,13 @@ import { API_BASE_URL } from '@/config/api'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, ref } from 'vue'
 
+// 前端展示用的类型
 interface Word {
-  id: number
+  id: string
   word: string
   phonetic: string
   translation: string
-  masteryLevel: 0 | 1 | 2 // 0: 未学习, 1: 模糊, 2: 熟悉
-}
-
-interface BookResponse {
-  words: Array<{
-    id: number
-    word: string
-    phonetic: string
-    translation: string
-    masteryLevel: 0 | 1 | 2
-  }>
+  masteryLevel: number // 将类型从 '0 | 1 | 2' 修改为 'number'
 }
 
 export default defineComponent({
@@ -33,20 +24,29 @@ export default defineComponent({
     const currentLoad = ref(1)
     const searchQuery = ref('')
     const isSearchVisible = ref(false)
+    const debugInfo = ref({
+      rawResponse: null as any,
+      currentLexicon: null as any,
+      error: '',
+    })
 
     // 根据当前标签筛选单词
     const filterWords = () => {
       const filteredWords = allWords.value.filter((word) => {
+        if (!word || !word.word)
+          return false // 添加空值检查
         const matchesTab = activeTab.value === 'all' || word.masteryLevel === Number(activeTab.value)
-        const matchesSearch = word.word.toLowerCase().includes(searchQuery.value.toLowerCase())
+        const matchesSearch = searchQuery.value ? word.word.toLowerCase().includes(searchQuery.value.toLowerCase()) : true
         return matchesTab && matchesSearch
       })
       displayedWords.value = filteredWords.slice(0, currentLoad.value * wordsPerLoad)
     }
 
-    // 获取词书单词
+    // 修改获取词书单词的函数
     const fetchWords = async () => {
       const currentLexicon = LexiconStorage.getCurrentLexicon()
+      debugInfo.value.currentLexicon = currentLexicon
+
       if (!currentLexicon) {
         uni.showToast({
           title: '请先选择词书',
@@ -56,35 +56,45 @@ export default defineComponent({
       }
 
       try {
+        const token = uni.getStorageSync('token')
         const response = await uni.request({
           url: `${API_BASE_URL}/books/${currentLexicon.id}`,
           method: 'GET',
           header: {
-            Authorization: `Bearer ${uni.getStorageSync('authToken')}`,
+            Authorization: `Bearer ${token}`,
           },
         })
 
-        if (response.statusCode === 200) {
-          const bookData = response.data as BookResponse
-          if (bookData && Array.isArray(bookData.words)) {
-            allWords.value = bookData.words
+        debugInfo.value.rawResponse = response.data
+
+        if (response.statusCode === 200 && Array.isArray(response.data)) {
+          // 处理词书数组
+          const processedWords: Word[] = response.data.map(wordData => ({
+            id: wordData.id || '',
+            word: wordData.word || '',
+            phonetic: wordData.phonetics?.[0]?.ipa || '',
+            translation: wordData.partOfSpeechList?.[0]?.type || '未知',
+            masteryLevel: 0, // 确保这里赋值的类型是 number
+          })).filter(word => word.word) // 过滤掉没有单词的数据
+
+          if (processedWords.length > 0) {
+            allWords.value = processedWords
+            debugInfo.value.error = ''
             filterWords()
           }
           else {
-            throw new Error('Invalid response format')
+            throw new Error('词书为空')
           }
         }
         else {
-          uni.showToast({
-            title: '获取单词列表失败',
-            icon: 'none',
-          })
+          throw new Error(`请求失败: ${response.statusCode}`)
         }
       }
       catch (error) {
-        console.error('获取单词列表失败:', error)
+        debugInfo.value.error = `请求错误: ${error}`
+        console.error('获取词书失败:', error) // 添加错误日志
         uni.showToast({
-          title: '网络错误',
+          title: '获取单词列表失败',
           icon: 'none',
         })
       }
@@ -169,6 +179,7 @@ export default defineComponent({
       searchQuery,
       handleBack,
       handleWordClick,
+      debugInfo,
     }
   },
 })
@@ -247,6 +258,38 @@ export default defineComponent({
       </template>
     </view>
   </scroll-view>
+
+  <!-- 调试信息面板 -->
+  <!-- <view class="fixed left-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
+    <text class="mb-2 block font-bold">
+      调试信息
+    </text>
+    <text class="mb-2 block">
+      当前词书: {{ debugInfo.currentLexicon?.name || '未选择' }}
+    </text>
+    <text class="mb-2 block">
+      词书ID: {{ debugInfo.currentLexicon?.id || '无' }}
+    </text>
+    <text class="mb-2 block">
+      错误信息: {{ debugInfo.error || '无' }}
+    </text>
+    <view class="mb-2">
+      <text class="font-bold">
+        原始响应:
+      </text>
+      <pre class="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all text-xs">{{ JSON.stringify(debugInfo.rawResponse, null, 2) }}</pre>
+    </view>
+    <view class="mb-2">
+      <text class="font-bold">
+        已处理数据:
+      </text>
+      <view class="mt-1 max-h-40 overflow-auto">
+        <view v-for="word in displayedWords" :key="word.id" class="mb-1 text-xs">
+          {{ word.word }} [{{ word.phonetic }}] - {{ word.translation }}
+        </view>
+      </view>
+    </view>
+  </view> -->
 </template>
 
 <style scoped>

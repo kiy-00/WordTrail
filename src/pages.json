@@ -3,7 +3,7 @@
     {
       "path": "pages/user/login",
       "type": "home",
-      "layout": "default",
+      "layout": "login",
       "style": {}
     },
     {

@@ -6,12 +6,33 @@ export interface CurrentLexicon {
 
 export const LexiconStorage = {
   getCurrentLexicon(): CurrentLexicon | null {
-    const lexiconData = uni.getStorageSync('currentLexicon')
-    return lexiconData ? JSON.parse(lexiconData) : null
+    try {
+      const lexicon = uni.getStorageSync('currentLexicon')
+      // 添加调试日志
+
+      return lexicon ? JSON.parse(lexicon) : null
+    }
+    catch (error) {
+      console.error('获取词书信息失败:', error)
+      return null
+    }
   },
 
   setCurrentLexicon(lexicon: CurrentLexicon): void {
-    uni.setStorageSync('currentLexicon', JSON.stringify(lexicon))
+    try {
+      // 存储前先打印
+
+      uni.setStorageSync('currentLexicon', JSON.stringify(lexicon))
+      // 存储后验证
+      const stored = this.getCurrentLexicon()
+      uni.showToast({
+        title: stored ? '词书信息已存储' : '词书信息存储失败',
+        icon: stored ? 'success' : 'none',
+      })
+    }
+    catch (error) {
+      console.error('存储词书信息失败:', error)
+    }
   },
 
   clearCurrentLexicon(): void {

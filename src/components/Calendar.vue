@@ -73,7 +73,7 @@ export default defineComponent({
           url: `${API_BASE_URL}/user/checkin`, // 替换为实际后端接口地址
           method: 'POST',
           header: {
-            Authorization: `Bearer ${uni.getStorageSync('authToken')}`, // 添加 token，确保用户已登录
+            Authorization: `Bearer ${uni.getStorageSync('token')}`, // 添加 token，确保用户已登录
           },
         })
 

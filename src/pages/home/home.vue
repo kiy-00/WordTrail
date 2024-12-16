@@ -1,35 +1,168 @@
 <script lang="ts">
+import TabBar from '@/components/TabBar.vue' // 添加TabBar组件导入
+// 添加API基础URL导入
 import { WordAPI } from '@/types/Word'
-import { LanguageStorage, SUPPORTED_LANGUAGES } from '@/utils/languageStorage'
 import { type CurrentLexicon, LexiconStorage } from '@/utils/lexiconStorage'
-import { UserStorage } from '@/utils/userStorage'
 import { defineComponent, onMounted, ref, watch } from 'vue'
+
+// // 添加用户信息接口
+// interface UserInfo {
+//   userId: string // 改为 string 类型
+//   username: string
+//   email: string
+//   phone: string | null
+//   avatarUrl: string | null
+//   status: number
+//   createTime: string
+//   updateTime: string
+// }
 
 export default defineComponent({
   name: 'Home',
-
+  components: {
+    TabBar,
+  },
   setup() {
-    const languages = ref(SUPPORTED_LANGUAGES)
-    const selectedLanguage = ref(LanguageStorage.getCurrentLanguage())
+    const languages = ref([
+      { name: 'en', icon: 'i-circle-flags:us', displayName: '英语', emoji: '🇺🇸' },
+      { name: 'fr', icon: 'i-circle-flags:fr', displayName: '法语', emoji: '🇫🇷' },
+      { name: 'de', icon: 'i-circle-flags:de', displayName: '德语', emoji: '🇩🇪' },
+    ])
+
+    const selectedLanguage = ref(languages.value.find(
+      lang => lang.name === uni.getStorageSync('selectedLanguage'),
+    ) || languages.value[0])
+
+    const showLanguageModal = ref(false)
+
     const username = ref<string>('')
+    const avatarUrl = ref<string>('')
+    const isBanned = ref(false)
+    const defaultAvatar = '/static/avatar/avatar.png'
 
     const signInDays = ref<number>(0) // 累计签到天数
     const currentLexicon = ref<CurrentLexicon | null>(LexiconStorage.getCurrentLexicon()) // 当前词书
 
-    onMounted(() => {
-      // 获取用户信息
-      const userInfo = UserStorage.getCurrentUser()
-      if (userInfo) {
-        username.value = userInfo.username
-      }
-      else {
-        // 如果本地没有用户信息，设置默认值
-        username.value = '未登录用户'
-        // TODO: 后续添加实际的用户信息获取逻辑
-      }
+    // const fetchUserInfo = async () => {
+    //   try {
+    //     // 首先检查token
+    //     const token = uni.getStorageSync('token') // 使用统一的 token key
+    //     if (!token) {
+    //       uni.redirectTo({ url: '/pages/user/login' })
+    //       return
+    //     }
 
-      // 检查词书选择状态
-      if (!currentLexicon.value) {
+    //     // 获取用户信息
+    //     const response = await uni.request({
+    //       url: `${API_BASE_URL}/user/info`,
+    //       method: 'GET',
+    //       header: {
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //     })
+
+    //     if (response.statusCode === 200) {
+    //       const userInfo = response.data as UserInfo // 使用类型断言
+
+    //       // 保存用户信息到本地
+    //       UserStorage.setCurrentUser(userInfo)
+
+    //       // 设置页面数据
+    //       username.value = userInfo.username
+    //       avatarUrl.value = userInfo.avatarUrl || defaultAvatar
+    //       isBanned.value = userInfo.status === 1
+
+    //       if (isBanned.value) {
+    //         uni.showToast({
+    //           title: '账号已被封禁',
+    //           icon: 'none',
+    //           duration: 2000,
+    //         })
+    //       }
+    //     }
+    //     else if (response.statusCode === 401) {
+    //       // token失效，清除本地存储并跳转登录
+    //       uni.removeStorageSync('token')
+    //       uni.removeStorageSync('userInfo')
+    //       uni.redirectTo({ url: '/pages/user/login' })
+    //     }
+    //     else {
+    //       throw new Error('获取用户信息失败')
+    //     }
+    //   }
+    //   catch (error) {
+    //     console.error('获取用户信息失败:', error)
+    //     const localUser = UserStorage.getCurrentUser()
+    //     if (localUser) {
+    //       username.value = localUser.username
+    //       avatarUrl.value = localUser.avatarUrl || defaultAvatar
+    //       isBanned.value = localUser.status === 1
+    //     }
+    //     else {
+    //       // 如果本地没有用户信息，跳转到登录页
+    //       uni.redirectTo({
+    //         url: '/pages/user/login',
+    //       })
+    //     }
+    //   }
+    // }
+
+    const loadUserInfo = () => {
+      try {
+        const userInfo = uni.getStorageSync('userInfo')
+
+        if (!userInfo) {
+          uni.redirectTo({ url: '/pages/user/login' })
+          return
+        }
+
+        // 直接使用存储的用户信息
+        username.value = userInfo.username || ''
+        avatarUrl.value = userInfo.avatarUrl || defaultAvatar
+        isBanned.value = userInfo.status === 1
+      }
+      catch (error) {
+        console.error('加载用户信息失败:', error)
+        uni.redirectTo({ url: '/pages/user/login' })
+      }
+    }
+
+    const selectInitialLanguage = () => {
+      showLanguageModal.value = true
+    }
+
+    const handleSelectLanguage = (language: typeof languages.value[0]) => {
+      selectedLanguage.value = language
+      uni.setStorageSync('selectedLanguage', language.name)
+      showLanguageModal.value = false
+
+      uni.showToast({
+        title: `${language.emoji} 已选择${language.displayName}`,
+        icon: 'none',
+        duration: 2000,
+      })
+
+      // 选择完语言后检查词书
+      setTimeout(() => {
+        if (!currentLexicon.value) {
+          uni.showModal({
+            title: '提示',
+            content: '您还未选择词书，是否前往选择？',
+            success: (res) => {
+              if (res.confirm)
+                uni.navigateTo({ url: '/pages/user/selectlexicon' })
+            },
+          })
+        }
+      }, 500)
+    }
+
+    // 添加词书检查函数
+    const checkLexiconStatus = () => {
+      const lexicon = LexiconStorage.getCurrentLexicon()
+      currentLexicon.value = lexicon
+
+      if (!lexicon) {
         uni.showModal({
           title: '提示',
           content: '您还未选择词书，是否前往选择？',
@@ -39,29 +172,75 @@ export default defineComponent({
           },
         })
       }
+    }
+
+    onMounted(() => {
+      loadUserInfo()
+
+      // 检查是否首次选择语言
+      if (!uni.getStorageSync('selectedLanguage')) {
+        uni.showModal({
+          title: '欢迎来到 WordTrail 🎉',
+          content: '选择一个语言，开始你的寻踪之旅吧！ 🌟',
+          showCancel: false,
+          success: () => {
+            selectInitialLanguage() // 显示语言选择模态框
+          },
+        })
+      }
+      else {
+        // 已有语言选择，检查词书
+        setTimeout(() => {
+          if (!currentLexicon.value) {
+            uni.showModal({
+              title: '提示',
+              content: '您还未选择词书，是否前往选择？',
+              success: (res) => {
+                if (res.confirm)
+                  uni.navigateTo({ url: '/pages/user/selectlexicon' })
+              },
+            })
+          }
+        }, 1500)
+      }
+      checkLexiconStatus() // 添加词书状态检查
     })
 
     const handleLanguageChange = (event: any) => {
       const index = event.detail.value
-      const newLanguage = languages.value[index]
-      LanguageStorage.setCurrentLanguage(newLanguage.name)
-      selectedLanguage.value = newLanguage
+      selectedLanguage.value = languages.value[index]
+      // 保存选择的语言到本地存储
+      uni.setStorageSync('selectedLanguage', selectedLanguage.value.name)
 
-      // 显示切换成功提示
       uni.showToast({
-        title: `${newLanguage.emoji} ${newLanguage.successMessage}`,
+        title: `${selectedLanguage.value.emoji} 已切换到${selectedLanguage.value.displayName}`,
         icon: 'none',
         duration: 2000,
       })
     }
 
     const navigateTo = (page: string) => {
+      if (isBanned.value) {
+        uni.showToast({
+          title: '哎呦！被封禁啦！',
+          icon: 'none',
+        })
+        return
+      }
       uni.navigateTo({
         url: page,
       })
     }
 
     const handleLearnClick = async () => {
+      if (isBanned.value) {
+        uni.showToast({
+          title: '哎呦！被封禁啦！',
+          icon: 'none',
+        })
+        return
+      }
+
       const lexicon = LexiconStorage.getCurrentLexicon()
       if (!lexicon) {
         uni.showToast({
@@ -106,7 +285,11 @@ export default defineComponent({
       selectedLanguage,
       languages,
       username,
+      avatarUrl,
+      isBanned,
       handleLanguageChange,
+      showLanguageModal,
+      handleSelectLanguage,
       navigateTo,
       signInDays,
       handleLearnClick,
@@ -120,13 +303,29 @@ export default defineComponent({
   <!-- Header -->
   <view class="mb-4 w-full flex items-center justify-between">
     <view class="flex items-center">
-      <image class="h-16 w-16 rounded-full" src="@/static/avatar/avatar.png" alt="User Avatar" />
+      <image
+        :src="avatarUrl"
+        class="h-16 w-16 rounded-full"
+        @error="avatarUrl = '/static/avatar/avatar.png'"
+      />
       <text class="ml-2 text-lg">
         {{ username }}
       </text>
     </view>
     <view class="flex items-center">
       <view class="i-mynaui:cog-two cursor-pointer text-2xl" aria-label="设置" @click="navigateTo('/pages/user/settings')" />
+    </view>
+  </view>
+
+  <!-- 被封禁提示 -->
+  <view v-if="isBanned" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <view class="rounded-lg bg-white p-6 text-center">
+      <text class="text-xl text-red-500 font-bold">
+        哎呦！被封禁啦！
+      </text>
+      <text class="mt-2 text-gray-600">
+        您的账号已被封禁，请联系管理员解封。
+      </text>
     </view>
   </view>
 
@@ -143,7 +342,32 @@ export default defineComponent({
       <text>{{ selectedLanguage.displayName }}</text>
     </picker>
     <view class="i-mynaui:chevron-down ml-2" />
-  </view>  <!-- Calendar -->  <!-- 签到日历 -->  <Calendar v-model:sign-in-days="signInDays" class="mb-4" />  <!-- Current Lexicon -->  <view class="mb-4">
+  </view>
+
+  <!-- Language Selection Modal -->
+  <view v-if="showLanguageModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <view class="w-4/5 rounded-lg bg-white p-6">
+      <text class="mb-4 block text-center text-xl font-bold">
+        选择学习语言
+      </text>
+      <view class="space-y-3">
+        <view
+          v-for="lang in languages"
+          :key="lang.name"
+          class="flex cursor-pointer items-center rounded-lg p-3 transition-colors"
+          :class="selectedLanguage.name === lang.name ? 'bg-yellow text-white' : 'bg-gray-100'"
+          @click="handleSelectLanguage(lang)"
+        >
+          <text class="mr-2 text-lg">
+            {{ lang.emoji }}
+          </text>
+          <text>{{ lang.displayName }}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Calendar -->  <!-- 签到日历 -->  <Calendar v-model:sign-in-days="signInDays" class="mb-4" />  <!-- Current Lexicon -->  <view class="mb-4">
     <text class="text-lg">
       当前词书：{{ currentLexicon?.name || '未选择' }}
     </text>

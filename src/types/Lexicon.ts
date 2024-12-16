@@ -35,7 +35,7 @@ export const LexiconAPI = {
         url: '/api/lexicon',
         method: 'GET',
         header: {
-          Authorization: `Bearer ${uni.getStorageSync('authToken')}`,
+          Authorization: `Bearer ${uni.getStorageSync('token')}`,
         },
         success: resolve,
         fail: reject,
@@ -43,17 +43,29 @@ export const LexiconAPI = {
     })
   },
 
-  // 获取所有系统词书列表
+  // 修改获取词书列表的方法
   getAllLexicons: () => {
     return new Promise<Lexicon[]>((resolve, reject) => {
+      const token = uni.getStorageSync('token')
+      if (!token) {
+        reject(new Error('No token found'))
+        return
+      }
+
       uni.request({
         url: `${API_BASE_URL}/books`,
         method: 'GET',
         header: {
-          'Authorization': `Bearer ${uni.getStorageSync('authToken')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         success: (res: UniApp.RequestSuccessCallbackResult) => {
+          if (res.statusCode === 403) {
+            uni.redirectTo({ url: '/pages/user/login' })
+            reject(new Error('Authentication failed'))
+            return
+          }
+
           if (res.statusCode === 200 && Array.isArray(res.data)) {
             resolve(res.data as Lexicon[])
           }
@@ -62,6 +74,7 @@ export const LexiconAPI = {
           }
         },
         fail: (err) => {
+          console.error('Request failed:', err)
           reject(new Error(`Request failed: ${err.errMsg}`))
         },
       })

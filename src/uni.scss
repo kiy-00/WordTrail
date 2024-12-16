@@ -79,6 +79,7 @@ $uni-font-size-paragraph: 15px;
 :root {
   --home-bg-image: url('/static/background/light-home-bg.png');
   --user-bg-image: url('/static/background/light-user-bg.png');
+  --login-bg-image: url('/static/login-background.svg');
 }
 
  /* 默认（浅色模式） */
@@ -105,6 +106,7 @@ $uni-font-size-paragraph: 15px;
   :root {
     --home-bg-image: url('/static/background/dark-home-bg.png');
     --user-bg-image: url('/static/background/dark-user-bg.png');
+    --login-bg-image: url('/static/login-background.svg');
     uni-button, uni-button[type='default'] {
       color: #fff;
     }

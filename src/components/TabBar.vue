@@ -8,9 +8,9 @@ function navigateTo(page: string) {
 
 <template>
   <view class="fixed bottom-0 left-0 right-0 flex justify-around bg-white py-3 shadow-md">
-    <view cursor-pointer @click="navigateTo('/pages/community/community')">
+    <!-- <view cursor-pointer @click="navigateTo('/pages/community/community')">
       <view class="i-mynaui:aperture text-2xl" />
-    </view>
+    </view> -->
     <view cursor-pointer @click="navigateTo('/pages/user/mycontent')">
       <view class="i-mynaui:academic-hat text-2xl" />
     </view>

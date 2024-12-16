@@ -30,28 +30,31 @@ export interface FailedResponse {
 }
 
 export const WordAPI = {
-  // 获取学习单词
   getLearnWords: async (lexiconName: string): Promise<Word[]> => {
     return new Promise((resolve, reject) => {
+      const token = uni.getStorageSync('token')
       uni.request({
         url: `${API_BASE_URL}/api/studyplan/learnwords/${lexiconName}`,
         method: 'GET',
         header: {
-          Authorization: `Bearer ${uni.getStorageSync('authToken')}`,
+          Authorization: `Bearer ${token}`,
         },
         success: (res) => {
           if (res.statusCode === 200) {
             resolve(res.data as Word[])
           }
           else {
-            reject(new Error('Failed to fetch words'))
+            console.error('获取单词失败:', res.statusCode, res.data)
+            reject(new Error(`获取单词失败`))
           }
         },
-        fail: reject,
+        fail: (error) => {
+          console.error('请求发生错误:', error)
+          reject(error)
+        },
       })
     })
   },
-
   // 获取复习单词
   getReviewWords: async (lexiconName: string): Promise<Word[]> => {
     return new Promise((resolve, reject) => {
@@ -59,7 +62,7 @@ export const WordAPI = {
         url: `${API_BASE_URL}/api/studyplan/reviewwords/${lexiconName}`,
         method: 'GET',
         header: {
-          Authorization: `Bearer ${uni.getStorageSync('authToken')}`,
+          Authorization: `Bearer ${uni.getStorageSync('token')}`,
         },
         success: (res) => {
           if (res.statusCode === 200) {
@@ -80,7 +83,7 @@ export const WordAPI = {
       url: `${API_BASE_URL}/api/studyplan/learncount/${lexiconName}`,
       method: 'GET',
       header: {
-        Authorization: `Bearer ${uni.getStorageSync('authToken')}`,
+        Authorization: `Bearer ${uni.getStorageSync('token')}`,
       },
     })
     return response
@@ -92,7 +95,7 @@ export const WordAPI = {
       url: `${API_BASE_URL}/api/studyplan/reviewcount/${lexiconName}`,
       method: 'GET',
       header: {
-        Authorization: `Bearer ${uni.getStorageSync('authToken')}`,
+        Authorization: `Bearer ${uni.getStorageSync('token')}`,
       },
     })
     return response
@@ -104,7 +107,7 @@ export const WordAPI = {
       url: `${API_BASE_URL}/api/studyplan/resetcount/${lexiconName}/${wordId}`,
       method: 'PUT',
       header: {
-        Authorization: `Bearer ${uni.getStorageSync('authToken')}`,
+        Authorization: `Bearer ${uni.getStorageSync('token')}`,
       },
     })
     return response
@@ -116,7 +119,7 @@ export const WordAPI = {
       url: `${API_BASE_URL}/api/studyplan/decrementcount/${lexiconName}/${wordId}`,
       method: 'PUT',
       header: {
-        Authorization: `Bearer ${uni.getStorageSync('authToken')}`,
+        Authorization: `Bearer ${uni.getStorageSync('token')}`,
       },
     })
     return response

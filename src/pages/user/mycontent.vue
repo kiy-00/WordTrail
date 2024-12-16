@@ -19,30 +19,30 @@ export default defineComponent({
         text: '在学词书',
         value: bookLearned,
       },
-      {
-        url: '/pages/user/recentlylearned',
-        icon: 'i-mynaui:clock-circle',
-        text: '最近学习',
-        value: recentlyLearned,
-      },
-      {
-        url: '/pages/user/totallearned',
-        icon: 'i-mynaui:chart-bar',
-        text: '总学习量',
-        value: totalLearned,
-      },
-      {
-        url: '/pages/user/vocabularycount',
-        icon: 'i-mynaui:book',
-        text: '词汇量',
-        value: vocabularyCount,
-      },
-      {
-        url: '/pages/user/notes',
-        icon: 'i-mynaui:pen',
-        text: '笔记',
-        value: notes,
-      },
+      // {
+      //   url: '/pages/user/recentlylearned',
+      //   icon: 'i-mynaui:clock-circle',
+      //   text: '最近学习',
+      //   value: recentlyLearned,
+      // },
+      // {
+      //   url: '/pages/user/totallearned',
+      //   icon: 'i-mynaui:chart-bar',
+      //   text: '总学习量',
+      //   value: totalLearned,
+      // },
+      // {
+      //   url: '/pages/user/vocabularycount',
+      //   icon: 'i-mynaui:book',
+      //   text: '词汇量',
+      //   value: vocabularyCount,
+      // },
+      // {
+      //   url: '/pages/user/notes',
+      //   icon: 'i-mynaui:pen',
+      //   text: '笔记',
+      //   value: notes,
+      // },
     ])
 
     // 返回逻辑

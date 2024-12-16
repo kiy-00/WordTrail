@@ -4,10 +4,10 @@ import type { Lexicon } from '@/types/Lexicon'
 import { LexiconAPI } from '@/types/Lexicon'
 import { LanguageStorage } from '@/utils/languageStorage'
 import { LexiconStorage } from '@/utils/lexiconStorage'
-import { defineComponent, ref, watch } from 'vue'
+import { defineComponent, onMounted, ref } from 'vue' // 删除未使用的 watch
 
 export default defineComponent({
-  name: 'SelectLexicon', // 修正：bookName -> name
+  name: 'SelectLexicon',
 
   setup() {
     const activeTab = ref<'all' | LexiconStatus>('all') // 注释而不是删除
@@ -19,6 +19,42 @@ export default defineComponent({
     const searchQuery = ref('')
     const isSearchVisible = ref(false)
     const selectedLanguage = ref(LanguageStorage.getCurrentLanguage())
+
+    // 添加语言显示相关代码
+    const languages = [
+      {
+        name: 'en',
+        icon: 'i-circle-flags:us',
+        displayName: '英语',
+        emoji: '🇺🇸',
+        successMessage: 'English selected!',
+      },
+      {
+        name: 'fr',
+        icon: 'i-circle-flags:fr',
+        displayName: '法语',
+        emoji: '🇫🇷',
+        successMessage: 'Français sélectionné!',
+      },
+      {
+        name: 'de',
+        icon: 'i-circle-flags:de',
+        displayName: '德语',
+        emoji: '🇩🇪',
+        successMessage: 'Deutsch ausgewählt!',
+      },
+    ]
+
+    const currentLanguage = ref(languages.find(
+      lang => lang.name === uni.getStorageSync('selectedLanguage'),
+    ) || languages[0])
+
+    // 添加调试信息
+    const debugInfo = ref({
+      allBooks: [] as Lexicon[],
+      currentLanguage: '',
+      error: '',
+    })
 
     // 根据当前标签筛选词书
     const filterLexicons = () => {
@@ -35,20 +71,35 @@ export default defineComponent({
       try {
         const data = await LexiconAPI.getAllLexicons()
         if (Array.isArray(data)) {
-          // 根据当前选择的语言筛选词书
-          allLexicons.value = data.filter(lexicon =>
-            lexicon && lexicon.language === selectedLanguage.value.name.toLowerCase(),
-          )
+          // 打印调试信息
+          // uni.showModal({
+          //   title: '调试信息',
+          //   content: `当前选择的语言: ${selectedLanguage.value.name}\n获取到的词书: ${data.map(book => `${book.bookName}(${book.language})`).join(', ')}`,
+          //   showCancel: false,
+          // })
+
+          // 修正筛选逻辑，确保大小写一致
+          allLexicons.value = data.filter((lexicon) => {
+            const bookLanguage = lexicon.language.toLowerCase()
+            const selectedLang = selectedLanguage.value.name.toLowerCase()
+            return bookLanguage === selectedLang
+          })
+
+          // 更新调试信息
+          debugInfo.value.allBooks = data
+          debugInfo.value.currentLanguage = selectedLanguage.value.name
+
           filterLexicons()
         }
         else {
+          debugInfo.value.error = 'Invalid data format'
           throw new TypeError('Invalid data format')
         }
       }
       catch (error) {
-        console.error('获取词书列表失败:', error)
+        debugInfo.value.error = error instanceof Error ? error.message : '获取词书列表失败'
         uni.showToast({
-          title: '获取词书列表失败',
+          title: debugInfo.value.error,
           icon: 'none',
           duration: 2000,
         })
@@ -63,37 +114,36 @@ export default defineComponent({
         success: (res) => {
           if (res.confirm) {
             try {
-              // 保存词书 id 和名称
+              // 保存词书信息并立即验证
               LexiconStorage.setCurrentLexicon({
                 id: lexicon.id,
                 name: lexicon.bookName,
               })
 
-              // 延迟返回，确保提示显示完整
-              uni.showToast({
-                title: '🎉 选择成功！',
-                icon: 'success',
-                duration: 1500,
-                success: () => {
-                  setTimeout(() => {
-                    uni.navigateBack()
-                  }, 1500)
-                },
-              })
+              // 立即验证是否保存成功
+              const savedLexicon = LexiconStorage.getCurrentLexicon()
+              if (savedLexicon && savedLexicon.id === lexicon.id) {
+                uni.showToast({
+                  title: '🎉 选择成功！',
+                  icon: 'success',
+                  duration: 1500,
+                  success: () => {
+                    setTimeout(() => {
+                      uni.navigateBack()
+                    }, 1500)
+                  },
+                })
+              }
+              else {
+                throw new Error('词书保存验证失败')
+              }
             }
-            catch (error) {
-              console.error('切换词书失败:', error)
+            catch {
               uni.showToast({
-                title: '❌ 切换失败，请重试',
+                title: '保存失败，请重试',
                 icon: 'none',
               })
             }
-          }
-          else {
-            uni.showToast({
-              title: '👍 已取消选择',
-              icon: 'none',
-            })
           }
         },
       })
@@ -130,12 +180,11 @@ export default defineComponent({
       // toggleSearch() // 可选：是否在搜索后关闭搜索框
     }
 
-    // 切换标签
-    // const handleTabChange = (tab: 'all' | LexiconStatus) => {
-    //   activeTab.value = tab
-    //   currentLoad.value = 1
-    //   filterLexicons()
-    // }
+    // 监听语言变化 - 使用普通函数替代 watch
+    const handleLanguageChange = (newLanguage: any) => {
+      selectedLanguage.value = newLanguage
+      fetchLexicons() // 重新获取对应语言的词书
+    }
 
     // 下拉刷新
     const onRefresh = async () => {
@@ -151,14 +200,22 @@ export default defineComponent({
       filterLexicons()
     }
 
-    // 监听语言变化
-    watch(() => LanguageStorage.getCurrentLanguage(), (newLanguage) => {
-      selectedLanguage.value = newLanguage
-      fetchLexicons() // 重新获取对应语言的词书
+    // 修正当前语言的获取逻辑
+    onMounted(() => {
+      // 确保从存储中获取正确的语言
+      const storedLanguage = uni.getStorageSync('selectedLanguage')
+      const foundLanguage = languages.find(lang => lang.name === storedLanguage)
+      if (foundLanguage) {
+        selectedLanguage.value = foundLanguage
+        currentLanguage.value = foundLanguage
+      }
+
+      initializeLexicons()
     })
 
-    // 初始化
-    initializeLexicons()
+    const handleBack = () => {
+      uni.navigateBack()
+    }
 
     return {
       activeTab, // 保留但不使用
@@ -173,13 +230,21 @@ export default defineComponent({
       toggleSearch,
       onSearch,
       searchQuery, // 添加这一行
+      handleBack,
+      currentLanguage,
+      debugInfo, // 添加调试信息到返回值
+      selectedLanguage, // 添加到返回值中
+      handleLanguageChange, // 加入到返回值中
     }
   },
 })
 </script>
 
 <template>
-  <view class="rounded p-4 shadow-sm frosted-glass">
+  <!-- 添加返回按钮组件 -->
+  <BackButton @back="handleBack" />
+
+  <view class="mt-8 rounded p-4 shadow-sm frosted-glass">
     <view class="mb-4 flex items-center justify-between">
       <text class="text-xl font-bold">
         词库
@@ -206,6 +271,46 @@ export default defineComponent({
       </view>
     </view>
   </transition>
+
+  <!-- 语言显示栏 -->
+  <view class="fixed bottom-4 right-4 z-50 flex items-center rounded-lg bg-yellow px-4 py-2">
+    <view :class="currentLanguage.icon" class="mr-2 text-lg" />
+    <text class="text-white">
+      {{ currentLanguage.displayName }}
+    </text>
+  </view>
+
+  <!-- 调试信息面板 -->
+  <!-- <view v-if="true" class="fixed left-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
+    <text class="mb-2 block text-black font-bold">
+      调试信息
+    </text>
+    <text class="mb-2 block text-black">
+      选择的语言: {{ selectedLanguage.name }}
+    </text>
+    <text class="mb-2 block text-black">
+      显示的语言: {{ currentLanguage.name }}
+    </text>
+    <text class="mb-2 block text-black">
+      词书总数: {{ debugInfo.allBooks.length }}
+    </text>
+    <text class="mb-2 block text-black">
+      筛选后词书数: {{ displayedLexicons.length }}
+    </text>
+    <view class="max-h-60 overflow-auto">
+      <view v-for="book in debugInfo.allBooks" :key="book.id" class="mb-2 border rounded p-2">
+        <text class="block text-black">
+          名称: {{ book.bookName }}
+        </text>
+        <text class="block text-black">
+          语言: {{ book.language }}
+        </text>
+        <text class="block text-black">
+          是否匹配: {{ book.language.toLowerCase() === selectedLanguage.name.toLowerCase() }}
+        </text>
+      </view>
+    </view>
+  </view> -->
 
   <!-- Tab栏 -->
   <!--
@@ -257,23 +362,4 @@ export default defineComponent({
 </route>
 
 <style scoped>
-.frosted-glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-in-out forwards;
-}
 </style>
