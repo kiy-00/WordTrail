@@ -61,8 +61,8 @@ export default defineComponent({
           yAxis: [{
             type: 'value',
             min: 0,
-            max: 300,
-            interval: 50,
+            max: 20,
+            interval: 5,
           }],
           series: [
             {
@@ -277,8 +277,8 @@ export default defineComponent({
 
   <!-- 在合适的位置添加图表容器 -->
   <div ref="chartRef" class="chart-container" style="width: 100%; height: 300px;" />
-
-  <!-- <view v-if="debugVisible" class="fixed right-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
+<!--
+  <view v-if="debugVisible" class="fixed right-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
     <view class="mb-2 flex items-center justify-between">
       <text class="font-bold">
         每周统计数据(调试)

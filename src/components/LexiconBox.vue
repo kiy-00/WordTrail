@@ -6,6 +6,10 @@ export type LexiconStatus = 'learning' | 'completed' | 'not-started'
 export default defineComponent({
   name: 'LexiconBox',
   props: {
+    id: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       required: true,
@@ -75,6 +79,9 @@ export default defineComponent({
           </view>
           <view class="text-sm text-gray-600">
             {{ description }}
+          </view>
+          <view>
+            {{ id }}
           </view>
         </view>
 

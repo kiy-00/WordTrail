@@ -24,6 +24,11 @@ interface Word {
   masteryLevel: number
 }
 
+interface WordCount {
+  wordId: string
+  count: number
+}
+
 export default defineComponent({
   name: 'MyLexicon',
 
@@ -41,14 +46,42 @@ export default defineComponent({
       currentLexicon: null as any,
       error: '',
     })
+    const wordCounts = ref<WordCount[]>([])
+    const currentLexiconName = ref('')
+
+    const updateWordMasteryLevels = () => {
+      allWords.value = allWords.value.map((word) => {
+        const wordCount = wordCounts.value.find(wc => wc.wordId === word.id)
+        const count = wordCount ? wordCount.count : 0
+        return {
+          ...word,
+          masteryLevel: count === 0 ? 0 : count === 1 ? 1 : 2,
+        }
+      })
+    }
 
     const filterWords = () => {
       const filteredWords = allWords.value.filter((word) => {
         if (!word || !word.word)
           return false
-        const matchesTab = activeTab.value === 'all' || word.masteryLevel === Number(activeTab.value)
-        const matchesSearch = searchQuery.value ? word.word.toLowerCase().includes(searchQuery.value.toLowerCase()) : true
-        return matchesTab && matchesSearch
+
+        if (activeTab.value === 'all') {
+          return true
+        }
+        else if (activeTab.value === '0') {
+          return word.masteryLevel === 0
+        }
+        else if (activeTab.value === '1') {
+          return word.masteryLevel === 1
+        }
+        else if (activeTab.value === '2') {
+          return word.masteryLevel === 2
+        }
+
+        const matchesSearch = searchQuery.value
+          ? word.word.toLowerCase().includes(searchQuery.value.toLowerCase())
+          : true
+        return matchesSearch
       })
       displayedWords.value = filteredWords.slice(0, currentLoad.value * wordsPerLoad)
     }
@@ -76,6 +109,7 @@ export default defineComponent({
         })
 
         debugInfo.value.rawResponse = response.data
+        console.error('fetchWords', response.data)
 
         if (response.statusCode === 200 && Array.isArray(response.data)) {
           // 保持原始数据结构，只添加 masteryLevel
@@ -107,9 +141,59 @@ export default defineComponent({
       }
     }
 
+    const fetchWordsCount = async () => {
+      const currentLexicon = LexiconStorage.getCurrentLexicon()
+      debugInfo.value.currentLexicon = currentLexicon
+
+      if (!currentLexicon) {
+        uni.showToast({
+          title: '请先选择词书',
+          icon: 'none',
+        })
+        return
+      }
+
+      try {
+        const token = uni.getStorageSync('token')
+        console.error('fetchWordsCount id', currentLexicon.id)
+        console.error('fetchWordsCount token', token)
+        const response = await uni.request({
+          url: `${API_BASE_URL}/api/lexicon/count`,
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${token}`,
+            lexiconId: `${currentLexicon.id}`,
+          },
+        })
+
+        if (response.statusCode === 200 && Array.isArray(response.data)) {
+          wordCounts.value = response.data
+          updateWordMasteryLevels()
+          filterWords()
+        }
+        else {
+          throw new Error(`请求失败: ${response.statusCode}`)
+        }
+      }
+      catch (error) {
+        debugInfo.value.error = `请求错误: ${error}`
+        console.error('获取词书失败:', error)
+        uni.showToast({
+          title: '获取单词列表失败',
+          icon: 'none',
+        })
+      }
+    }
+
+    const updateCurrentLexiconName = () => {
+      const lexicon = LexiconStorage.getCurrentLexicon()
+      currentLexiconName.value = lexicon?.name || '未选择词书'
+    }
+
     // 其他方法保持不变
     const initializeWords = async () => {
       await fetchWords()
+      await fetchWordsCount()
       filterWords()
     }
 
@@ -162,6 +246,7 @@ export default defineComponent({
     }
 
     initializeWords()
+    updateCurrentLexiconName()
 
     return {
       activeTab,
@@ -178,6 +263,9 @@ export default defineComponent({
       handleBack,
       handleWordClick,
       debugInfo,
+      allWords, // 添加这一行
+      wordCounts,
+      currentLexiconName,
     }
   },
 })
@@ -188,9 +276,14 @@ export default defineComponent({
 
   <view class="mt-10 rounded p-4 shadow-sm frosted-glass">
     <view class="mb-4 flex items-center justify-between">
-      <text class="text-xl font-bold">
-        当前词书
-      </text>
+      <view class="flex flex-col">
+        <text class="text-base text-gray-500">
+          当前词书
+        </text>
+        <text class="mt-1 text-xl font-bold">
+          {{ currentLexiconName }}
+        </text>
+      </view>
       <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
         <view class="i-mynaui:search text-2xl" />
       </view>
@@ -217,17 +310,20 @@ export default defineComponent({
   <view class="mt-5 flex border-b rounded frosted-glass">
     <view
       v-for="tab in [
-        { key: 'all', label: '全部' },
-        { key: '0', label: '未学习' },
-        { key: '1', label: '模糊' },
-        { key: '2', label: '熟悉' },
+        { key: 'all', label: '全部', count: allWords.length },
+        { key: '0', label: '未学习', count: allWords.filter(w => w.masteryLevel === 0).length },
+        { key: '1', label: '模糊', count: allWords.filter(w => w.masteryLevel === 1).length },
+        { key: '2', label: '熟悉', count: allWords.filter(w => w.masteryLevel === 2).length },
       ]"
       :key="tab.key"
-      class="flex-1 py-3 text-center"
+      class="relative flex-1 py-3 text-center"
       :class="{ 'border-b-2 border-yellow text-yellow': activeTab === tab.key }"
       @click="handleTabChange(tab.key as 'all' | '0' | '1' | '2')"
     >
-      {{ tab.label }}
+      <text>{{ tab.label }}</text>
+      <view class="count-badge" :class="{ 'count-badge-active': activeTab === tab.key }">
+        {{ tab.count }}
+      </view>
     </view>
   </view>
 
@@ -285,24 +381,24 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.frosted-glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
+.count-badge {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  background-color: #666;
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-in-out forwards;
+.count-badge-active {
+  background-color: #fbbf24;
 }
 </style>
 

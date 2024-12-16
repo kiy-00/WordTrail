@@ -251,14 +251,18 @@ export default defineComponent({
       }
 
       try {
+        console.error('词书ID:', lexicon.id)
         const words = await WordAPI.getLearnWords(lexicon.id) // 使用词书 id 获取单词
+        console.error('获取学习单词:', words.length)
+        const token = uni.getStorageSync('token')
+        console.error('token:', token)
         if (words && words.length > 0) {
-          uni.navigateTo({
-            url: '/pages/word/learn',
-            success: (res) => {
-              res.eventChannel.emit('acceptWords', { words })
-            },
-          })
+          // uni.navigateTo({
+          //   url: '/pages/word/learn',
+          //   success: (res) => {
+          //     res.eventChannel.emit('acceptWords', { words })
+          //   },
+          // })
         }
         else {
           uni.showToast({
@@ -269,6 +273,54 @@ export default defineComponent({
       }
       catch (error) {
         console.error('获取学习单词失败:', error)
+        uni.showToast({
+          title: '网络错误，请稍后重试',
+          icon: 'none',
+        })
+      }
+    }
+
+    const handleReviewClick = async () => {
+      if (isBanned.value) {
+        uni.showToast({
+          title: '哎呦！被封禁啦！',
+          icon: 'none',
+        })
+        return
+      }
+
+      const lexicon = LexiconStorage.getCurrentLexicon()
+      if (!lexicon) {
+        uni.showToast({
+          title: '请先选择词书',
+          icon: 'none',
+        })
+        return
+      }
+
+      try {
+        console.error('词书ID:', lexicon.id)
+        const words = await WordAPI.getReviewWords(lexicon.id) // 使用词书 id 获取单词
+        console.error('获取复习单词:', words.length)
+        const token = uni.getStorageSync('token')
+        console.error('token:', token)
+        if (words && words.length > 0) {
+          // uni.navigateTo({
+          //   url: '/pages/word/learn',
+          //   success: (res) => {
+          //     res.eventChannel.emit('acceptWords', { words })
+          //   },
+          // })
+        }
+        else {
+          uni.showToast({
+            title: '没有需要复习的单词',
+            icon: 'none',
+          })
+        }
+      }
+      catch (error) {
+        console.error('获取复习单词失败:', error)
         uni.showToast({
           title: '网络错误，请稍后重试',
           icon: 'none',
@@ -293,6 +345,7 @@ export default defineComponent({
       navigateTo,
       signInDays,
       handleLearnClick,
+      handleReviewClick,
       currentLexicon,
     }
   },
@@ -375,7 +428,7 @@ export default defineComponent({
     <button class="mr-6 w-sm frosted-glass" @click="handleLearnClick">
       Learn
     </button>
-    <button class="w-sm frosted-glass" @click="navigateTo('/pages/word/review')">
+    <button class="w-sm frosted-glass" @click="handleReviewClick">
       Review
     </button>
   </view>

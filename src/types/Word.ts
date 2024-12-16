@@ -56,10 +56,10 @@ export const WordAPI = {
     })
   },
   // 获取复习单词
-  getReviewWords: async (lexiconName: string): Promise<Word[]> => {
+  getReviewWords: async (lexiconId: string): Promise<Word[]> => {
     return new Promise((resolve, reject) => {
       uni.request({
-        url: `${API_BASE_URL}/api/studyplan/reviewwords/${lexiconName}`,
+        url: `${API_BASE_URL}/api/studyplan/reviewwords/${lexiconId}`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${uni.getStorageSync('token')}`,

@@ -282,7 +282,7 @@ export default defineComponent({
         </view>
 
         <!-- 登录方式选择按钮 - 使用黄色背景 -->
-        <view class="mb-4 flex space-x-2">
+        <!-- <view class="mb-4 flex space-x-2">
           <button
             v-for="method in loginMethods"
             :key="method"
@@ -292,7 +292,7 @@ export default defineComponent({
           >
             {{ method === 'email' ? '邮箱' : method === 'phone' ? '电话号码' : 'ID' }}
           </button>
-        </view>
+        </view> -->
 
         <!-- 输入框容器使用统一的宽度和对齐方式 -->
         <view class="w-full space-y-3">
