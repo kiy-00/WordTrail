@@ -67,7 +67,7 @@
     {
       "path": "pages/word/learn",
       "type": "page",
-      "layout": "default",
+      "layout": "home",
       "style": {}
     },
     {

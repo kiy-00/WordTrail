@@ -89,15 +89,15 @@ export default defineComponent({
     </view>
 
     <view class="flex items-center gap-4">
-      <view class="flex cursor-pointer items-center justify-center" @click="onCollect">
+      <!-- <view class="flex cursor-pointer items-center justify-center" @click="onCollect">
         <view :class="isCollected ? 'i-mynaui:star-solid text-yellow' : 'i-mynaui:star'" class="text-2xl text-white" />
-      </view>
+      </view> -->
       <view class="flex cursor-pointer items-center justify-center" @click="onMarkAsKnown">
         <view class="i-mynaui:trash text-2xl text-white" />
       </view>
-      <view class="flex cursor-pointer items-center justify-center" @click="onMoreInfo">
+      <!-- <view class="flex cursor-pointer items-center justify-center" @click="onMoreInfo">
         <view class="i-mynaui:dots text-2xl text-white" />
-      </view>
+      </view> -->
     </view>
   </view>
 </template>

@@ -10,6 +10,7 @@ export interface PartOfSpeech {
   exampleSentences: string[] | null
   gender: string[] | null
   pluralForms: string[] | null
+  definitions: string | null // 添加这个字段
 }
 
 export interface Word {

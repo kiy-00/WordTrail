@@ -1,190 +1,202 @@
-<!-- review.vue -->
 <script lang="ts">
+import type { DetailedPartOfSpeech, DetailedWord } from '@/types/DetailedWord'
+import type { Word } from '@/types/Word'
+import WordCardContent from '@/components/WordCardContent.vue'
+import WordCardsHeader from '@/components/WordCardsHeader.vue'
 import { defineComponent } from 'vue'
 
-interface ReviewData {
-  word: string
-  pronunciation: string
-  definitions: string[]
-  example: string
-  exampleTranslation: string
-}
-
 export default defineComponent({
+  components: {
+    WordCardsHeader,
+    WordCardContent,
+  },
 
   data() {
     return {
-      words: [
-        {
-          word: 'hybrid',
-          pronunciation: '/ˈhaɪbrɪd/',
-          definitions: [
-            'n. 杂交动物或植物；合成物',
-            'adj. 杂交的；合成的；混合动力的',
-          ],
-          example: 'In biology, a hybrid is an animal or a plant produced from two different species.',
-          exampleTranslation: '在生物学上，“杂种”就是由两种不同的物种繁殖出的动物或植物。',
-        },
-        {
-          word: 'adapt',
-          pronunciation: '/əˈdæpt/',
-          definitions: ['v. 适应；改编'],
-          example: 'She quickly adapted to the new environment.',
-          exampleTranslation: '她很快适应了新环境。',
-        },
-        {
-          word: 'bilingual',
-          pronunciation: '/ˌbaɪˈlɪŋɡwəl/',
-          definitions: ['adj. 双语的；能说两种语言的'],
-          example: 'Being bilingual can open up many career opportunities.',
-          exampleTranslation: '会说两种语言可以带来许多职业机会。',
-        },
-        {
-          word: 'culture',
-          pronunciation: '/ˈkʌltʃər/',
-          definitions: ['n. 文化；教养；培养'],
-          example: 'The festival is a celebration of local culture.',
-          exampleTranslation: '这个节日是对当地文化的庆祝。',
-        },
-        {
-          word: 'diverse',
-          pronunciation: '/daɪˈvɜːrs/',
-          definitions: ['adj. 多种多样的；不同的'],
-          example: 'The city is known for its diverse population.',
-          exampleTranslation: '这座城市以其多元化的人口而闻名。',
-        },
-        {
-          word: 'efficient',
-          pronunciation: '/ɪˈfɪʃnt/',
-          definitions: ['adj. 高效的；效率高的'],
-          example: 'Solar panels are an efficient source of energy.',
-          exampleTranslation: '太阳能电池板是一种高效的能源来源。',
-        },
-        {
-          word: 'fluent',
-          pronunciation: '/ˈfluːənt/',
-          definitions: ['adj. 流利的；流畅的'],
-          example: 'She is fluent in three languages.',
-          exampleTranslation: '她会流利地说三种语言。',
-        },
-        {
-          word: 'global',
-          pronunciation: '/ˈɡloʊbl/',
-          definitions: ['adj. 全球的；全局的'],
-          example: 'Climate change is a global issue that requires urgent action.',
-          exampleTranslation: '气候变化是一个需要紧急应对的全球性问题。',
-        },
-        {
-          word: 'synergy',
-          pronunciation: '/ˈsɪnərdʒi/',
-          definitions: ['n. 协同作用；增效作用'],
-          example: 'The synergy between departments led to improved productivity.',
-          exampleTranslation: '各部门之间的协同作用提高了生产力。',
-        },
-        {
-          word: 'resilient',
-          pronunciation: '/rɪˈzɪliənt/',
-          definitions: ['adj. 有弹性的；适应力强的'],
-          example: 'The material is highly resilient, able to withstand great pressure.',
-          exampleTranslation: '这种材料非常有弹性，能够承受巨大的压力。',
-        },
-        // 总共10个单词
-      ] as ReviewData[],
+      words: [] as Word[],
       currentIndex: 0,
+      showDetails: false,
+      selectedDifficulty: '',
     }
   },
+
+  onLoad(options: any) {
+    if (options.words) {
+      try {
+        const decodedWords = JSON.parse(decodeURIComponent(options.words))
+        this.words = decodedWords
+      }
+      catch (error) {
+        console.error('Failed to parse words data:', error)
+      }
+    }
+  },
+
   computed: {
-    currentWord() {
+    currentWord(): Word | undefined {
       return this.words[this.currentIndex]
     },
     currentCard() {
-      return this.currentIndex + 1 // 显示从1开始
+      return this.currentIndex + 1
     },
     totalCards() {
-      return this.words.length // 总单词数
+      return this.words.length
+    },
+    adaptedWordData(): DetailedWord {
+      const word = this.currentWord
+      if (!word) {
+        return {
+          id: '',
+          word: '',
+          language: '',
+          partOfSpeechList: [],
+          phonetics: [],
+          category: [],
+        } as DetailedWord
+      }
+
+      const adaptedPartOfSpeech: DetailedPartOfSpeech[] = word.partOfSpeechList.map(pos => ({
+        type: pos.type || '',
+        definitions: pos.definitions ? [pos.definitions] : [],
+        exampleSentences: pos.exampleSentences || [],
+        gender: pos.gender || [],
+        pluralForms: pos.pluralForms || [],
+      }))
+
+      return {
+        id: word.id || '',
+        word: word.word || '',
+        language: word.language || '',
+        category: word.category || [],
+        partOfSpeechList: adaptedPartOfSpeech,
+        phonetics: word.phonetics || [],
+        exampleSentence: '',
+        exampleTranslation: '',
+      }
     },
   },
+
   methods: {
-    onNextWord(): void {
+    handleDifficultySelect(difficulty: 'known' | 'vague' | 'forgotten') {
+      this.selectedDifficulty = difficulty
+      this.showDetails = true
+
+      // TODO: 根据难度处理复习逻辑
+      switch (difficulty) {
+        case 'known':
+          // 处理"认识"的逻辑
+          break
+        case 'vague':
+          // 处理"模糊"的逻辑
+          break
+        case 'forgotten':
+          // 处理"忘记"的逻辑
+          break
+      }
+    },
+
+    nextWord() {
       if (this.currentIndex < this.words.length - 1) {
         this.currentIndex++
+        this.showDetails = false
+        this.selectedDifficulty = ''
       }
       else {
         uni.showToast({
-          title: '您已经完成了本轮复习!',
+          title: '本轮复习完成！',
           icon: 'none',
           duration: 2000,
         })
-        this.currentIndex = 0
-        uni.navigateTo({
-          url: '/pages/home/home',
-        })
+        setTimeout(() => {
+          uni.navigateTo({ url: '/pages/home/home' })
+        }, 2000)
       }
-    },
-    onForgot(): void {
-      uni.showToast({
-        title: '记错了！',
-        icon: 'none',
-        duration: 2000,
-      })
     },
   },
 })
 </script>
 
 <template>
-  <!-- Wordcard Header -->
-  <WordCardsHeader :current-card="currentCard" :total-cards="totalCards" :word="currentWord.word" />
+  <view class="relative h-full flex flex-col">
+    <!-- Header -->
+    <WordCardsHeader
+      :current-card="currentCard"
+      :total-cards="totalCards"
+      :word="currentWord?.word || ''"
+    />
 
-  <!-- Wordcard Content -->
-  <scroll-view class="mt-10 box-border w-full flex-1 overflow-y-auto px-5" scroll-y>
-    <view class="font-verdana mb-2 text-left text-4xl font-bold">
-      {{ currentWord.word }}
-    </view>
-    <view class="mb-3 text-left text-lg text-[#809bae]">
-      {{ currentWord.pronunciation }}
-    </view>
-    <view class="font-verdana mt-5 rounded-lg bg-white/20 p-2 text-left">
-      <text class="text-xl text-[#d6e6ee]">
-        <br>
-      </text>
-    </view>
-    <view class="font-verdana mt-5 rounded-lg bg-white/20 p-2 text-left">
-      <text class="text-xl text-[#d6e6ee]">
-        <br>
-      </text>
-    </view>
-  </scroll-view>
+    <!-- Content -->
+    <scroll-view class="mt-5 box-border flex-1 px-5 pb-32" scroll-y>
+      <template v-if="currentWord">
+        <!-- Word and Pronunciation -->
+        <view class="font-verdana mb-2 text-left text-4xl font-bold">
+          {{ currentWord.word }}
+        </view>
+        <view class="mb-3 text-left text-lg text-[#809bae]">
+          {{ currentWord.phonetics?.[0]?.ipa || '' }}
+        </view>
 
-  <!-- Wordcard Footer -->
-  <view class="flex items-center justify-around py-7">
-    <!-- Known Button -->
-    <view class="flex flex-col cursor-pointer items-center" @click="onNextWord">
-      <text class="text-base text-white font-sans">
+        <!-- Masked Content -->
+        <view
+          v-if="!showDetails"
+          class="font-verdana mt-4 rounded-lg bg-white/20 p-5 text-center text-lg text-[#d6e6ee]"
+        >
+          选择难度查看详细释义
+        </view>
+
+        <!-- Details -->
+        <template v-else>
+          <WordCardContent
+            :word-data="adaptedWordData"
+            class="flex-1"
+          />
+
+          <!-- Next Word Button -->
+          <view class="mb-4 mt-6 flex justify-center">
+            <text
+              class="cursor-pointer rounded-full bg-blue-500 px-8 py-3 text-white font-semibold"
+              hover-class="opacity-80"
+              @click="nextWord"
+            >
+              下一词
+            </text>
+          </view>
+        </template>
+      </template>
+    </scroll-view>
+
+    <!-- Fixed Footer -->
+    <view class="fixed bottom-0 left-0 right-0 flex items-center justify-around p-6 shadow-lg frosted-glass">
+      <view
+        class="cursor-pointer rounded-full px-8 py-3 text-white font-semibold"
+        :class="selectedDifficulty === 'known' ? 'bg-green-600' : 'bg-green-500'"
+        hover-class="opacity-80"
+        @click="handleDifficultySelect('known')"
+      >
         认识
-      </text>
-      <view class="mt-1 h-1 w-5 rounded bg-[#4caf50]" />
-    </view>
-
-    <!-- Unfamiliar Button -->
-    <view class="flex flex-col cursor-pointer items-center" @click="onNextWord">
-      <text class="text-base text-white font-sans">
+      </view>
+      <view
+        class="cursor-pointer rounded-full px-8 py-3 text-white font-semibold"
+        :class="selectedDifficulty === 'vague' ? 'bg-yellow-600' : 'bg-yellow-500'"
+        hover-class="opacity-80"
+        @click="handleDifficultySelect('vague')"
+      >
         模糊
-      </text>
-      <view class="mt-1 h-1 w-5 rounded bg-[#d2a83b]" />
-    </view>
-
-    <!-- Forgotten Button -->
-    <view class="flex flex-col cursor-pointer items-center" @click="onNextWord">
-      <text class="text-base text-white font-sans">
-        忘记了
-      </text>
-      <view class="mt-1 h-1 w-5 rounded bg-[#f44336]" />
+      </view>
+      <view
+        class="cursor-pointer rounded-full px-8 py-3 text-white font-semibold"
+        :class="selectedDifficulty === 'forgotten' ? 'bg-red-600' : 'bg-red-500'"
+        hover-class="opacity-80"
+        @click="handleDifficultySelect('forgotten')"
+      >
+        忘记
+      </view>
     </view>
   </view>
 </template>
 
 <style scoped>
+
 </style>
 
 <route lang="json">

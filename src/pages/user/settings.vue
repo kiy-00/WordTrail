@@ -13,20 +13,20 @@ export default defineComponent({
         text: '外观设置',
         value: 'appearance',
       },
-      {
-        key: 2,
-        url: '/pages/user/mycontent',
-        icon: 'i-mynaui:config-vertical',
-        text: '学习设置',
-        value: 'learning',
-      },
-      {
-        key: 3,
-        url: '/pages/user/settings',
-        icon: 'i-mynaui:tool',
-        text: '更多设置',
-        value: 'more',
-      },
+      // {
+      //   key: 2,
+      //   url: '/pages/user/mycontent',
+      //   icon: 'i-mynaui:config-vertical',
+      //   text: '学习设置',
+      //   value: 'learning',
+      // },
+      // {
+      //   key: 3,
+      //   url: '/pages/user/settings',
+      //   icon: 'i-mynaui:tool',
+      //   text: '更多设置',
+      //   value: 'more',
+      // },
     ])
     // 返回逻辑
     const handleBack = () => {
@@ -54,20 +54,19 @@ export default defineComponent({
         username
       </text>
     </view>
-    <view class="absolute right-4 top-4 z-20 flex items-center">
+    <!-- <view class="absolute right-4 top-4 z-20 flex items-center">
       <view class="i-mynaui:envelope mr-1 text-lg" />
-      <!-- 小红圈包裹数字 -->
+
       <view class="absolute h-4 w-4 flex items-center justify-center rounded-full bg-red-500 -right-2 -top-1">
         <text class="text-xs font-bold">
           3
         </text>
       </view>
-    </view>
+    </view> -->
 
     <!-- Links -->
 
     <view class="my-[15%] w-full flex flex-col rounded-md">
-      <!-- 外观设置 -->
       <BoxItem
         v-for="(item, index) in settingsItems"
         :key="index"

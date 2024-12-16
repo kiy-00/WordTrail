@@ -1,137 +1,172 @@
 <script lang="ts">
+import type { DetailedPartOfSpeech, DetailedWord } from '@/types/DetailedWord'
 import type { Word } from '@/types/Word'
+import WordCardContent from '@/components/WordCardContent.vue'
+import WordCardsHeader from '@/components/WordCardsHeader.vue'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  components: {
+    WordCardsHeader,
+    WordCardContent,
+  },
+
   data() {
     return {
       words: [] as Word[],
       currentIndex: 0,
-      showContent: false,
-      waitingTime: 10,
-      timer: null as number | null,
     }
   },
 
-  // 修改 onLoad 钩子的实现，正确处理类型
-  onLoad() {
-    const pages = getCurrentPages()
-    const currentPage = pages[pages.length - 1] as any // 获取当前页面
-    if (currentPage.$getAppWebview) {
-      const eventChannel = currentPage.$getAppWebview().eventChannel
-      // 监听acceptWords事件，获取上一页面传送到当前页面的数据
-      eventChannel.on('acceptWords', (data: { words: Word[] }) => {
-        this.words = data.words
-        this.startWaiting()
-      })
+  onLoad(options: any) {
+    console.error('onLoad options:', options)
+    if (options.words) {
+      try {
+        const decodedWords = JSON.parse(decodeURIComponent(options.words))
+        console.error('Decoded words:', decodedWords)
+        this.words = decodedWords
+      }
+      catch (error) {
+        console.error('Failed to parse words data:', error)
+      }
     }
   },
 
   computed: {
     currentWord(): Word | undefined {
-      return this.words[this.currentIndex]
+      const word = this.words[this.currentIndex]
+      console.error('Current word:', word)
+      return word
     },
     currentCard() {
-      return this.currentIndex + 1 // 显示从1开始
+      return this.currentIndex + 1
     },
     totalCards() {
-      return this.words.length // 总单词数
+      return this.words.length
+    },
+    adaptedWordData(): DetailedWord {
+      const word = this.currentWord
+      console.error('Adapting word:', word)
+
+      if (!word) {
+        console.error('No current word, returning empty DetailedWord')
+        return {
+          id: '',
+          word: '',
+          language: '',
+          partOfSpeechList: [],
+          phonetics: [],
+          category: [],
+        } as DetailedWord
+      }
+
+      const adaptedPartOfSpeech: DetailedPartOfSpeech[] = word.partOfSpeechList.map(pos => ({
+        type: pos.type || '',
+        definitions: pos.definitions ? [pos.definitions] : [],
+        exampleSentences: pos.exampleSentences || [],
+        gender: pos.gender || [],
+        pluralForms: pos.pluralForms || [],
+      }))
+
+      return {
+        id: word.id || '',
+        word: word.word || '',
+        language: word.language || '',
+        category: word.category || [],
+        partOfSpeechList: adaptedPartOfSpeech,
+        phonetics: word.phonetics || [],
+        exampleSentence: '',
+        exampleTranslation: '',
+      }
     },
   },
 
-  beforeUnmount() {
-    if (this.timer) {
-      clearInterval(this.timer)
-      this.timer = null
-    }
-  },
   methods: {
-    startWaiting() {
-      this.showContent = false
-      this.waitingTime = 10
-      this.timer = setInterval(() => {
-        if (this.waitingTime > 0) {
-          this.waitingTime--
-        }
-        else {
-          this.showContent = true
-          if (this.timer) {
-            clearInterval(this.timer)
-            this.timer = null
-          }
-        }
-      }, 1000)
-    },
-
-    onNextWord(): void {
+    nextWord() {
       if (this.currentIndex < this.words.length - 1) {
         this.currentIndex++
-        this.startWaiting() // 重新开始等待
       }
       else {
+        // 所有单词学习完成，返回首页
         uni.showToast({
-          title: '您已经完成了本轮学习!',
+          title: '本轮学习完成！',
           icon: 'none',
           duration: 2000,
         })
-        this.currentIndex = 0
-        uni.navigateTo({
-          url: '/pages/home/home',
-        })
+        setTimeout(() => {
+          uni.navigateBack({
+            delta: 1,
+          })
+        }, 2000)
       }
     },
-    onForgot(): void {
-      uni.showToast({
-        title: '记错了！',
-        icon: 'none',
-        duration: 2000,
-      })
+
+    handleKnow() {
+      if (this.currentWord) {
+        // TODO: 处理"认识"的业务逻辑
+        this.nextWord()
+      }
+    },
+
+    handleDontKnow() {
+      if (this.currentWord) {
+        // TODO: 处理"不认识"的业务逻辑
+        this.nextWord()
+      }
     },
   },
 })
 </script>
 
 <template>
-  <!-- Wordcard Header -->
-  <WordCardsHeader
-    :current-card="currentCard"
-    :total-cards="totalCards"
-    :word="currentWord?.word || ''"
-  />
-
-  <!-- 根据showContent状态显示等待组件或单词内容 -->
-  <template v-if="!showContent">
-    <WaitingCard :remaining-time="waitingTime" />
-  </template>
-  <template v-else>
-    <WordCardContent v-if="currentWord" :word-data="currentWord" />
-  </template>
-
-  <!-- Wordcard Footer -->
-  <view class="flex items-center justify-around py-7">
-    <!-- Next Word Button -->
-    <view class="flex flex-col cursor-pointer items-center" @click="onNextWord">
-      <text class="text-base font-sans">
-        下一词
-      </text>
-      <view class="mt-1 h-1 w-5 rounded bg-[#4caf50]" />
+  <view class="h-full flex flex-col">
+    <!-- Debug Info -->
+    <view v-if="words.length === 0" class="p-4 text-red-500">
+      No words loaded
     </view>
 
-    <!-- Forgot Button -->
-    <view class="flex flex-col cursor-pointer items-center" @click="onForgot">
-      <text class="text-base font-sans">
-        记错了
-      </text>
-      <view class="mt-1 h-1 w-5 rounded bg-[#f44336]" />
+    <!-- Header -->
+    <WordCardsHeader
+      :current-card="currentCard"
+      :total-cards="totalCards"
+      :word="currentWord?.word || ''"
+    />
+
+    <!-- Content -->
+    <WordCardContent
+      v-if="currentWord"
+      :word-data="adaptedWordData"
+      class="flex-1"
+    />
+
+    <!-- Footer Buttons -->
+    <view class="fixed bottom-0 left-0 right-0 flex items-center justify-around p-6 shadow-lg frosted-glass">
+      <view
+        class="cursor-pointer rounded-full bg-red-500 px-8 py-3 text-white font-semibold"
+        hover-class="opacity-80"
+        @click="handleDontKnow"
+      >
+        不认识
+      </view>
+      <view
+        class="cursor-pointer rounded-full bg-green-500 px-8 py-3 text-white font-semibold"
+        hover-class="opacity-80"
+        @click="handleKnow"
+      >
+        认识
+      </view>
     </view>
   </view>
 </template>
 
 <style scoped>
+.cursor-pointer {
+  cursor: pointer;
+}
 </style>
 
 <route lang="json">
-  {
-    "layout": "default"
-  }
+{
+  "layout": "home"
+}
 </route>

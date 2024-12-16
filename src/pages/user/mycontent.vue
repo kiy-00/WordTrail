@@ -76,16 +76,15 @@ export default defineComponent({
         username
       </text>
     </view>
-    <view class="absolute right-4 top-4 z-20 flex items-center">
+    <!-- <view class="absolute right-4 top-4 z-20 flex items-center">
       <view class="i-mynaui:envelope mr-1 text-lg" />
 
-      <!-- 红圈 -->
       <view class="absolute left-4 top--1 h-4 w-4 flex items-center justify-center rounded-full bg-red-500">
         <text class="text-xs font-bold">
           3
         </text>
       </view>
-    </view>
+    </view> -->
   </view>
 
   <!-- Links -->

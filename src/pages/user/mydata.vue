@@ -1,6 +1,7 @@
 <script lang="ts">
-import type { EChartOption } from 'echarts'
+import type { EChartOption } from 'echarts/types/dist/echarts' // 修改导入
 import { API_BASE_URL } from '@/config/api'
+import { LexiconStorage } from '@/utils/lexiconStorage'
 import * as echarts from 'echarts'
 import { defineComponent, onMounted, ref, watch } from 'vue'
 
@@ -47,7 +48,7 @@ export default defineComponent({
     // 定义更新图表的函数，提前放在调用之前
     const updateChart = () => {
       if (chartInstance) {
-        const option: EChartOption = {
+        const option: EChartOption = { // 使用 EChartOption 类型
           tooltip: {
             trigger: 'axis',
           },
@@ -133,6 +134,13 @@ export default defineComponent({
       }
     }
 
+    const currentLexiconName = ref('')
+
+    const updateCurrentLexiconName = () => {
+      const lexicon = LexiconStorage.getCurrentLexicon()
+      currentLexiconName.value = lexicon?.name || '未选择词书'
+    }
+
     onMounted(() => {
       checkDays.value = 100
       todayLearned.value = 100
@@ -142,6 +150,7 @@ export default defineComponent({
       fetchWeeklyStats()
       // 初始化图表
       initChart()
+      updateCurrentLexiconName()
     })
 
     // 返回逻辑
@@ -178,6 +187,7 @@ export default defineComponent({
       weeklyStats,
       debugVisible,
       chartRef,
+      currentLexiconName,
     }
   },
 })
@@ -194,7 +204,7 @@ export default defineComponent({
   </view>
   <view class="body-head mt-5 flex items-center justify-between">
     <text class="ml-2 font-bold">
-      正在学习
+      {{ currentLexiconName }}
     </text>
     <button
       class="action-button mr-0 h-8 rounded-lg bg-yellow p-2 text-align-center text-sm font-bold"
@@ -229,9 +239,9 @@ export default defineComponent({
         </text>
       </view>
     </view> -->
-  <text class="my-data-text absolute mt-12 text-left -ml-40">
+  <!-- <text class="my-data-text absolute mt-12 text-left -ml-40">
     我的数据
-  </text>
+  </text> -->
 
   <!-- <view class="box relative my-4 ml-1 mt-22 flex flex-col rounded-md p-5 frosted-glass">
       <text class="box-text absolute left-2 top-2">
@@ -251,7 +261,7 @@ export default defineComponent({
       </view>
     </view> -->
 
-  <view class="box relative my-4 ml-1 flex flex-col rounded-md p-5 frosted-glass">
+  <!-- <view class="box relative my-4 ml-1 flex flex-col rounded-md p-5 frosted-glass">
     <view class="flex items-center justify-between">
       <text class="box-text absolute left-2 top-2">
         日历
@@ -273,12 +283,12 @@ export default defineComponent({
         class="custom-calendar-date flex-grow text-center"
       />
     </view>
-  </view>
+  </view> -->
 
   <!-- 在合适的位置添加图表容器 -->
   <div ref="chartRef" class="chart-container" style="width: 100%; height: 300px;" />
-<!--
-  <view v-if="debugVisible" class="fixed right-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
+
+  <!-- <view v-if="debugVisible" class="fixed right-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
     <view class="mb-2 flex items-center justify-between">
       <text class="font-bold">
         每周统计数据(调试)
