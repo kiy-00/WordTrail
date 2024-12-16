@@ -3,13 +3,25 @@ import { API_BASE_URL } from '@/config/api'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, ref } from 'vue'
 
-// 前端展示用的类型
+interface Phonetic {
+  ipa: string
+  audio: string
+}
+
+interface PartOfSpeech {
+  type: string
+  definitions: string
+  gender?: string | null
+}
+
+// 更新后的Word接口
 interface Word {
   id: string
   word: string
-  phonetic: string
-  translation: string
-  masteryLevel: number // 将类型从 '0 | 1 | 2' 修改为 'number'
+  language: string
+  partOfSpeechList: PartOfSpeech[]
+  phonetics: Phonetic[]
+  masteryLevel: number
 }
 
 export default defineComponent({
@@ -30,11 +42,10 @@ export default defineComponent({
       error: '',
     })
 
-    // 根据当前标签筛选单词
     const filterWords = () => {
       const filteredWords = allWords.value.filter((word) => {
         if (!word || !word.word)
-          return false // 添加空值检查
+          return false
         const matchesTab = activeTab.value === 'all' || word.masteryLevel === Number(activeTab.value)
         const matchesSearch = searchQuery.value ? word.word.toLowerCase().includes(searchQuery.value.toLowerCase()) : true
         return matchesTab && matchesSearch
@@ -42,7 +53,6 @@ export default defineComponent({
       displayedWords.value = filteredWords.slice(0, currentLoad.value * wordsPerLoad)
     }
 
-    // 修改获取词书单词的函数
     const fetchWords = async () => {
       const currentLexicon = LexiconStorage.getCurrentLexicon()
       debugInfo.value.currentLexicon = currentLexicon
@@ -68,14 +78,11 @@ export default defineComponent({
         debugInfo.value.rawResponse = response.data
 
         if (response.statusCode === 200 && Array.isArray(response.data)) {
-          // 处理词书数组
+          // 保持原始数据结构，只添加 masteryLevel
           const processedWords: Word[] = response.data.map(wordData => ({
-            id: wordData.id || '',
-            word: wordData.word || '',
-            phonetic: wordData.phonetics?.[0]?.ipa || '',
-            translation: wordData.partOfSpeechList?.[0]?.type || '未知',
-            masteryLevel: 0, // 确保这里赋值的类型是 number
-          })).filter(word => word.word) // 过滤掉没有单词的数据
+            ...wordData,
+            masteryLevel: 0, // 默认未学习状态
+          })).filter(word => word.word)
 
           if (processedWords.length > 0) {
             allWords.value = processedWords
@@ -92,7 +99,7 @@ export default defineComponent({
       }
       catch (error) {
         debugInfo.value.error = `请求错误: ${error}`
-        console.error('获取词书失败:', error) // 添加错误日志
+        console.error('获取词书失败:', error)
         uni.showToast({
           title: '获取单词列表失败',
           icon: 'none',
@@ -100,27 +107,24 @@ export default defineComponent({
       }
     }
 
-    // 初始化加载
+    // 其他方法保持不变
     const initializeWords = async () => {
       await fetchWords()
       filterWords()
     }
 
-    // 切换标签
     const handleTabChange = (tab: 'all' | '0' | '1' | '2') => {
       activeTab.value = tab
       currentLoad.value = 1
       filterWords()
     }
 
-    // 搜索功能
     const handleSearch = (event: UniHelper.InputOnInputEvent) => {
       searchQuery.value = event.detail.value
       currentLoad.value = 1
       filterWords()
     }
 
-    // 下拉刷新
     const onRefresh = async () => {
       isRefreshing.value = true
       await fetchWords()
@@ -128,13 +132,11 @@ export default defineComponent({
       isRefreshing.value = false
     }
 
-    // 加载更多
     const onLoadMore = async () => {
       currentLoad.value++
       filterWords()
     }
 
-    // 切换搜索框显示
     const toggleSearch = () => {
       isSearchVisible.value = !isSearchVisible.value
       if (!isSearchVisible.value)
@@ -142,17 +144,14 @@ export default defineComponent({
     }
 
     const onSearch = () => {
-      if (searchQuery.value.trim()) {
+      if (searchQuery.value.trim())
         filterWords()
-      }
     }
 
-    // 添加返回逻辑
     const handleBack = () => {
       uni.navigateBack()
     }
 
-    // 点击单词显示详情
     const handleWordClick = (word: Word) => {
       uni.navigateTo({
         url: `/pages/word/detail?id=${word.id}`,
@@ -162,7 +161,6 @@ export default defineComponent({
       })
     }
 
-    // 初始化
     initializeWords()
 
     return {
@@ -186,10 +184,8 @@ export default defineComponent({
 </script>
 
 <template>
-  <!-- 添加返回按钮 -->
   <BackButton @back="handleBack" />
 
-  <!-- 顶部区域 -->
   <view class="mt-10 rounded p-4 shadow-sm frosted-glass">
     <view class="mb-4 flex items-center justify-between">
       <text class="text-xl font-bold">
@@ -201,7 +197,6 @@ export default defineComponent({
     </view>
   </view>
 
-  <!-- 搜索栏 -->
   <transition name="fade">
     <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-16 z-50 px-4 py-2 shadow-md frosted-glass">
       <view class="flex items-center">
@@ -219,7 +214,6 @@ export default defineComponent({
     </view>
   </transition>
 
-  <!-- Tab栏 -->
   <view class="mt-5 flex border-b rounded frosted-glass">
     <view
       v-for="tab in [
@@ -237,7 +231,6 @@ export default defineComponent({
     </view>
   </view>
 
-  <!-- 单词列表 -->
   <scroll-view
     :scroll-y="true"
     refresher-enabled
@@ -250,16 +243,13 @@ export default defineComponent({
     <view class="p-4">
       <template v-for="word in displayedWords" :key="word.id">
         <WordBox
-          :word="word.word"
-          :phonetic="word.phonetic"
-          :translation="word.translation"
+          :word-data="word"
           @click="handleWordClick(word)"
         />
       </template>
     </view>
   </scroll-view>
 
-  <!-- 调试信息面板 -->
   <!-- <view class="fixed left-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
     <text class="mb-2 block font-bold">
       调试信息
@@ -285,7 +275,9 @@ export default defineComponent({
       </text>
       <view class="mt-1 max-h-40 overflow-auto">
         <view v-for="word in displayedWords" :key="word.id" class="mb-1 text-xs">
-          {{ word.word }} [{{ word.phonetic }}] - {{ word.translation }}
+          {{ word.word }}
+          [{{ word.phonetics?.[0]?.ipa || '' }}] -
+          {{ word.partOfSpeechList?.[0]?.type || '未知' }}
         </view>
       </view>
     </view>
