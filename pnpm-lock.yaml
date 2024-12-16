@@ -53,6 +53,9 @@ importers:
       '@vueuse/core':
         specifier: ^11.2.0
         version: 11.2.0(vue@3.4.38(typescript@5.5.4))
+      echarts:
+        specifier: ^5.5.1
+        version: 5.5.1
       vue-i18n:
         specifier: ^9.14.1
         version: 9.14.1(vue@3.4.38(typescript@5.5.4))
@@ -99,6 +102,9 @@ importers:
       '@mini-types/alipay':
         specifier: ^3.0.14
         version: 3.0.14
+      '@types/echarts':
+        specifier: ^4.9.22
+        version: 4.9.22
       '@types/node':
         specifier: ^22.9.0
         version: 22.9.0
@@ -2028,6 +2034,9 @@ packages:
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
 
+  '@types/echarts@4.9.22':
+    resolution: {integrity: sha512-7Fo6XdWpoi8jxkwP7BARUOM7riq8bMhmsCtSG8gzUcJmFhLo387tihoBYS/y5j7jl3PENT5RxeWZdN9RiwO7HQ==}
+
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
 
@@ -2075,6 +2084,9 @@ packages:
 
   '@types/yargs@16.0.9':
     resolution: {integrity: sha512-tHhzvkFXZQeTECenFoRljLBYPZJ7jAVxqqtEI0qTLOmuultnFp4I9yKE17vTuhf7BkhCu7I4XuemPgikDVuYqA==}
+
+  '@types/zrender@4.0.6':
+    resolution: {integrity: sha512-1jZ9bJn2BsfmYFPBHtl5o3uV+ILejAtGrDcYSpT4qaVKEI/0YY+arw3XHU04Ebd8Nca3SQ7uNcLaqiL+tTFVMg==}
 
   '@typescript-eslint/eslint-plugin@8.13.0':
     resolution: {integrity: sha512-nQtBLiZYMUPkclSeC3id+x4uVd1SGtHuElTxL++SfP47jR0zfkZBJHc+gL4qPsgTuypz0k8Y2GheaDYn6Gy3rg==}
@@ -3090,6 +3102,9 @@ packages:
 
   duplexer@0.1.2:
     resolution: {integrity: sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg==}
+
+  echarts@5.5.1:
+    resolution: {integrity: sha512-Fce8upazaAXUVUVsjgV6mBnGuqgO+JNDlcgF79Dksy4+wgGpQB2lmYoO4TSweFg/mZITdpGHomw/cNBJZj1icA==}
 
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
@@ -5342,6 +5357,9 @@ packages:
     peerDependencies:
       typescript: '>=4.2.0'
 
+  tslib@2.3.0:
+    resolution: {integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -5836,6 +5854,9 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  zrender@5.6.0:
+    resolution: {integrity: sha512-uzgraf4njmmHAbEUxMJ8Oxg+P3fT04O+9p7gY+wJRVxo8Ge+KmYv0WJev945EH4wFuc4OY2NLXz46FZrWS9xJg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -8333,6 +8354,10 @@ snapshots:
     dependencies:
       '@types/ms': 0.7.34
 
+  '@types/echarts@4.9.22':
+    dependencies:
+      '@types/zrender': 4.0.6
+
   '@types/estree@1.0.6': {}
 
   '@types/graceful-fs@4.1.9':
@@ -8376,6 +8401,8 @@ snapshots:
   '@types/yargs@16.0.9':
     dependencies:
       '@types/yargs-parser': 21.0.3
+
+  '@types/zrender@4.0.6': {}
 
   '@typescript-eslint/eslint-plugin@8.13.0(@typescript-eslint/parser@8.13.0(eslint@9.14.0(jiti@1.21.6))(typescript@5.5.4))(eslint@9.14.0(jiti@1.21.6))(typescript@5.5.4)':
     dependencies:
@@ -9578,6 +9605,11 @@ snapshots:
   dotenv@16.4.5: {}
 
   duplexer@0.1.2: {}
+
+  echarts@5.5.1:
+    dependencies:
+      tslib: 2.3.0
+      zrender: 5.6.0
 
   ee-first@1.1.1: {}
 
@@ -12336,6 +12368,8 @@ snapshots:
     dependencies:
       typescript: 5.5.4
 
+  tslib@2.3.0: {}
+
   tslib@2.8.1: {}
 
   tsx@4.19.2:
@@ -12823,5 +12857,9 @@ snapshots:
       yargs-parser: 21.1.1
 
   yocto-queue@0.1.0: {}
+
+  zrender@5.6.0:
+    dependencies:
+      tslib: 2.3.0
 
   zwitch@2.0.4: {}
