@@ -60,11 +60,6 @@
       "style": {}
     },
     {
-      "path": "pages/word/detail",
-      "type": "page",
-      "style": {}
-    },
-    {
       "path": "pages/word/learn",
       "type": "page",
       "layout": "home",
@@ -74,11 +69,6 @@
       "path": "pages/word/review",
       "type": "page",
       "layout": "default",
-      "style": {}
-    },
-    {
-      "path": "pages/word/wordcards",
-      "type": "page",
       "style": {}
     }
   ],
