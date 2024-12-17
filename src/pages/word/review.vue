@@ -3,6 +3,8 @@ import type { DetailedPartOfSpeech, DetailedWord } from '@/types/DetailedWord'
 import type { Word } from '@/types/Word'
 import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
+import { API_BASE_URL } from '@/config/api'
+import { LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
@@ -77,21 +79,67 @@ export default defineComponent({
   },
 
   methods: {
-    handleDifficultySelect(difficulty: 'known' | 'vague' | 'forgotten') {
+    async resetReviewCount(wordId: string) {
+      try {
+        const token = uni.getStorageSync('token')
+        const currentLexicon = LexiconStorage.getCurrentLexicon()
+        if (!currentLexicon) {
+          console.error('No lexicon selected')
+          return
+        }
+
+        await uni.request({
+          url: `${API_BASE_URL}/api/studyplan/resetcount/${currentLexicon.id}/${wordId}`,
+          method: 'PUT',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      }
+      catch (error) {
+        console.error('Reset review count failed:', error)
+      }
+    },
+
+    async decrementReviewCount(wordId: string) {
+      try {
+        const token = uni.getStorageSync('token')
+        const currentLexicon = LexiconStorage.getCurrentLexicon()
+        if (!currentLexicon) {
+          console.error('No lexicon selected')
+          return
+        }
+
+        await uni.request({
+          url: `${API_BASE_URL}/api/studyplan/decrementcount/${currentLexicon.id}/${wordId}`,
+          method: 'PUT',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      }
+      catch (error) {
+        console.error('Decrement review count failed:', error)
+      }
+    },
+
+    async handleDifficultySelect(difficulty: 'known' | 'vague' | 'forgotten') {
       this.selectedDifficulty = difficulty
       this.showDetails = true
 
-      // TODO: 根据难度处理复习逻辑
-      switch (difficulty) {
-        case 'known':
-          // 处理"认识"的逻辑
-          break
-        case 'vague':
-          // 处理"模糊"的逻辑
-          break
-        case 'forgotten':
-          // 处理"忘记"的逻辑
-          break
+      if (this.currentWord) {
+        // 根据难度调用不同的 API
+        switch (difficulty) {
+          case 'forgotten':
+            await this.resetReviewCount(this.currentWord.id)
+            break
+          case 'vague':
+            await this.decrementReviewCount(this.currentWord.id)
+            break
+          case 'known':
+            // 认识不需要调用 API
+            break
+        }
       }
     },
 

@@ -56,6 +56,9 @@ importers:
       echarts:
         specifier: ^5.5.1
         version: 5.5.1
+      uniapp-echarts:
+        specifier: ^1.0.2
+        version: 1.0.2
       vue-i18n:
         specifier: ^9.14.1
         version: 9.14.1(vue@3.4.38(typescript@5.5.4))
@@ -5412,6 +5415,10 @@ packages:
 
   undici-types@6.19.8:
     resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
+
+  uniapp-echarts@1.0.2:
+    resolution: {integrity: sha512-z8b32orT0xslOTnT4JrfPZDdTkrFBmdfycPAux1DhCyvhjdgtSxhmVmxqFh0/bWzH+cuuVgAFLoxeDe+M8p8ag==}
+    engines: {HBuilderX: ^3.2.13}
 
   unicode-canonical-property-names-ecmascript@2.0.1:
     resolution: {integrity: sha512-dA8WbNeb2a6oQzAQ55YlT5vQAWGV9WXOsi3SskE3bcCdM0P4SDd+24zS/OCacdRq5BkdsRj9q3Pg6YyQoxIGqg==}
@@ -12415,6 +12422,8 @@ snapshots:
       - supports-color
 
   undici-types@6.19.8: {}
+
+  uniapp-echarts@1.0.2: {}
 
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 

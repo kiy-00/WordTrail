@@ -60,13 +60,14 @@ export const WordAPI = {
   getReviewWords: async (lexiconId: string): Promise<Word[]> => {
     return new Promise((resolve, reject) => {
       uni.request({
-        url: `${API_BASE_URL}/api/studyplan/reviewwords/${lexiconId}`,
+        // 修改 URL 路径，使用词书名称而不是ID
+        url: `${API_BASE_URL}/api/studyplan/reviewwords/${encodeURIComponent(lexiconId)}`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${uni.getStorageSync('token')}`,
         },
         success: (res) => {
-          if (res.statusCode === 200) {
+          if (res.statusCode === 200 && Array.isArray(res.data)) {
             resolve(res.data as Word[])
           }
           else {

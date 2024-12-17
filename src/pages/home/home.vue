@@ -1,5 +1,6 @@
 <script lang="ts">
 import TabBar from '@/components/TabBar.vue' // 添加TabBar组件导入
+import { WordAPI } from '@/types/Word' // 添加回API导入
 // 添加API基础URL导入
 import { type CurrentLexicon, LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, onMounted, ref, watch } from 'vue'
@@ -231,60 +232,16 @@ export default defineComponent({
       })
     }
 
-    // 添加测试数据
+    /* 注释掉测试数据
     const testWords = [
       {
         id: '1',
         word: 'maison',
-        language: 'fr',
-        partOfSpeechList: [
-          {
-            type: 'n.f.',
-            definitions: '房子；家',
-          },
-        ],
-        phonetics: [
-          {
-            ipa: '/mɛ.zɔ̃/',
-            audio: 'audio',
-          },
-        ],
+        // ...其他测试数据
       },
-      {
-        id: '2',
-        word: 'ami',
-        language: 'fr',
-        partOfSpeechList: [
-          {
-            type: 'n.m.',
-            definitions: '朋友',
-          },
-        ],
-        phonetics: [
-          {
-            ipa: '/a.mi/',
-            audio: 'audio',
-          },
-        ],
-      },
-      {
-        id: '3',
-        word: 'chat',
-        language: 'fr',
-        partOfSpeechList: [
-          {
-            type: 'n.m.',
-            definitions: '猫',
-          },
-        ],
-        phonetics: [
-          {
-            ipa: '/ʃa/',
-            audio: 'audio',
-          },
-        ],
-      },
+      // ...其他测试单词
     ]
+    */
 
     const handleLearnClick = async () => {
       if (isBanned.value) {
@@ -304,13 +261,6 @@ export default defineComponent({
         return
       }
 
-      // 使用测试数据
-      // 使用测试数据
-      uni.navigateTo({
-        url: `/pages/word/learn?words=${encodeURIComponent(JSON.stringify(testWords))}`,
-      })
-
-      /* 注释掉原有的 API 调用代码
       try {
         console.error('词书ID:', lexicon.id)
         const words = await WordAPI.getLearnWords(lexicon.id)
@@ -320,10 +270,7 @@ export default defineComponent({
         console.error('token:', token)
         if (words && words.length > 0) {
           uni.navigateTo({
-            url: '/pages/word/learn',
-            success: (res) => {
-              res.eventChannel.emit('acceptWords', { words })
-            },
+            url: `/pages/word/learn?words=${encodeURIComponent(JSON.stringify(words))}`,
           })
         }
         else {
@@ -340,7 +287,6 @@ export default defineComponent({
           icon: 'none',
         })
       }
-      */
     }
 
     const handleReviewClick = async () => {
@@ -361,13 +307,6 @@ export default defineComponent({
         return
       }
 
-      // 使用测试数据
-      // 使用测试数据
-      uni.navigateTo({
-        url: `/pages/word/review?words=${encodeURIComponent(JSON.stringify(testWords))}`,
-      })
-
-      /* 注释掉原有的 API 调用代码
       try {
         console.error('词书ID:', lexicon.id)
         const words = await WordAPI.getReviewWords(lexicon.id)
@@ -376,10 +315,7 @@ export default defineComponent({
         console.error('token:', token)
         if (words && words.length > 0) {
           uni.navigateTo({
-            url: '/pages/word/learn',
-            success: (res) => {
-              res.eventChannel.emit('acceptWords', { words })
-            },
+            url: `/pages/word/review?words=${encodeURIComponent(JSON.stringify(words))}`,
           })
         }
         else {
@@ -396,7 +332,6 @@ export default defineComponent({
           icon: 'none',
         })
       }
-      */
     }
 
     // 添加监听词书变化的函数
