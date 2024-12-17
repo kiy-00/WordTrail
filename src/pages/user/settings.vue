@@ -1,6 +1,6 @@
 <script lang="ts">
 import { API_BASE_URL } from '@/config/api'
-import { defineComponent, ref } from 'vue'
+import { defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
   name: 'Settings',
@@ -76,10 +76,53 @@ export default defineComponent({
       }
     }
 
+    const clearLocalStorage = () => {
+      uni.showModal({
+        title: '确认清除',
+        content: '这将清除所有本地数据并重新登录，确定继续吗？',
+        success: (res) => {
+          if (res.confirm) {
+            // 清除所有本地存储
+            uni.clearStorageSync()
+
+            uni.showToast({
+              title: '清除成功',
+              icon: 'success',
+              duration: 1500,
+            })
+
+            // 延迟跳转到登录页
+            setTimeout(() => {
+              uni.reLaunch({
+                url: '/pages/user/login',
+              })
+            }, 1500)
+          }
+        },
+      })
+    }
+
+    // 添加用户名响应式引用
+    const username = ref('')
+
+    // 获取用户信息
+    const loadUserInfo = () => {
+      const userInfo = uni.getStorageSync('userInfo')
+      if (userInfo) {
+        username.value = userInfo.username || '未知用户'
+      }
+    }
+
+    onMounted(() => {
+      loadUserInfo()
+    })
+
     return {
       settingsItems,
       handleBack,
       handleLogout,
+      clearLocalStorage,
+      username,
     }
   },
 
@@ -94,7 +137,7 @@ export default defineComponent({
     <view class="mt-12 flex flex-col items-center">
       <image class="h-24 w-24 rounded-full" src="@/static/avatar/avatar.png" alt="User Avatar" />
       <text class="mt-2 text-2xl">
-        username
+        {{ username }}
       </text>
     </view>
     <!-- <view class="absolute right-4 top-4 z-20 flex items-center">
@@ -119,6 +162,16 @@ export default defineComponent({
         :value="item.value"
       />
     </view>
+  </view>
+
+  <!-- 在登出按钮上方添加清除缓存按钮 -->
+  <view class="fixed bottom-24 left-0 right-0 mb-5 px-2">
+    <button
+      class="rounded-lg bg-yellow py-3 text-white font-bold"
+      @click="clearLocalStorage"
+    >
+      清除缓存
+    </button>
   </view>
 
   <!-- 登出按钮 -->

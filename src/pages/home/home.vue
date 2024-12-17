@@ -24,6 +24,7 @@ export default defineComponent({
   },
   setup() {
     const languages = ref([
+      { name: 'unknown', icon: 'i-circle-flags:unknown', displayName: '未知', emoji: '❓' },
       { name: 'en', icon: 'i-circle-flags:us', displayName: '英语', emoji: '🇺🇸' },
       { name: 'fr', icon: 'i-circle-flags:fr', displayName: '法语', emoji: '🇫🇷' },
       { name: 'de', icon: 'i-circle-flags:de', displayName: '德语', emoji: '🇩🇪' },
@@ -131,6 +132,26 @@ export default defineComponent({
       showLanguageModal.value = true
     }
 
+    // 把词书检查函数移到这里，在使用之前
+    const checkLexiconStatus = () => {
+      // 只有在已选择语言后才提示选择词书
+      if (selectedLanguage.value.name !== 'unknown') {
+        const lexicon = LexiconStorage.getCurrentLexicon()
+        currentLexicon.value = lexicon
+
+        if (!lexicon) {
+          uni.showModal({
+            title: '提示',
+            content: '您还未选择词书，是否前往选择？',
+            success: (res) => {
+              if (res.confirm)
+                uni.navigateTo({ url: '/pages/user/selectlexicon' })
+            },
+          })
+        }
+      }
+    }
+
     const handleSelectLanguage = (language: typeof languages.value[0]) => {
       selectedLanguage.value = language
       uni.setStorageSync('selectedLanguage', language.name)
@@ -142,68 +163,32 @@ export default defineComponent({
         duration: 2000,
       })
 
-      // 选择完语言后检查词书
-      setTimeout(() => {
-        if (!currentLexicon.value) {
-          uni.showModal({
-            title: '提示',
-            content: '您还未选择词书，是否前往选择？',
-            success: (res) => {
-              if (res.confirm)
-                uni.navigateTo({ url: '/pages/user/selectlexicon' })
-            },
-          })
-        }
-      }, 500)
-    }
-
-    // 添加词书检查函数
-    const checkLexiconStatus = () => {
-      const lexicon = LexiconStorage.getCurrentLexicon()
-      currentLexicon.value = lexicon
-
-      if (!lexicon) {
-        uni.showModal({
-          title: '提示',
-          content: '您还未选择词书，是否前往选择？',
-          success: (res) => {
-            if (res.confirm)
-              uni.navigateTo({ url: '/pages/user/selectlexicon' })
-          },
-        })
+      // 选择语言后延迟检查词书
+      if (language.name !== 'unknown') {
+        setTimeout(() => {
+          checkLexiconStatus()
+        }, 500)
       }
     }
 
     onMounted(() => {
       loadUserInfo()
 
-      // 检查是否首次选择语言
-      if (!uni.getStorageSync('selectedLanguage')) {
+      // 检查是否有选择语言
+      const storedLanguage = uni.getStorageSync('selectedLanguage')
+      if (!storedLanguage || storedLanguage === 'unknown') {
         uni.showModal({
           title: '欢迎来到 WordTrail 🎉',
-          content: '选择一个语言，开始你的寻踪之旅吧！ 🌟',
+          content: '首先请选择一个学习语言！',
           showCancel: false,
           success: () => {
-            selectInitialLanguage() // 显示语言选择模态框
+            selectInitialLanguage()
           },
         })
       }
       else {
-        // 已有语言选择，检查词书
-        setTimeout(() => {
-          if (!currentLexicon.value) {
-            uni.showModal({
-              title: '提示',
-              content: '您还未选择词书，是否前往选择？',
-              success: (res) => {
-                if (res.confirm)
-                  uni.navigateTo({ url: '/pages/user/selectlexicon' })
-              },
-            })
-          }
-        }, 1500)
+        checkLexiconStatus() // 只有在已有语言选择的情况下才检查词书
       }
-      checkLexiconStatus() // 添加词书状态检查
     })
 
     const handleLanguageChange = (event: any) => {
@@ -391,7 +376,7 @@ export default defineComponent({
       </text>
       <view class="space-y-3">
         <view
-          v-for="lang in languages"
+          v-for="lang in languages.slice(1)"
           :key="lang.name"
           class="flex cursor-pointer items-center rounded-lg p-3 transition-colors"
           :class="selectedLanguage.name === lang.name ? 'bg-yellow text-white' : 'bg-gray-100'"

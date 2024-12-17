@@ -23,6 +23,13 @@ export default defineComponent({
     // 添加语言显示相关代码
     const languages = [
       {
+        name: 'unknown',
+        icon: 'i-circle-flags:question',
+        displayName: '未知',
+        emoji: '❓',
+        successMessage: 'Unknown selected!',
+      },
+      {
         name: 'en',
         icon: 'i-circle-flags:us',
         displayName: '英语',
