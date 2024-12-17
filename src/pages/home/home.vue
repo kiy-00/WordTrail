@@ -1,7 +1,7 @@
 <script lang="ts">
 import TabBar from '@/components/TabBar.vue' // 添加TabBar组件导入
-import { WordAPI } from '@/types/Word' // 添加回API导入
 // 添加API基础URL导入
+import { WordAPI } from '@/types/Word'
 import { type CurrentLexicon, LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, onMounted, ref, watch } from 'vue'
 
@@ -232,17 +232,6 @@ export default defineComponent({
       })
     }
 
-    /* 注释掉测试数据
-    const testWords = [
-      {
-        id: '1',
-        word: 'maison',
-        // ...其他测试数据
-      },
-      // ...其他测试单词
-    ]
-    */
-
     const handleLearnClick = async () => {
       if (isBanned.value) {
         uni.showToast({
@@ -263,15 +252,18 @@ export default defineComponent({
 
       try {
         console.error('词书ID:', lexicon.id)
-        const words = await WordAPI.getLearnWords(lexicon.id)
+        const words = await WordAPI.getLearnWords(lexicon.id) // 使用词书 id 获取单词
         console.error('获取学习单词:', words.length)
         console.error('单词:', words)
         const token = uni.getStorageSync('token')
         console.error('token:', token)
         if (words && words.length > 0) {
-          uni.navigateTo({
-            url: `/pages/word/learn?words=${encodeURIComponent(JSON.stringify(words))}`,
-          })
+          // uni.navigateTo({
+          //   url: '/pages/word/learn',
+          //   success: (res) => {
+          //     res.eventChannel.emit('acceptWords', { words })
+          //   },
+          // })
         }
         else {
           uni.showToast({
@@ -309,14 +301,17 @@ export default defineComponent({
 
       try {
         console.error('词书ID:', lexicon.id)
-        const words = await WordAPI.getReviewWords(lexicon.id)
+        const words = await WordAPI.getReviewWords(lexicon.id) // 使用词书 id 获取单词
         console.error('获取复习单词:', words.length)
         const token = uni.getStorageSync('token')
         console.error('token:', token)
         if (words && words.length > 0) {
-          uni.navigateTo({
-            url: `/pages/word/review?words=${encodeURIComponent(JSON.stringify(words))}`,
-          })
+          // uni.navigateTo({
+          //   url: '/pages/word/learn',
+          //   success: (res) => {
+          //     res.eventChannel.emit('acceptWords', { words })
+          //   },
+          // })
         }
         else {
           uni.showToast({

@@ -34,10 +34,6 @@ export default defineUniPages({
       path: 'pages/user/settings',
       type: 'page',
     },
-    {
-      path: 'pages/word/wordcards',
-      type: 'page',
-    },
   ],
   globalStyle: {
     backgroundColor: '@bgColor',
