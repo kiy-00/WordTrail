@@ -80,9 +80,9 @@ export default defineComponent({
           <view class="text-sm text-gray-600">
             {{ description }}
           </view>
-          <view>
+          <!-- <view>
             {{ id }}
-          </view>
+          </view> -->
         </view>
 
         <!-- 状态标签 -->
@@ -102,8 +102,4 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.frosted-glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-}
 </style>

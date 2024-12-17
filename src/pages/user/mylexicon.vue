@@ -61,28 +61,26 @@ export default defineComponent({
     }
 
     const filterWords = () => {
-      const filteredWords = allWords.value.filter((word) => {
+      // 先根据搜索关键字过滤
+      let filteredWords = allWords.value.filter((word) => {
         if (!word || !word.word)
           return false
 
-        if (activeTab.value === 'all') {
-          return true
+        // 如果有搜索关键字，则根据关键字过滤
+        if (searchQuery.value) {
+          return word.word.toLowerCase().includes(searchQuery.value.toLowerCase())
         }
-        else if (activeTab.value === '0') {
-          return word.masteryLevel === 0
-        }
-        else if (activeTab.value === '1') {
-          return word.masteryLevel === 1
-        }
-        else if (activeTab.value === '2') {
-          return word.masteryLevel === 2
-        }
-
-        const matchesSearch = searchQuery.value
-          ? word.word.toLowerCase().includes(searchQuery.value.toLowerCase())
-          : true
-        return matchesSearch
+        return true
       })
+
+      // 再根据标签过滤
+      if (activeTab.value !== 'all') {
+        filteredWords = filteredWords.filter(word =>
+          word.masteryLevel.toString() === activeTab.value,
+        )
+      }
+
+      // 分页处理
       displayedWords.value = filteredWords.slice(0, currentLoad.value * wordsPerLoad)
     }
 
@@ -205,7 +203,7 @@ export default defineComponent({
 
     const handleSearch = (event: UniHelper.InputOnInputEvent) => {
       searchQuery.value = event.detail.value
-      currentLoad.value = 1
+      currentLoad.value = 1 // 重置加载页数
       filterWords()
     }
 
@@ -223,13 +221,17 @@ export default defineComponent({
 
     const toggleSearch = () => {
       isSearchVisible.value = !isSearchVisible.value
-      if (!isSearchVisible.value)
+      if (!isSearchVisible.value) {
         searchQuery.value = ''
+        filterWords() // 清空搜索时重新过滤
+      }
     }
 
     const onSearch = () => {
-      if (searchQuery.value.trim())
+      if (searchQuery.value.trim()) {
+        currentLoad.value = 1 // 重置加载页数
         filterWords()
+      }
     }
 
     const handleBack = () => {
@@ -284,13 +286,13 @@ export default defineComponent({
           {{ currentLexiconName }}
         </text>
       </view>
-      <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
+      <!-- <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
         <view class="i-mynaui:search text-2xl" />
-      </view>
+      </view> -->
     </view>
   </view>
 
-  <transition name="fade">
+  <!-- <transition name="fade">
     <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-16 z-50 px-4 py-2 shadow-md frosted-glass">
       <view class="flex items-center">
         <view class="i-mynaui:search mr-2 text-xl text-gray-400" />
@@ -305,7 +307,7 @@ export default defineComponent({
         <view class="i-ci:close-md ml-2 cursor-pointer text-xl" @click="toggleSearch" />
       </view>
     </view>
-  </transition>
+  </transition> -->
 
   <view class="mt-5 flex border-b rounded frosted-glass">
     <view

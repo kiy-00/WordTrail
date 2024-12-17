@@ -187,7 +187,7 @@ export default defineComponent({
         <!-- Masked Content -->
         <view
           v-if="!showDetails"
-          class="font-verdana mt-4 rounded-lg bg-white/20 p-5 text-center text-lg text-[#d6e6ee]"
+          class="font-verdana mt-4 rounded-lg bg-white/20 p-5 text-center text-lg text-yellow"
         >
           选择难度查看详细释义
         </view>

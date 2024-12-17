@@ -251,19 +251,11 @@ export default defineComponent({
       }
 
       try {
-        console.error('词书ID:', lexicon.id)
-        const words = await WordAPI.getLearnWords(lexicon.id) // 使用词书 id 获取单词
-        console.error('获取学习单词:', words.length)
-        console.error('单词:', words)
-        const token = uni.getStorageSync('token')
-        console.error('token:', token)
+        const words = await WordAPI.getLearnWords(lexicon.id)
         if (words && words.length > 0) {
-          // uni.navigateTo({
-          //   url: '/pages/word/learn',
-          //   success: (res) => {
-          //     res.eventChannel.emit('acceptWords', { words })
-          //   },
-          // })
+          uni.navigateTo({
+            url: `/pages/word/learn?words=${encodeURIComponent(JSON.stringify(words))}`,
+          })
         }
         else {
           uni.showToast({
@@ -300,18 +292,11 @@ export default defineComponent({
       }
 
       try {
-        console.error('词书ID:', lexicon.id)
-        const words = await WordAPI.getReviewWords(lexicon.id) // 使用词书 id 获取单词
-        console.error('获取复习单词:', words.length)
-        const token = uni.getStorageSync('token')
-        console.error('token:', token)
+        const words = await WordAPI.getReviewWords(lexicon.id)
         if (words && words.length > 0) {
-          // uni.navigateTo({
-          //   url: '/pages/word/learn',
-          //   success: (res) => {
-          //     res.eventChannel.emit('acceptWords', { words })
-          //   },
-          // })
+          uni.navigateTo({
+            url: `/pages/word/review?words=${encodeURIComponent(JSON.stringify(words))}`,
+          })
         }
         else {
           uni.showToast({

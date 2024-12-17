@@ -14,14 +14,13 @@ interface NavigateToOptions {
        "/pages/user/mylexicon" |
        "/pages/user/selectlexicon" |
        "/pages/user/settings" |
-       "/pages/word/detail" |
        "/pages/word/learn" |
-       "/pages/word/review"
+       "/pages/word/review";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 
 interface SwitchTabOptions {
-
+  
 }
 
 type ReLaunchOptions = NavigateToOptions | SwitchTabOptions;

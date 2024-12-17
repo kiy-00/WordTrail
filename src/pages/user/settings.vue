@@ -1,5 +1,6 @@
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { API_BASE_URL } from '@/config/api'
+import { defineComponent, ref } from 'vue'
 
 export default defineComponent({
   name: 'Settings',
@@ -34,9 +35,51 @@ export default defineComponent({
       uni.navigateBack()
     }
 
+    const handleLogout = async () => {
+      try {
+        const token = uni.getStorageSync('token')
+        const response = await uni.request({
+          url: `${API_BASE_URL}/auth/logout`,
+          method: 'POST',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.statusCode === 200) {
+          // 清除本地存储的用户信息
+          uni.removeStorageSync('token')
+          uni.removeStorageSync('userInfo')
+
+          uni.showToast({
+            title: '已退出登录',
+            icon: 'success',
+          })
+
+          // 跳转到登录页
+          setTimeout(() => {
+            uni.reLaunch({
+              url: '/pages/user/login',
+            })
+          }, 1500)
+        }
+        else {
+          throw new Error('登出失败')
+        }
+      }
+      catch (error) {
+        console.error('登出失败:', error)
+        uni.showToast({
+          title: '登出失败',
+          icon: 'none',
+        })
+      }
+    }
+
     return {
       settingsItems,
       handleBack,
+      handleLogout,
     }
   },
 
@@ -76,6 +119,16 @@ export default defineComponent({
         :value="item.value"
       />
     </view>
+  </view>
+
+  <!-- 登出按钮 -->
+  <view class="fixed bottom-10 left-0 right-0 px-2">
+    <button
+      class="rounded-lg bg-yellow py-3 text-white font-bold"
+      @click="handleLogout"
+    >
+      退出登录
+    </button>
   </view>
 </template>
 

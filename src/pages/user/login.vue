@@ -298,7 +298,7 @@ export default defineComponent({
         <view class="w-full space-y-3">
           <input
             v-model="account"
-            :placeholder="loginMethod === 'email' ? '请输入邮箱' : loginMethod === 'phone' ? '请输入电话号码' : '请输入ID'"
+            :placeholder="loginMethod === 'email' ? '请输入用户名' : loginMethod === 'phone' ? '请输入电话号码' : '请输入ID'"
             class="mb-5 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
           >
 
