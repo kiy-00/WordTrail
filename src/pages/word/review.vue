@@ -123,6 +123,28 @@ export default defineComponent({
       }
     },
 
+    async addLog(wordId: string) {
+      try {
+        const token = uni.getStorageSync('token')
+        const currentLexicon = LexiconStorage.getCurrentLexicon()
+        if (!currentLexicon)
+          return
+
+        await uni.request({
+          url: `${API_BASE_URL}/api/statistics/addLog`,
+          method: 'POST',
+          header: {
+            Authorization: `Bearer ${token}`,
+            lexicon: currentLexicon.id,
+            wordId,
+          },
+        })
+      }
+      catch (error) {
+        console.error('添加复习日志失败:', error)
+      }
+    },
+
     async handleDifficultySelect(difficulty: 'known' | 'vague' | 'forgotten') {
       this.selectedDifficulty = difficulty
       this.showDetails = true
@@ -140,6 +162,9 @@ export default defineComponent({
             // 认识不需要调用 API
             break
         }
+
+        // 添加学习日志
+        await this.addLog(this.currentWord.id)
       }
     },
 

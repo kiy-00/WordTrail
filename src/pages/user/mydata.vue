@@ -48,38 +48,67 @@ export default defineComponent({
     // 定义更新图表的函数，提前放在调用之前
     const updateChart = () => {
       if (chartInstance) {
-        const option: EChartOption = { // 使用 EChartOption 类型
+        const option: EChartOption = {
           tooltip: {
             trigger: 'axis',
+            formatter: (params: any) => {
+              const date = params[0].name
+              const reviewCount = params[0].value
+              const reviewGreaterCount = params[1].value
+              return `${date}<br/>
+                     首次学习：${reviewCount}个<br/>
+                     重复复习：${reviewGreaterCount}个`
+            },
           },
           legend: {
-            data: ['学习', '复习'],
+            data: ['首次学习', '重复复习'],
           },
           xAxis: [{
             type: 'category',
             data: chartData.value.dates,
+            axisLabel: {
+              formatter: (value: string) => {
+                // 只显示月份和日期
+                return value.slice(5)
+              },
+            },
           }],
           yAxis: [{
             type: 'value',
+            name: '单词数量',
             min: 0,
-            max: 20,
-            interval: 5,
+            max: 100, // 修改上限为100
+            interval: 10, // 修改间隔为10
+            axisLabel: {
+              formatter: '{value}个',
+            },
           }],
           series: [
             {
-              name: '学习',
+              name: '首次学习',
               type: 'bar',
               data: chartData.value.learnCounts,
               itemStyle: {
-                color: '#FFCB00', // 学习的柱状显示为黄色
+                color: '#FFCB00',
+              },
+              barGap: '30%',
+              emphasis: {
+                itemStyle: {
+                  color: '#FFD700',
+                },
               },
             },
             {
-              name: '复习',
+              name: '重复复习',
               type: 'bar',
               data: chartData.value.reviewCounts,
               itemStyle: {
-                color: '#4B99FF', // 复习的柱状显示为蓝色
+                color: '#4B99FF',
+              },
+              emphasis: {
+                itemStyle: {
+                  color: '#6CB6FF',
+                },
               },
             },
           ],
@@ -91,8 +120,11 @@ export default defineComponent({
     // 监听 weeklyStats 的变化，更新 chartData
     watch(weeklyStats, (newStats) => {
       if (newStats && Array.isArray(newStats)) {
+        // 直接使用原始顺序，不再反转
         chartData.value.dates = newStats.map(item => item.date)
+        // reviewCount1 对应首次学习的数量
         chartData.value.learnCounts = newStats.map(item => item.reviewCount1)
+        // reviewCountGreater1 对应重复复习的数量
         chartData.value.reviewCounts = newStats.map(item => item.reviewCountGreater1)
         updateChart()
       }
@@ -286,7 +318,7 @@ export default defineComponent({
   </view> -->
 
   <!-- 在合适的位置添加图表容器 -->
-  <div ref="chartRef" class="chart-container" style="width: 100%; height: 300px;" />
+  <div ref="chartRef" class="chart-container rounded p-4 frosted-glass" style="width: 90%; height: 300px;" />
 
   <!-- <view v-if="debugVisible" class="fixed right-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
     <view class="mb-2 flex items-center justify-between">
@@ -307,6 +339,8 @@ export default defineComponent({
 /* 添加必要的样式 */
 .chart-container {
   margin-top: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
 }
 </style>
 

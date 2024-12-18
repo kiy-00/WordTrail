@@ -24,7 +24,7 @@ export default defineComponent({
   },
   setup() {
     const languages = ref([
-      { name: 'unknown', icon: 'i-circle-flags:unknown', displayName: '未知', emoji: '❓' },
+      { name: 'unknown', icon: 'i-mynaui:question', displayName: '暂不选择', emoji: '❓' },
       { name: 'en', icon: 'i-circle-flags:us', displayName: '英语', emoji: '🇺🇸' },
       { name: 'fr', icon: 'i-circle-flags:fr', displayName: '法语', emoji: '🇫🇷' },
       { name: 'de', icon: 'i-circle-flags:de', displayName: '德语', emoji: '🇩🇪' },
@@ -43,6 +43,13 @@ export default defineComponent({
 
     const signInDays = ref<number>(0) // 累计签到天数
     const currentLexicon = ref<CurrentLexicon | null>(LexiconStorage.getCurrentLexicon()) // 当前词书
+
+    watch(
+      () => LexiconStorage.getCurrentLexicon(),
+      (newValue) => {
+        currentLexicon.value = newValue
+      },
+    )
 
     // const fetchUserInfo = async () => {
     //   try {
@@ -157,18 +164,43 @@ export default defineComponent({
       uni.setStorageSync('selectedLanguage', language.name)
       showLanguageModal.value = false
 
-      uni.showToast({
-        title: `${language.emoji} 已选择${language.displayName}`,
-        icon: 'none',
-        duration: 2000,
-      })
+      // 清除当前词书
+      LexiconStorage.clearCurrentLexicon()
+      currentLexicon.value = null
 
-      // 选择语言后延迟检查词书
-      if (language.name !== 'unknown') {
-        setTimeout(() => {
-          checkLexiconStatus()
-        }, 500)
-      }
+      // 显示提示并强制跳转到词书选择界面
+      uni.showModal({
+        title: '语言已切换',
+        content: '切换了语言系统，请前往选择词书',
+
+        showCancel: false,
+        success: () => {
+          console.error('当前语言系统:', uni.getStorageSync('selectedLanguage'))
+          uni.navigateTo({ url: '/pages/user/selectlexicon' })
+        },
+      })
+    }
+
+    const handleLanguageChange = (event: any) => {
+      const index = event.detail.value
+      selectedLanguage.value = languages.value[index]
+      // 保存选择的语言到本地存储
+      uni.setStorageSync('selectedLanguage', selectedLanguage.value.name)
+
+      // 清除当前词书
+      LexiconStorage.clearCurrentLexicon()
+      currentLexicon.value = null
+
+      // 显示提示并强制跳转到词书选择界面
+      uni.showModal({
+        title: '语言已切换',
+        content: '切换了语言系统，请前往选择词书',
+        showCancel: false,
+        success: () => {
+          console.error('当前语言系统:', uni.getStorageSync('selectedLanguage'))
+          uni.navigateTo({ url: '/pages/user/selectlexicon' })
+        },
+      })
     }
 
     onMounted(() => {
@@ -191,18 +223,16 @@ export default defineComponent({
       }
     })
 
-    const handleLanguageChange = (event: any) => {
-      const index = event.detail.value
-      selectedLanguage.value = languages.value[index]
-      // 保存选择的语言到本地存储
-      uni.setStorageSync('selectedLanguage', selectedLanguage.value.name)
-
-      uni.showToast({
-        title: `${selectedLanguage.value.emoji} 已切换到${selectedLanguage.value.displayName}`,
-        icon: 'none',
-        duration: 2000,
-      })
+    const refreshData = () => {
+      // 重新加载用户信息或其他需要刷新的数据
+      loadUserInfo()
+      checkLexiconStatus()
+      // ...其他刷新逻辑...
     }
+
+    onShow(() => {
+      refreshData()
+    })
 
     const navigateTo = (page: string) => {
       if (isBanned.value) {

@@ -3,6 +3,8 @@ import type { DetailedPartOfSpeech, DetailedWord } from '@/types/DetailedWord'
 import type { Word } from '@/types/Word'
 import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
+import { API_BASE_URL } from '@/config/api'
+import { LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
@@ -82,6 +84,42 @@ export default defineComponent({
   },
 
   methods: {
+    async addLog(wordId: string) {
+      try {
+        const token = uni.getStorageSync('token')
+        const currentLexicon = LexiconStorage.getCurrentLexicon()
+        if (!currentLexicon)
+          return
+
+        await uni.request({
+          url: `${API_BASE_URL}/api/statistics/addLog`,
+          method: 'POST',
+          header: {
+            Authorization: `Bearer ${token}`,
+            lexicon: currentLexicon.id,
+            wordId,
+          },
+        })
+      }
+      catch (error) {
+        console.error('添加学习日志失败:', error)
+      }
+    },
+
+    async handleKnow() {
+      if (this.currentWord) {
+        await this.addLog(this.currentWord.id)
+        this.nextWord()
+      }
+    },
+
+    async handleDontKnow() {
+      if (this.currentWord) {
+        await this.addLog(this.currentWord.id)
+        this.nextWord()
+      }
+    },
+
     nextWord() {
       if (this.currentIndex < this.words.length - 1) {
         this.currentIndex++
@@ -98,20 +136,6 @@ export default defineComponent({
             delta: 1,
           })
         }, 2000)
-      }
-    },
-
-    handleKnow() {
-      if (this.currentWord) {
-        // TODO: 处理"认识"的业务逻辑
-        this.nextWord()
-      }
-    },
-
-    handleDontKnow() {
-      if (this.currentWord) {
-        // TODO: 处理"不认识"的业务逻辑
-        this.nextWord()
       }
     },
   },
@@ -167,6 +191,6 @@ export default defineComponent({
 
 <route lang="json">
 {
-  "layout": "home"
+  "layout": "default"
 }
 </route>
