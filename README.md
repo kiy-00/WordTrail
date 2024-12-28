@@ -10,3 +10,5 @@ npm install
 ```bash
 npx vite --port=4000
 ```
+## template
+https://github.com/uni-helper/vitesse-uni-app
