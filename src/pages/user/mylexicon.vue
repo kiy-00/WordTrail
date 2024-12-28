@@ -286,13 +286,13 @@ export default defineComponent({
           {{ currentLexiconName }}
         </text>
       </view>
-      <!-- <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
+      <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
         <view class="i-mynaui:search text-2xl" />
-      </view> -->
+      </view>
     </view>
   </view>
 
-  <!-- <transition name="fade">
+  <transition name="fade">
     <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-16 z-50 px-4 py-2 shadow-md frosted-glass">
       <view class="flex items-center">
         <view class="i-mynaui:search mr-2 text-xl text-gray-400" />
@@ -307,7 +307,7 @@ export default defineComponent({
         <view class="i-ci:close-md ml-2 cursor-pointer text-xl" @click="toggleSearch" />
       </view>
     </view>
-  </transition> -->
+  </transition>
 
   <view class="mt-5 flex border-b rounded frosted-glass">
     <view

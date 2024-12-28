@@ -103,9 +103,16 @@ export default defineComponent({
           const response = await uni.request({
             url: `${API_BASE_URL}/auth/login`,
             method: 'POST',
+            header: {
+              'content-type': 'application/json',
+              'Access-Control-Allow-Origin': '*', // 如果后端允许的话
+            },
             data: {
-              username: account.value,
+              code: 'test',
               password: password.value,
+              username: account.value,
+              uuid: 'test',
+
             },
           })
 

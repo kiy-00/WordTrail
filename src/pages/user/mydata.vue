@@ -144,7 +144,7 @@ export default defineComponent({
       try {
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/statistics/weekly`,
+          url: `${API_BASE_URL}/word/api/statistics/weekly`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
