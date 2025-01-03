@@ -1,5 +1,4 @@
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
@@ -39,10 +38,10 @@ export default defineComponent({
       try {
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `${API_BASE_URL}/auth/logout`,
-          method: 'POST',
+          url: `/auth/logout`,
+          method: 'DELETE',
           header: {
-            Authorization: `Bearer ${token}`,
+            Authorization: token,
           },
         })
 

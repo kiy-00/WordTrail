@@ -1,25 +1,42 @@
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, ref } from 'vue'
 
 interface LoginResponse {
-  message: string
-  token: string
+  code: number
+  msg: string
+  data: {
+    access_token: string
+    expires_in: number
+  }
+}
+
+interface InfoResponse {
+  msg: string
+  code: number
   user: {
-    id: string
-    username: string
-    email: string
+    id: number
+    userName: string
+    nickName: string
+    userType: string
+    email: string | null
+    phoneNumber: string | null
+    sex: string // Gender ('0' for male, '1' for female)
+    avatar: string | null
+    password: string // Encrypted password
+    status: string
+    delFlag: boolean
+    bio: string | null
+    admin: boolean
+    createTime: string
+    updateTime: string
+    params: Record<string, unknown>
   }
 }
 
 interface RegisterResponse {
-  message: string
-  user: {
-    username: string
-    email: string
-    id: number
-    created_at: string
-  }
+  msg: string
+  code: number
+  data: string
 }
 
 interface FailedResponse {
@@ -100,36 +117,48 @@ export default defineComponent({
 
       try {
         if (currentTab.value === 'login') {
-          const response = await uni.request({
-            url: `${API_BASE_URL}/auth/login`,
+          const loginResponse = await uni.request({
+            url: `/auth/login`,
             method: 'POST',
-            header: {
-              'content-type': 'application/json',
-              'Access-Control-Allow-Origin': '*', // 如果后端允许的话
-            },
             data: {
               code: 'test',
               password: password.value,
               username: account.value,
               uuid: 'test',
-
             },
           })
 
-          if (response.statusCode === 200) {
-            const data = response.data as LoginResponse
+          // eslint-disable-next-line no-console
+          console.log('username:', account.value)
+          // eslint-disable-next-line no-console
+          console.log('password:', password.value)
+
+          if (loginResponse.statusCode === 200) {
+            const loginData = loginResponse.data as LoginResponse
             // eslint-disable-next-line no-console
-            console.log('登录后端响应数据:', response.data)
+            console.log('登录后端响应数据:', loginData)
+
+            const infoResponse = await uni.request({
+              url: `/system/user/getInfo`,
+              method: 'GET',
+              header: {
+                Authorization: loginData.data.access_token,
+              },
+            })
+
+            const infoData = infoResponse.data as InfoResponse
+            // eslint-disable-next-line no-console
+            console.log('登录后端个人信息:', infoData)
 
             // 先存储数据
-            uni.setStorageSync('token', data.token) // 改用统一的 token key
+            uni.setStorageSync('token', loginData.data.access_token) // 改用统一的 token key
             uni.setStorageSync('userInfo', {
-              userId: data.user.id, // 统一字段名
-              username: data.user.username,
-              email: data.user.email,
-              phone: null,
-              avatarUrl: null,
-              status: 0,
+              userId: infoData.user.id, // 统一字段名
+              username: infoData.user.userName,
+              email: infoData.user.email,
+              phone: infoData.user.phoneNumber,
+              avatarUrl: infoData.user.avatar,
+              status: Number(infoData.user.status),
               createTime: new Date().toISOString(),
               updateTime: new Date().toISOString(),
             })
@@ -151,8 +180,6 @@ export default defineComponent({
               })
 
               uni.redirectTo({ url: '/pages/home/home' }) // 跳转到首页
-              // eslint-disable-next-line no-console
-              console.log('登录后端响应数据:', data) // 日志记录 uni.redirectTo({ url: '/pages/home/home' }) // 跳转到首页
             }
             else {
               uni.showToast({
@@ -163,7 +190,7 @@ export default defineComponent({
             }
           }
           else {
-            const data = response.data as FailedResponse
+            const data = loginResponse.data as FailedResponse
             uni.showToast({
               title: data.error,
               icon: 'none',
@@ -173,23 +200,27 @@ export default defineComponent({
         }
         else if (currentTab.value === 'register') {
           // 注册逻辑
-          const response = await uni.request({
-            url: `${API_BASE_URL}/auth/register`,
+          const registerResponse = await uni.request({
+            url: `/auth/register`,
             method: 'POST',
             data: {
-              username: account.value,
+              code: 'test',
               password: password.value,
+              username: account.value,
               email: account.value,
+              phoneNumber: null,
+              uuid: 'test',
             },
           })
 
-          // eslint-disable-next-line no-console
-          console.log('注册后端响应数据:', response.data) // 日志记录
+          const registerData = registerResponse.data as RegisterResponse
 
-          if (response.statusCode === 201) {
-            const data = response.data as RegisterResponse
+          // eslint-disable-next-line no-console
+          console.log('注册后端响应数据:', registerData) // 日志记录
+
+          if (registerResponse.statusCode === 201) {
             uni.showToast({
-              title: data.message,
+              title: '注册成功',
               icon: 'success',
               mask: true,
             })
@@ -199,7 +230,7 @@ export default defineComponent({
             }, 100)
           }
           else {
-            const data = response.data as FailedResponse
+            const data = registerResponse.data as FailedResponse
             uni.showToast({
               title: data.error,
               icon: 'none',
@@ -312,7 +343,7 @@ export default defineComponent({
           <input
             v-model="password"
             placeholder="请输入密码"
-            type="safe-password"
+            type="password"
             class="mb-5 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
           >
 
@@ -321,7 +352,7 @@ export default defineComponent({
             v-if="currentTab === 'register'"
             v-model="confirmPassword"
             placeholder="请再次输入密码"
-            type="safe-password"
+            type="password"
             class="mb-5 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
           >
         </view>

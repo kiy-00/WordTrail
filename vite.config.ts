@@ -45,5 +45,29 @@ export default async () => {
     //     include: [/node_modules/, /@dcloudio\/uni-ui/],
     //   },
     // },
+    server: {
+      proxy: {
+        '/auth': {
+          target: 'http://47.120.51.47:8080', // 后端服务地址
+          changeOrigin: true, // 跨域时需要设置为 true
+          rewrite: path => path.replace(/^\/auth/, '/auth'), // 可选，调整路径
+        },
+        '/system': {
+          target: 'http://47.120.51.47:8080', // 后端服务地址
+          changeOrigin: true, // 跨域时需要设置为 true
+          rewrite: path => path.replace(/^\/system/, '/system'), // 可选，根据需要调整路径
+        },
+        '/user': {
+          target: 'http://47.120.51.47:8080', // 后端服务地址
+          changeOrigin: true, // 跨域时需要设置为 true
+          rewrite: path => path.replace(/^\/user/, '/user'), // 可选，根据需要调整路径
+        },
+        '/word': {
+          target: 'http://47.120.51.47:8080', // 后端服务地址
+          changeOrigin: true, // 跨域时需要设置为 true
+          rewrite: path => path.replace(/^\/word/, '/word'), // 可选，根据需要调整路径
+        },
+      },
+    },
   })
 }

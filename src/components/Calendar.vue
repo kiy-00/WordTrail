@@ -3,11 +3,14 @@ import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 interface checkinResponse {
-  message: string
-  checkinDays: number // 假设登录接口返回一个 token
+  msg: string
+  code: number
+  checkinDays: number
 }
 
 interface checkinDaysResponse {
+  msg: string
+  code: number
   checkinDays: number
 }
 
@@ -79,15 +82,15 @@ export default defineComponent({
 
         // 发送签到请求到后端
         const response = await uni.request({
-          url: `${API_BASE_URL}/user/checkin`, // 替换为实际后端接口地址
+          url: `/word/user/checkin`, // 替换为实际后端接口地址
           method: 'POST',
           header: {
-            Authorization: `Bearer ${uni.getStorageSync('token')}`, // 添加 token，确保用户已登录
+            Authorization: uni.getStorageSync('token'), // 添加 token，确保用户已登录
           },
         })
 
         // eslint-disable-next-line no-console
-        console.log('后端响应数据:', response) // 日志记录：完整响应
+        console.log('签到响应数据:', response.data) // 日志记录：完整响应
 
         if (response.statusCode === 200) {
           // 成功签到
@@ -102,7 +105,7 @@ export default defineComponent({
           }
 
           uni.showToast({
-            title: data.message,
+            title: data.msg,
             icon: 'success',
           })
 
@@ -144,12 +147,15 @@ export default defineComponent({
     const fetchCheckinDays = async () => {
       try {
         const response = await uni.request({
-          url: `${API_BASE_URL}/user/checkin-days`, // 替换为实际后端接口地址
+          url: `word/user/checkin-days`, // 替换为实际后端接口地址
           method: 'GET',
           header: {
-            Authorization: `Bearer ${uni.getStorageSync('token')}`, // 添加 token，确保用户已登录
+            Authorization: uni.getStorageSync('token'), // 添加 token，确保用户已登录
           },
         })
+
+        // eslint-disable-next-line no-console
+        console.log('获取连续签到天数响应数据:', response.data) // 日志记录：完整响应
 
         const data = response.data as checkinDaysResponse
         signInDays.value = data.checkinDays
