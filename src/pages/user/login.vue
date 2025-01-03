@@ -343,7 +343,7 @@ export default defineComponent({
           <input
             v-model="password"
             placeholder="请输入密码"
-            type="password"
+            :password="true"
             class="mb-5 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
           >
 
@@ -352,7 +352,7 @@ export default defineComponent({
             v-if="currentTab === 'register'"
             v-model="confirmPassword"
             placeholder="请再次输入密码"
-            type="password"
+            :password="true"
             class="mb-5 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
           >
         </view>
