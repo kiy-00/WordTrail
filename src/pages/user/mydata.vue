@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { EChartOption } from 'echarts/types/dist/echarts' // 修改导入
-import { API_BASE_URL } from '@/config/api'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import * as echarts from 'echarts'
 import { defineComponent, onMounted, ref, watch } from 'vue'
@@ -144,10 +143,10 @@ export default defineComponent({
       try {
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `${API_BASE_URL}/word/api/statistics/weekly`,
+          url: '/word/api/statistics/weekly',
           method: 'GET',
           header: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `${token}`,
           },
         })
 

@@ -46,6 +46,7 @@ export default async () => {
     //   },
     // },
     server: {
+      port: 4001, // 添加端口配置
       proxy: {
         '/auth': {
           target: 'http://47.120.51.47:8080', // 后端服务地址
@@ -66,6 +67,11 @@ export default async () => {
           target: 'http://47.120.51.47:8080', // 后端服务地址
           changeOrigin: true, // 跨域时需要设置为 true
           rewrite: path => path.replace(/^\/word/, '/word'), // 可选，根据需要调整路径
+        },
+        '/forum': {
+          target: 'http://47.120.51.47:8080', // 后端服务地址
+          changeOrigin: true, // 跨域时需要设置为 true
+          rewrite: path => path.replace(/^\/forum/, '/forum'), // 可选，根据需要调整路径
         },
       },
     },

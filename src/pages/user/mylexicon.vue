@@ -1,5 +1,4 @@
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, ref } from 'vue'
 
@@ -99,10 +98,10 @@ export default defineComponent({
       try {
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `${API_BASE_URL}/books/${currentLexicon.id}`,
+          url: `/word/books/${currentLexicon.id}`,
           method: 'GET',
           header: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `${token}`,
           },
         })
 
@@ -156,7 +155,7 @@ export default defineComponent({
         console.error('fetchWordsCount id', currentLexicon.id)
         console.error('fetchWordsCount token', token)
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/lexicon/count`,
+          url: '/word/api/lexicon/count',
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,

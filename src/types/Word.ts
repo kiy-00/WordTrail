@@ -33,20 +33,24 @@ export interface FailedResponse {
 export const WordAPI = {
   getLearnWords: async (lexiconId: string): Promise<Word[]> => {
     return new Promise((resolve, reject) => {
-      const token = uni.getStorageSync('token')
       uni.request({
-        url: `${API_BASE_URL}/api/studyplan/learnwords/${lexiconId}`,
+        url: `/word/api/studyplan/learnwords/${lexiconId}`, // 使用相对路径
         method: 'GET',
         header: {
-          Authorization: `Bearer ${token}`,
+          Authorization: uni.getStorageSync('token'),
         },
         success: (res) => {
           if (res.statusCode === 200) {
-            resolve(res.data as Word[])
+            if (Array.isArray(res.data)) {
+              resolve(res.data as Word[])
+            }
+            else {
+              reject(new Error('返回数据格式错误'))
+            }
           }
           else {
             console.error('获取单词失败:', res.statusCode, res.data)
-            reject(new Error(`获取单词失败`))
+            reject(new Error(`获取单词失败: ${res.statusCode}`))
           }
         },
         fail: (error) => {

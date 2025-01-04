@@ -1,59 +1,46 @@
-<script lang="ts">
-import type { Post } from '@/types/Post.ts'
-import type { PropType } from 'vue'
-import { defineComponent, ref } from 'vue'
+<script setup lang="ts">
+import type { Post } from '@/types/Post'
+import { defineEmits, ref } from 'vue'
+// import axios from 'axios' // 移除 axios 导入
 
-export default defineComponent({
-  name: 'PostCard',
+interface Props {
+  post: Post
+  isMyPost?: boolean
+}
 
-  props: {
-    post: {
-      type: Object as PropType<Post>,
-      required: true,
-    },
-    isMyPost: { // 新增 prop 用于判断是否为“我的”帖子
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['delete'],
-  setup(props, { emit }) {
-    const isLiked = ref(false)
-    const likes = ref(props.post.likes)
-
-    const navigateToDetail = () => {
-      uni.navigateTo({
-        url: `/pages/community/post?id=${props.post.id}`,
-      })
-    }
-
-    const toggleLike = () => {
-      if (isLiked.value) {
-        likes.value -= 1
-        isLiked.value = false
-      }
-      else {
-        likes.value += 1
-        isLiked.value = true
-      }
-      // 如果需要通知父组件，可以取消注释以下行
-      // emit('update:likes', likes.value)
-    }
-
-    const deletePost = () => {
-      emit('delete', props.post.id)
-    }
-
-    return {
-      navigateToDetail,
-      isLiked,
-      likes,
-      toggleLike,
-      deletePost,
-      isMyPost: props.isMyPost,
-    }
-  },
+const props = withDefaults(defineProps<Props>(), {
+  isMyPost: false,
 })
+
+const emit = defineEmits<{
+  (e: 'delete', id: number): void
+}>()
+
+const isLiked = ref(false)
+const likes = ref(props.post.likes)
+
+function navigateToDetail() {
+  uni.navigateTo({
+    url: `/pages/community/post?id=${props.post.id}`, // 直接使用 props.post.id
+  })
+}
+
+function toggleLike() {
+  if (isLiked.value) {
+    likes.value -= 1
+    isLiked.value = false
+  }
+  else {
+    likes.value += 1
+    isLiked.value = true
+  }
+  // 如果需要通知父组件，可以取消注释以下行
+  // emit('update:likes', likes.value)
+}
+
+function deletePost() {
+  emit('delete', props.post.id)
+}
 </script>
 
 <template>
@@ -61,9 +48,9 @@ export default defineComponent({
     class="post-card mb-1 rounded-lg p-2 frosted-glass"
     @click="navigateToDetail"
   >
-    <!-- 删除按钮，仅在“我的”帖子中显示 -->
+    <!-- 删除按钮，直接使用 props.isMyPost -->
     <view
-      v-if="isMyPost"
+      v-if="props.isMyPost"
       class="absolute right-1 top-2 z-10 h-6 w-6 flex cursor-pointer items-center justify-center rounded-full bg-red-500 text-white"
       @click.stop="deletePost"
     >
@@ -111,7 +98,7 @@ export default defineComponent({
         </text>
       </view>
       <!-- 仅在“我的”帖子中显示状态 -->
-      <view v-if="isMyPost && post.status" class="text-xs">
+      <view v-if="props.isMyPost && post.status" class="text-xs">
         {{ post.status }}
       </view>
     </view>

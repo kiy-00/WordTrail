@@ -59,7 +59,7 @@ export default defineComponent({
     /**
      * 发布帖子
      */
-    const publishPost = () => {
+    const publishPost = async () => {
       if (!title.value.trim()) {
         uni.showToast({ title: '标题不能为空', icon: 'none' })
         return
@@ -94,17 +94,71 @@ export default defineComponent({
       // 防报错语句
       newPost.collects = 0 // 初始化收藏数为 0
 
-      uni.showToast({
-        title: '已发布，待审核',
-        icon: 'success',
-        duration: 2000,
-      })
+      try {
+        if (images.value.length > 0) {
+          for (const filePath of images.value) {
+            const uploadRes = await new Promise<UniApp.UploadFileSuccessCallbackResult>((resolve, reject) => {
+              uni.uploadFile({
+                url: '/forum/post/new',
+                filePath,
+                name: 'files',
+                header: {
+                  Authorization: uni.getStorageSync('token'),
+                },
+                formData: {
+                  title: title.value.trim(),
+                  content: content.value.trim(),
+                },
+                success: res => resolve(res),
+                fail: err => reject(err),
+              })
+            })
+            // 简单使用 uploadRes，避免未使用变量的警告
+            if (uploadRes.statusCode !== 200) {
+              throw new Error('上传失败')
+            }
+          }
+          uni.showToast({ title: '已发布', icon: 'success' })
+          // 重置表单
+          images.value = []
+          title.value = ''
+          content.value = ''
+          selectedTags.value = []
+        }
+        else {
+          // 无图片时保持原先 JSON 请求
+          const [reqErr, reqRes] = await uni.request({
+            url: '/forum/post/new',
+            method: 'POST',
+            header: {
+              Authorization: uni.getStorageSync('token'),
+            },
+            data: {
+              title: title.value.trim(),
+              content: content.value.trim(),
+            },
+          }) as unknown as [any, { data: any }]
 
-      // 重置表单
-      images.value = []
-      title.value = ''
-      content.value = ''
-      selectedTags.value = []
+          if (reqErr) {
+            throw reqErr
+          }
+          if (reqRes.data.code === 200) {
+            uni.showToast({ title: '已发布', icon: 'success' })
+            // 重置表单
+            images.value = []
+            title.value = ''
+            content.value = ''
+            selectedTags.value = []
+          }
+          else {
+            uni.showToast({ title: reqRes.data.msg || '发布失败', icon: 'none' })
+          }
+        }
+      }
+      catch (error) {
+        uni.showToast({ title: '发布失败', icon: 'none' })
+        console.error('发布失败:', error)
+      }
     }
 
     // 计算 justify-content 的类

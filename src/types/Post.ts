@@ -14,15 +14,16 @@ export interface Comment {
 }
 
 export interface Post {
-  id: number
+  id: number // 保持为 number 类型
   title: string
   content: string
   publishTime: string
   username: string
   userAvatar: string
-  images?: string[]
-  tags?: string[]
+  images: string[]
+  tags: string[]
   likes: number
+  commentCount?: number
   collects?: number
-  status?: '审核中' | '已发布' | '被举报' // 新增状态字段
+  status?: string
 }

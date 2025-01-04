@@ -1,44 +1,32 @@
 <!-- CommentsCard.vue -->
 <script lang="ts">
-import { defineComponent, reactive, ref } from 'vue'
-
-interface Comment {
-  id: number
-  username: string
-  avatar: string
-  content: string
-  publishTime: string
-  likes: number
-  dislikes: number
-  replies?: Comment[]
-  parentUsername?: string
-}
+import type { Comment } from '@/types/Comment'
+import type { PropType } from 'vue'
+import { computed, defineComponent, ref } from 'vue'
 
 export default defineComponent({
   name: 'CommentsCard',
   props: {
     comment: {
-      type: Object as () => Comment,
+      type: Object as PropType<Comment>,
+      required: true,
+    },
+    rootComment: {
+      type: Object as PropType<Comment>,
       required: true,
     },
     parentUsername: {
       type: String,
       default: '',
     },
-    rootComment: {
-      type: Object as () => Comment,
-      required: true,
-    },
   },
   setup(props) {
-    const rootComment = reactive({ ...props.rootComment }) // 深拷贝并转换为响应式对象
-    const likes = ref(props.comment.likes)
-    const dislikes = ref(props.comment.dislikes)
-    const isLiked = ref(false)
-    const isDisliked = ref(false)
     const isReplying = ref(false)
     const replyContent = ref('')
-    const replies = ref<Comment[]>(props.comment.replies || [])
+    const isLiked = ref(false)
+    const isDisliked = ref(false)
+    const likes = ref(props.comment.likes)
+    const dislikes = ref(props.comment.dislikes)
 
     const toggleLike = () => {
       if (isLiked.value) {
@@ -73,48 +61,38 @@ export default defineComponent({
     const toggleReply = () => {
       isReplying.value = !isReplying.value
     }
+
     const submitReply = () => {
-      if (replyContent.value.trim()) {
-        const newReply: Comment = {
-          id: Date.now(),
-          username: '新用户',
-          avatar: 'https://via.placeholder.com/30',
-          content: replyContent.value.trim(),
-          publishTime: new Date().toISOString().split('T')[0],
-          likes: 0,
-          dislikes: 0,
-          parentUsername: props.comment.username, // 被回复者的用户名
-        }
-        // 检查并初始化 rootComment.replies
-        if (!rootComment.replies) {
-          rootComment.replies = []
-        }
-        // 将新回复添加到主评论的 replies 数组中
-        rootComment.replies.push(newReply)
-        replyContent.value = ''
-        isReplying.value = false
-      }
+      if (!replyContent.value.trim())
+        return
+
+      // TODO: 实现发送回复的 API 调用
+      isReplying.value = false
+      replyContent.value = ''
     }
 
     return {
-      likes,
-      dislikes,
-      isLiked,
-      isDisliked,
       isReplying,
       replyContent,
-      replies,
+      isLiked,
+      isDisliked,
+      likes,
+      dislikes,
       toggleLike,
       toggleDislike,
       toggleReply,
       submitReply,
+      isReply: computed(() => props.comment.id !== props.rootComment.id),
     }
   },
 })
 </script>
 
 <template>
-  <view class="mb-4 flex flex-col rounded-lg p-4 shadow frosted-glass">
+  <view
+    class="mb-4 flex flex-col rounded-lg p-4 shadow frosted-glass"
+    :class="{ 'ml-8': isReply }"
+  >
     <!-- 用户信息和点赞/点踩 -->
     <view class="flex items-center justify-between">
       <!-- 用户信息 -->

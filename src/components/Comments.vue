@@ -1,18 +1,9 @@
 <!-- Comments.vue -->
 <script lang="ts">
+import type { Comment } from '@/types/Comment'
+import type { PropType } from 'vue'
 import { defineComponent } from 'vue'
 import CommentsCard from './CommentsCard.vue'
-
-interface Comment {
-  id: number
-  username: string
-  avatar: string
-  content: string
-  publishTime: string
-  likes: number
-  dislikes: number
-  replies?: Comment[]
-}
 
 export default defineComponent({
   name: 'Comments',
@@ -21,12 +12,9 @@ export default defineComponent({
   },
   props: {
     comment: {
-      type: Object as () => Comment,
+      type: Object as PropType<Comment>,
       required: true,
     },
-  },
-  setup() {
-    return {}
   },
 })
 </script>
@@ -37,8 +25,16 @@ export default defineComponent({
     <CommentsCard :comment="comment" :root-comment="comment" />
 
     <!-- 渲染主评论的所有回复 -->
-    <view v-for="reply in comment.replies" :key="reply.id">
-      <CommentsCard :comment="reply" :root-comment="comment" />
+    <view
+      v-for="reply in comment.replies"
+      :key="reply.id"
+      class="ml-8"
+    >
+      <CommentsCard
+        :comment="reply"
+        :root-comment="comment"
+        :parent-username="comment.username"
+      />
     </view>
   </view>
 </template>
