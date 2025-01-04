@@ -39,6 +39,11 @@ interface RegisterResponse {
   data: string
 }
 
+interface EmailCodeResponse {
+  msg: string
+  code: number
+}
+
 interface FailedResponse {
   error: string
 }
@@ -53,6 +58,9 @@ export default defineComponent({
     const account = ref<string>('') // 更新变量名为 account
     const password = ref<string>('')
     const confirmPassword = ref<string>('') // 新增，确认密码
+    const email = ref<string>('') // 邮箱输入框的值
+    const verificationCode = ref<string>('') // 验证码输入框的值
+    const sendingCode = ref<boolean>(false) // 是否正在发送验证码
     const agreePrivacy = ref<boolean>(false)
     const showPrivacyModal = ref<boolean>(false) // 新增，控制隐私协议弹框
 
@@ -199,6 +207,24 @@ export default defineComponent({
           }
         }
         else if (currentTab.value === 'register') {
+          if (!email.value) {
+            uni.showToast({
+              title: '请输入邮箱',
+              icon: 'none',
+              mask: true,
+            })
+            return
+          }
+
+          if (!verificationCode.value) {
+            uni.showToast({
+              title: '请输入验证码',
+              icon: 'none',
+              mask: true,
+            })
+            return
+          }
+
           // 注册逻辑
           const registerResponse = await uni.request({
             url: `/auth/register`,
@@ -207,7 +233,8 @@ export default defineComponent({
               code: 'test',
               password: password.value,
               username: account.value,
-              email: account.value,
+              email: email.value,
+              emailCode: verificationCode.value,
               phoneNumber: null,
               uuid: 'test',
             },
@@ -218,7 +245,7 @@ export default defineComponent({
           // eslint-disable-next-line no-console
           console.log('注册后端响应数据:', registerData) // 日志记录
 
-          if (registerResponse.statusCode === 201) {
+          if (registerResponse.statusCode === 200) {
             uni.showToast({
               title: '注册成功',
               icon: 'success',
@@ -263,6 +290,58 @@ export default defineComponent({
       console.log('隐私协议状态:', agreePrivacy.value) // 添加日志便于调试
     }
 
+    // 发送验证码的函数
+    const sendVerificationCode = async () => {
+      if (!email.value) {
+        uni.showToast({
+          title: '请输入邮箱',
+          icon: 'none',
+          mask: true,
+        })
+        return
+      }
+
+      try {
+        sendingCode.value = true
+        const response = await uni.request({
+          url: '/system/user/emailCode',
+          method: 'POST',
+          header: {
+            'Content-Type': 'application/x-www-form-urlencoded', // 设置请求头
+          },
+          data: `email=${encodeURIComponent(email.value)}&businessType=register`, // 将请求体编码为URL格式
+        })
+
+        const emailCodeData = response.data as EmailCodeResponse
+
+        if (response.statusCode === 200 && emailCodeData.code === 200) {
+          uni.showToast({
+            title: '验证码已发送，请检查邮箱',
+            icon: 'success',
+            mask: true,
+          })
+        }
+        else {
+          uni.showToast({
+            title: emailCodeData.msg || '验证码发送失败',
+            icon: 'none',
+            mask: true,
+          })
+        }
+      }
+      catch (error) {
+        console.error('验证码发送失败:', error)
+        uni.showToast({
+          title: '网络问题，请稍后重试',
+          icon: 'none',
+          mask: true,
+        })
+      }
+      finally {
+        sendingCode.value = false
+      }
+    }
+
     return {
       currentTab, // 新增
       loginMethod,
@@ -276,6 +355,10 @@ export default defineComponent({
       closePrivacyModal, // 新增
       handleAction, // 修改为通用方法
       handlePrivacyChange,
+      email,
+      verificationCode,
+      sendingCode,
+      sendVerificationCode,
     }
   },
 })
@@ -339,6 +422,30 @@ export default defineComponent({
             :placeholder="loginMethod === 'email' ? '请输入用户名' : loginMethod === 'phone' ? '请输入电话号码' : '请输入ID'"
             class="mb-5 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
           >
+
+          <!-- 新增邮箱输入框 -->
+          <input
+            v-if="currentTab === 'register'"
+            v-model="email"
+            placeholder="请输入邮箱"
+            class="mb-5 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
+          >
+
+          <!-- 新增验证码输入框和发送按钮 -->
+          <view v-if="currentTab === 'register'" class="flex items-center space-x-2">
+            <input
+              v-model="verificationCode"
+              placeholder="请输入验证码"
+              class="flex-1 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
+            >
+            <button
+              :disabled="sendingCode"
+              class="rounded bg-yellow px-4 py-2 text-white transition-colors disabled:bg-gray-400 hover:bg-yellow-600"
+              @click="sendVerificationCode"
+            >
+              {{ sendingCode ? '发送中...' : '发送验证码' }}
+            </button>
+          </view>
 
           <input
             v-model="password"
