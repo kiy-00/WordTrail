@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { LexiconStatus } from '@/components/LexiconBox.vue'
-import type { Lexicon, WordbooksResponse } from '@/types/Lexicon'
+import type { Lexicon, SystemWordbook, WordbooksResponse } from '@/types/Lexicon'
 import { API_BASE_URL } from '@/config/api'
 import { LexiconAPI } from '@/types/Lexicon'
 import { LanguageStorage } from '@/utils/languageStorage'
@@ -115,7 +115,7 @@ export default defineComponent({
           const data = response.data as WordbooksResponse
 
           // Convert system wordbooks to lexicons
-          const lexicons: Lexicon[] = data.content.map(book => ({
+          const lexicons: Lexicon[] = data.content.map((book: SystemWordbook) => ({
             id: book.id,
             bookName: book.bookName,
             description: book.description,
