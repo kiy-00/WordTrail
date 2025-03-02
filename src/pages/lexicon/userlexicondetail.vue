@@ -1,3 +1,4 @@
+<script lang="ts">
 import { API_BASE_URL } from '@/config/api'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
