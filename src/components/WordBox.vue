@@ -9,16 +9,30 @@ interface Phonetic {
 
 interface PartOfSpeech {
   type: string
-  definitions: string
+  definitions: string[] // 修改为 string[] 而不是 string
   gender?: string | null
+  examples?: Array<{
+    sentence: string
+    translation: string
+  }>
+  plural?: string
 }
 
+// 修改 WordData 接口以适配后端返回的实际数据
 interface WordData {
-  id: string
+  _id?: { // 添加 _id 替代 id
+    timestamp: number
+    date: string
+  }
+  id?: string // id 保持可选
   word: string
   language: string
+  difficulty?: number
+  synonyms?: string[]
+  antonyms?: string[]
   partOfSpeechList: PartOfSpeech[]
   phonetics: Phonetic[]
+  tags?: string[]
 }
 
 export default defineComponent({
@@ -29,12 +43,22 @@ export default defineComponent({
       required: true,
     },
   },
+  computed: {
+    // 添加计算属性来获取适当的ID
+    wordId(): string {
+      if (this.wordData.id)
+        return this.wordData.id
+      if (this.wordData._id?.timestamp)
+        return this.wordData._id.timestamp.toString()
+      return ''
+    },
+  },
   methods: {
     handleClick() {
       this.$emit('click')
     },
     // Helper method to limit array items
-    limitItems<T>(items: T[] | null, limit: number = 3): T[] {
+    limitItems<T>(items: T[] | undefined | null, limit: number = 3): T[] {
       if (!items)
         return []
       return items.slice(0, limit)
@@ -74,7 +98,13 @@ export default defineComponent({
             <span v-if="pos.gender" class="text-xs text-gray-500">({{ pos.gender }})</span>
           </view>
           <view class="mt-1 text-gray-600">
-            {{ pos.definitions }}
+            <!-- 处理多个定义的情况 -->
+            <view v-if="Array.isArray(pos.definitions) && pos.definitions.length > 0">
+              {{ pos.definitions.join('; ') }}
+            </view>
+            <view v-else>
+              {{ pos.definitions }}
+            </view>
           </view>
         </view>
       </view>

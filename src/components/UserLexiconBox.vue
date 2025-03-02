@@ -69,7 +69,7 @@ export default defineComponent({
     },
     viewDetail() {
       uni.navigateTo({
-        url: `/pages/lexicon/lexicondetail?id=${this.id}&type=user`,
+        url: `/pages/lexicon/userlexicondetail?id=${this.id}&type=user`,
       })
     },
   },

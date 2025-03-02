@@ -39,6 +39,7 @@
     {
       "path": "pages/lexicon/userlexicondetail",
       "type": "page",
+      "layout": "default",
       "style": {}
     },
     {

@@ -2,14 +2,113 @@
 import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
+interface Word {
+  _id: {
+    timestamp: number
+    date: string
+  }
+  word: string
+  language: string
+  difficulty: number
+  synonyms: string[]
+  antonyms: string[]
+  partOfSpeechList: Array<{
+    type: string
+    definitions: string[]
+    gender?: string
+    plural?: string
+    examples?: Array<{
+      sentence: string
+      translation: string
+    }>
+  }>
+  phonetics: Array<{
+    ipa: string
+    audio: string
+  }>
+  tags: string[]
+}
+
+interface SystemWordbook {
+  id: string
+  bookName: string
+  description: string
+  language: string
+  createUser: string
+  words: string[] // 这里存储的是单词ID列表
+}
+
 export default defineComponent({
   name: 'LexiconDetail',
   setup() {
     const id = ref('')
-    const type = ref<'system' | 'user'>('system')
-    const lexiconDetail = ref<any>(null)
+    const lexiconDetail = ref<SystemWordbook | null>(null)
     const loading = ref(true)
+    const words = ref<Word[]>([])
+    const loadingWords = ref(false)
+    const currentPage = ref(0)
+    const pageSize = ref(10)
+    const totalWords = ref(0)
+    const hasMoreWords = ref(true)
 
+    // 先定义 loadWords 函数
+    const loadWords = async () => {
+      // 添加空值检查，确保 lexiconDetail.value 不为 null
+      if (!lexiconDetail.value || !lexiconDetail.value.words.length)
+        return
+
+      try {
+        loadingWords.value = true
+        const token = uni.getStorageSync('token')
+
+        const startIndex = currentPage.value * pageSize.value
+        const endIndex = Math.min(startIndex + pageSize.value, lexiconDetail.value.words.length)
+        const wordIds = lexiconDetail.value.words.slice(startIndex, endIndex)
+
+        // 如果已经加载了所有单词
+        if (startIndex >= lexiconDetail.value.words.length) {
+          hasMoreWords.value = false
+          return
+        }
+
+        // 并行请求多个单词的详细信息
+        const wordPromises = wordIds.map(wordId =>
+          uni.request({
+            url: `${API_BASE_URL}/api/v1/words/${wordId}`,
+            method: 'GET',
+            header: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }),
+        )
+
+        const responses = await Promise.all(wordPromises)
+
+        const newWords = responses
+          .filter(response => response.statusCode === 200 && response.data)
+          .map(response => response.data as Word)
+
+        words.value = [...words.value, ...newWords]
+
+        // 更新页码和检查是否还有更多
+        currentPage.value++
+        hasMoreWords.value = words.value.length < lexiconDetail.value.words.length
+      }
+      catch (error) {
+        uni.showToast({
+          title: '获取单词信息失败',
+          icon: 'none',
+          duration: 2000,
+        })
+        console.error('加载单词失败:', error)
+      }
+      finally {
+        loadingWords.value = false
+      }
+    }
+
+    // 之后定义使用 loadWords 的函数
     const fetchLexiconDetail = async () => {
       try {
         const token = uni.getStorageSync('token')
@@ -25,13 +124,8 @@ export default defineComponent({
 
         loading.value = true
 
-        // 基于词书类型选择不同的API端点
-        const apiUrl = type.value === 'system'
-          ? `${API_BASE_URL}/api/v1/system-wordbooks/${id.value}`
-          : `${API_BASE_URL}/api/v1/user-wordbooks/${id.value}`
-
         const response = await uni.request({
-          url: apiUrl,
+          url: `${API_BASE_URL}/api/v1/system-wordbooks/${id.value}`,
           method: 'GET',
           header: {
             'Authorization': `Bearer ${token}`,
@@ -40,8 +134,14 @@ export default defineComponent({
         })
 
         if (response.statusCode === 200) {
-          lexiconDetail.value = response.data
+          lexiconDetail.value = response.data as SystemWordbook
           console.error('词书详情:', lexiconDetail.value)
+          // 添加空值检查
+          if (lexiconDetail.value) {
+            totalWords.value = lexiconDetail.value.words.length
+            // 初始加载词书的前10个单词
+            await loadWords()
+          }
         }
         else if (response.statusCode === 401 || response.statusCode === 403) {
           uni.showToast({
@@ -68,22 +168,13 @@ export default defineComponent({
       }
     }
 
-    const formatDate = (dateString: string) => {
-      try {
-        const date = new Date(dateString)
-        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
-      }
-      catch {
-        return '未知日期'
-      }
-    }
-
     const handleBack = () => {
       uni.navigateBack()
     }
 
     // 选定该词书
     const selectLexicon = async () => {
+      // 添加空值检查
       if (!lexiconDetail.value)
         return
 
@@ -110,11 +201,14 @@ export default defineComponent({
                   duration: 2000,
                 })
 
-                // 保存到本地存储
-                uni.setStorageSync('currentLexicon', {
-                  id: lexiconDetail.value.id,
-                  name: lexiconDetail.value.bookName,
-                })
+                // 添加空值检查
+                if (lexiconDetail.value) {
+                  // 保存到本地存储
+                  uni.setStorageSync('currentLexicon', {
+                    id: lexiconDetail.value.id,
+                    name: lexiconDetail.value.bookName,
+                  })
+                }
 
                 setTimeout(() => {
                   uni.navigateBack()
@@ -137,6 +231,20 @@ export default defineComponent({
       })
     }
 
+    // 打开单词详情
+    const openWordDetail = (word: Word) => {
+      uni.navigateTo({
+        url: `/pages/word/worddetail?id=${word._id.timestamp}`,
+      })
+    }
+
+    // 滚动到底部时加载更多单词
+    const onScrollToLower = () => {
+      if (!loadingWords.value && hasMoreWords.value) {
+        loadWords()
+      }
+    }
+
     onMounted(() => {
       const pages = getCurrentPages()
       const currentPage = pages[pages.length - 1] as any
@@ -144,19 +252,23 @@ export default defineComponent({
 
       if (options) {
         id.value = options.id || ''
-        type.value = (options.type as 'system' | 'user') || 'system'
         fetchLexiconDetail()
       }
     })
 
     return {
       id,
-      type,
       lexiconDetail,
       loading,
-      formatDate,
+      words,
+      loadingWords,
+      hasMoreWords,
+      totalWords,
       handleBack,
       selectLexicon,
+      openWordDetail,
+      onScrollToLower,
+      loadWords, // 添加这一行，暴露 loadWords 函数给模板使用
     }
   },
 })
@@ -165,140 +277,139 @@ export default defineComponent({
 <template>
   <BackButton @back="handleBack" />
 
-  <view class="p-4">
-    <!-- 加载状态 -->
-    <view v-if="loading" class="h-80 flex items-center justify-center">
-      <view class="i-tabler:loader-2 animate-spin text-4xl text-yellow" />
-    </view>
-
-    <!-- 词书详情 -->
-    <template v-else-if="lexiconDetail">
-      <view class="mb-6 flex flex-col items-center justify-center">
-        <view class="mb-3 h-32 w-32 flex items-center justify-center rounded-lg bg-yellow-50">
-          <view class="i-carbon:book text-6xl text-yellow" />
-        </view>
-        <view class="text-2xl text-yellow font-bold">
-          {{ lexiconDetail.bookName }}
-        </view>
+  <scroll-view
+    class="h-screen"
+    :scroll-y="true"
+    @scrolltolower="onScrollToLower"
+  >
+    <view class="p-4">
+      <!-- 加载状态 -->
+      <view v-if="loading" class="h-80 flex items-center justify-center">
+        <view class="i-tabler:loader-2 animate-spin text-4xl text-yellow" />
       </view>
 
-      <!-- 基本信息 -->
-      <view class="mb-6 rounded-lg bg-gray-50 p-4">
-        <view class="mb-2 text-lg text-gray-700 font-bold">
-          基本信息
+      <!-- 词书详情 -->
+      <template v-else-if="lexiconDetail">
+        <!-- 词书标题和图标 -->
+        <view class="mb-6 flex flex-col items-center justify-center">
+          <view class="mb-3 h-32 w-32 flex items-center justify-center rounded-lg bg-yellow-50">
+            <view class="i-carbon:book text-6xl text-yellow" />
+          </view>
+          <view class="text-2xl text-yellow font-bold">
+            {{ lexiconDetail.bookName }}
+          </view>
         </view>
-        <view class="mb-2">
-          <text class="text-gray-600 font-bold">
-            描述：
-          </text>
-          <text class="text-gray-700">
-            {{ lexiconDetail.description }}
-          </text>
-        </view>
-        <view class="mb-2">
-          <text class="text-gray-600 font-bold">
-            语言：
-          </text>
-          <text class="text-gray-700">
-            {{ lexiconDetail.language }}
-          </text>
-        </view>
-        <view v-if="lexiconDetail.wordCount !== undefined" class="mb-2">
-          <text class="text-gray-600 font-bold">
-            单词数量：
-          </text>
-          <text class="text-gray-700">
-            {{ lexiconDetail.wordCount || lexiconDetail.words?.length || '未知' }}
-          </text>
-        </view>
-      </view>
 
-      <!-- 用户词书特有信息 -->
-      <view v-if="type === 'user'" class="mb-6 rounded-lg bg-gray-50 p-4">
-        <view class="mb-2 text-lg text-gray-700 font-bold">
-          创建信息
+        <!-- 基本信息 -->
+        <view class="mb-6 rounded-lg bg-gray-50 p-4 shadow-sm">
+          <view class="mb-2 text-lg text-yellow font-bold">
+            基本信息
+          </view>
+          <view class="mb-2">
+            <text class="text-gray-600 font-bold">
+              描述：
+            </text>
+            <text class="text-gray-700">
+              {{ lexiconDetail.description }}
+            </text>
+          </view>
+          <view class="mb-2">
+            <text class="text-gray-600 font-bold">
+              语言：
+            </text>
+            <text class="text-gray-700">
+              {{ lexiconDetail.language }}
+            </text>
+          </view>
+          <view class="mb-2">
+            <text class="text-gray-600 font-bold">
+              创建者：
+            </text>
+            <text class="text-gray-700">
+              {{ lexiconDetail.createUser }}
+            </text>
+          </view>
+          <view class="mb-2">
+            <text class="text-gray-600 font-bold">
+              单词数量：
+            </text>
+            <text class="text-gray-700">
+              {{ totalWords }}
+            </text>
+          </view>
         </view>
-        <view class="mb-2">
-          <text class="text-gray-600 font-bold">
-            创建者：
-          </text>
-          <text class="text-gray-700">
-            {{ lexiconDetail.createUser || '未知' }}
-          </text>
-        </view>
-        <view class="mb-2">
-          <text class="text-gray-600 font-bold">
-            创建时间：
-          </text>
-          <text class="text-gray-700">
-            {{ lexiconDetail.createTime ? formatDate(lexiconDetail.createTime) : '未知' }}
-          </text>
-        </view>
-        <view class="mb-2">
-          <text class="text-gray-600 font-bold">
-            状态：
-          </text>
-          <text
-            class="rounded-full px-2 py-0.5 text-xs"
-            :class="{
-              'bg-green-100 text-green-700': lexiconDetail.status === 'approved',
-              'bg-yellow-100 text-yellow-700': lexiconDetail.status === 'pending',
-              'bg-red-100 text-red-700': lexiconDetail.status === 'rejected',
-            }"
-          >
-            {{ lexiconDetail.status === 'approved' ? '已审核'
-              : lexiconDetail.status === 'pending' ? '审核中' : '已拒绝' }}
-          </text>
-          <text
-            class="ml-2 rounded-full px-2 py-0.5 text-xs"
-            :class="lexiconDetail.isPublic ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'"
-          >
-            {{ lexiconDetail.isPublic ? '公开' : '私有' }}
-          </text>
-        </view>
-      </view>
 
-      <!-- 单词预览 -->
-      <view class="mb-6 rounded-lg bg-gray-50 p-4">
-        <view class="mb-2 text-lg text-gray-700 font-bold">
-          单词预览 (最多显示5个)
-        </view>
-        <template v-if="lexiconDetail.words && lexiconDetail.words.length > 0">
-          <view
-            v-for="(word, index) in lexiconDetail.words.slice(0, 5)"
-            :key="index"
-            class="mb-2 border-b border-gray-100 pb-2"
-          >
-            <view class="font-bold">
-              {{ word.spelling }}
+        <!-- 单词列表 -->
+        <view class="mb-6">
+          <view class="mb-3 flex items-center justify-between">
+            <text class="text-lg text-yellow font-bold">
+              单词列表
+            </text>
+            <text class="text-sm text-gray-500">
+              {{ words.length }}/{{ totalWords }}
+            </text>
+          </view>
+
+          <!-- 单词卡片 -->
+          <view v-if="words.length > 0">
+            <WordBox
+              v-for="word in words"
+              :key="word._id.timestamp"
+              :word-data="word"
+              class="mb-4"
+              @click="openWordDetail(word)"
+            />
+
+            <!-- 加载更多指示器 -->
+            <view v-if="loadingWords" class="my-4 flex justify-center">
+              <view class="i-tabler:loader-2 animate-spin text-2xl text-yellow" />
             </view>
-            <view class="text-sm text-gray-600">
-              {{ word.translation }}
+
+            <!-- 加载更多按钮 -->
+            <view v-else-if="hasMoreWords" class="my-4 flex justify-center">
+              <button
+                class="rounded-full bg-blue-50 px-4 py-2 text-sm text-blue-600"
+                @click="loadWords"
+              >
+                加载更多
+              </button>
+            </view>
+
+            <!-- 已加载全部提示 -->
+            <view v-else class="my-4 text-center text-sm text-gray-500">
+              已加载全部单词
             </view>
           </view>
-        </template>
-        <view v-else class="py-2 text-center text-gray-500">
-          暂无单词数据
+
+          <!-- 无单词状态 -->
+          <view v-else-if="!loadingWords" class="py-10 text-center text-gray-500">
+            词书中暂无单词
+          </view>
+
+          <!-- 初始加载状态 -->
+          <view v-else class="h-40 flex items-center justify-center">
+            <view class="i-tabler:loader-2 animate-spin text-2xl text-yellow" />
+          </view>
         </view>
+
+        <!-- 选择按钮 -->
+        <button
+          class="mb-8 w-full rounded-lg bg-yellow py-3 text-white font-bold"
+          @click="selectLexicon"
+        >
+          选择此词书
+        </button>
+      </template>
+
+      <!-- 无数据状态 -->
+      <view v-else class="h-80 flex flex-col items-center justify-center">
+        <view class="i-carbon:document-error mb-2 text-4xl text-gray-400" />
+        <text class="text-gray-500">
+          找不到词书信息
+        </text>
       </view>
-
-      <!-- 选择按钮 -->
-      <button
-        class="w-full rounded-lg bg-yellow py-3 text-white font-bold"
-        @click="selectLexicon"
-      >
-        选择此词书
-      </button>
-    </template>
-
-    <!-- 无数据状态 -->
-    <view v-else class="h-80 flex flex-col items-center justify-center">
-      <view class="i-carbon:document-error mb-2 text-4xl text-gray-400" />
-      <text class="text-gray-500">
-        找不到词书信息
-      </text>
     </view>
-  </view>
+  </scroll-view>
 </template>
 
 <route lang="json">
