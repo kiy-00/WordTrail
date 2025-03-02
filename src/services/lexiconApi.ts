@@ -30,7 +30,9 @@ export default {
         Authorization: `Bearer ${uni.getStorageSync('token')}`,
       },
     })
-    return response.data
+    if (typeof response.data === 'object' && response.data !== null)
+      return response.data as WordbookDetail
+    throw new Error('Invalid response data')
   },
 
   getWord: async (id: string): Promise<WordDetail> => {
@@ -41,6 +43,8 @@ export default {
         Authorization: `Bearer ${uni.getStorageSync('token')}`,
       },
     })
-    return response.data
+    if (typeof response.data === 'object' && response.data !== null)
+      return response.data as WordDetail
+    throw new Error('Invalid response data')
   },
 }

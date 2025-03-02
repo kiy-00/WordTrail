@@ -27,6 +27,35 @@ export interface LexiconError {
   error: string
 }
 
+export interface SystemWordbook {
+  id: string
+  bookName: string
+  description: string
+  language: string
+  createUser: string
+  words: string[]
+}
+
+export interface PageableSort {
+  empty: boolean
+  sorted: boolean
+  unsorted: boolean
+}
+
+export interface WordbooksResponse {
+  content: SystemWordbook[]
+  pageable: {
+    pageNumber: number
+    pageSize: number
+    sort: PageableSort
+  }
+  totalPages: number
+  totalElements: number
+  last: boolean
+  first: boolean
+  empty: boolean
+}
+
 export const LexiconAPI = {
   // 获取用户词书信息
   getUserLexicons: async () => {
