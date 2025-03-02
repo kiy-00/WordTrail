@@ -24,6 +24,7 @@ export default defineComponent({
     const pageSize = ref(10)
     const totalPages = ref(1)
     const isLastPage = ref(false)
+    const activeType = ref<'system' | 'user'>('system')
 
     // 添加语言显示相关代码
     const languages = [
@@ -94,57 +95,87 @@ export default defineComponent({
           return
         }
 
-        const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/system-wordbooks`,
-          method: 'GET',
-          header: {
-            'Authorization': `Bearer ${token}`, // 添加 token 到请求头
-            'Content-Type': 'application/json',
-          },
-          data: {
-            page: currentPage.value,
-            size: pageSize.value,
-            // Add any filters if needed
-            ...(selectedLanguage.value.name !== 'unknown' && {
-              language: selectedLanguage.value.name,
-            }),
-          },
-        })
-
-        if (response.statusCode === 200) {
-          const data = response.data as WordbooksResponse
-
-          // Convert system wordbooks to lexicons
-          const lexicons: Lexicon[] = data.content.map((book: SystemWordbook) => ({
-            id: book.id,
-            bookName: book.bookName,
-            description: book.description,
-            language: book.language,
-            wordCount: book.words.length, // Changed from wordsCount to wordCount
-            createUser: book.createUser,
-            words: book.words,
-          }))
-
-          if (currentPage.value === 0)
-            allLexicons.value = lexicons
-          else
-            allLexicons.value = [...allLexicons.value, ...lexicons]
-
-          totalPages.value = data.totalPages
-          isLastPage.value = data.last
-          filterLexicons()
-        }
-        else if (response.statusCode === 401 || response.statusCode === 403) {
-          // 如果token过期或无效，重定向到登录页
-          uni.showToast({
-            title: '请重新登录',
-            icon: 'none',
-            duration: 2000,
+        if (activeType.value === 'system') {
+          const response = await uni.request({
+            url: `${API_BASE_URL}/api/v1/system-wordbooks/by-language/${selectedLanguage.value.name}`,
+            method: 'GET',
+            header: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
           })
-          uni.redirectTo({ url: '/pages/user/login' })
+          if (response.statusCode === 200) {
+            const data = response.data as SystemWordbook[]
+            console.error('System wordbooks:', data)
+            const lexicons: Lexicon[] = data.map(book => ({
+              id: book.id,
+              bookName: book.bookName,
+              description: book.description,
+              language: book.language,
+              wordCount: 0, // 可根据需要调整
+              createUser: book.createUser,
+              words: [],
+            }))
+            allLexicons.value = [...allLexicons.value, ...lexicons]
+            filterLexicons()
+          }
+          else {
+            throw new Error('Failed to fetch system wordbooks')
+          }
         }
         else {
-          throw new Error('Failed to fetch lexicons')
+          const response = await uni.request({
+            url: `${API_BASE_URL}/api/v1/system-wordbooks`,
+            method: 'GET',
+            header: {
+              'Authorization': `Bearer ${token}`, // 添加 token 到请求头
+              'Content-Type': 'application/json',
+            },
+            data: {
+              page: currentPage.value,
+              size: pageSize.value,
+              // Add any filters if needed
+              ...(selectedLanguage.value.name !== 'unknown' && {
+                language: selectedLanguage.value.name,
+              }),
+            },
+          })
+
+          if (response.statusCode === 200) {
+            const data = response.data as WordbooksResponse
+
+            // Convert system wordbooks to lexicons
+            const lexicons: Lexicon[] = data.content.map((book: SystemWordbook) => ({
+              id: book.id,
+              bookName: book.bookName,
+              description: book.description,
+              language: book.language,
+              wordCount: book.words.length, // Changed from wordsCount to wordCount
+              createUser: book.createUser,
+              words: book.words,
+            }))
+
+            if (currentPage.value === 0)
+              allLexicons.value = lexicons
+            else
+              allLexicons.value = [...allLexicons.value, ...lexicons]
+
+            totalPages.value = data.totalPages
+            isLastPage.value = data.last
+            filterLexicons()
+          }
+          else if (response.statusCode === 401 || response.statusCode === 403) {
+            // 如果token过期或无效，重定向到登录页
+            uni.showToast({
+              title: '请重新登录',
+              icon: 'none',
+              duration: 2000,
+            })
+            uni.redirectTo({ url: '/pages/user/login' })
+          }
+          else {
+            throw new Error('Failed to fetch lexicons')
+          }
         }
       }
       catch (error) {
@@ -257,6 +288,13 @@ export default defineComponent({
       }
     }
 
+    const handleTypeChange = (type: 'system' | 'user') => {
+      activeType.value = type
+      currentPage.value = 0
+      allLexicons.value = []
+      fetchLexicons()
+    }
+
     // 修正当前语言的获取逻辑
     onMounted(() => {
       // 确保从存储中获取正确的语言
@@ -295,6 +333,8 @@ export default defineComponent({
       isLastPage,
       totalPages,
       currentPage,
+      activeType,
+      handleTypeChange,
     }
   },
 })
@@ -397,6 +437,24 @@ export default defineComponent({
     </view>
   </view>
   -->
+
+  <!-- 词书类型切换栏 -->
+  <view class="flex border-b frosted-glass">
+    <view
+      class="flex-1 py-3 text-center"
+      :class="{ 'border-b-2 border-yellow text-yellow': activeType === 'system' }"
+      @click="handleTypeChange('system')"
+    >
+      系统词书
+    </view>
+    <view
+      class="flex-1 py-3 text-center"
+      :class="{ 'border-b-2 border-yellow text-yellow': activeType === 'user' }"
+      @click="handleTypeChange('user')"
+    >
+      用户创建词书
+    </view>
+  </view>
 
   <!-- 词书列表 -->
   <scroll-view

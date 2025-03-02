@@ -1,4 +1,5 @@
 <script lang="ts">
+import { API_BASE_URL } from '@/config/api'
 import { defineComponent, ref } from 'vue'
 
 // interface LoginResponse {
@@ -48,6 +49,11 @@ interface FailedResponse {
   error: string
 }
 
+interface AuthLoginResponse {
+  token: string
+  // 若后端返回其它字段，也可在此处继续扩展
+}
+
 export default defineComponent({
   name: 'Login',
   setup() {
@@ -95,39 +101,40 @@ export default defineComponent({
 
       try {
         if (currentTab.value === 'login') {
-          // 模拟登录成功的数据
-          const mockToken = `mock_token_${Date.now()}`
-          const mockUserInfo = {
-            userId: 1,
-            username: account.value,
-            email: 'mock@example.com',
-            phone: '1234567890',
-            avatarUrl: null,
-            status: 1,
-            createTime: new Date().toISOString(),
-            updateTime: new Date().toISOString(),
-          }
-
-          // 存储模拟数据
-          uni.setStorageSync('token', mockToken)
-          uni.setStorageSync('userInfo', mockUserInfo)
-
-          // 验证存储是否成功
-          const storedToken = uni.getStorageSync('token')
-          const storedUser = uni.getStorageSync('userInfo')
-
-          if (storedToken && storedUser) {
-            uni.showToast({
-              title: '登录成功',
-              icon: 'success',
-              mask: true,
+          try {
+            const response = await uni.request({
+              url: `${API_BASE_URL}/api/v1/auth/login`,
+              method: 'POST',
+              header: {
+                'Content-Type': 'application/json',
+              },
+              data: {
+                username: account.value,
+                password: password.value,
+              },
             })
-
-            uni.redirectTo({ url: '/pages/home/home' })
+            const responseData = response.data as AuthLoginResponse
+            if (response.statusCode === 200 && responseData.token) {
+              uni.setStorageSync('token', responseData.token)
+              uni.showToast({
+                title: '登录成功',
+                icon: 'success',
+                mask: true,
+              })
+              uni.redirectTo({ url: '/pages/home/home' })
+            }
+            else {
+              uni.showToast({
+                title: '登录失败，请检查用户名或密码',
+                icon: 'none',
+                mask: true,
+              })
+            }
           }
-          else {
+          catch (error) {
+            console.error('登录发生错误:', error)
             uni.showToast({
-              title: '登录信息存储失败',
+              title: '网络请求错误',
               icon: 'none',
               mask: true,
             })
