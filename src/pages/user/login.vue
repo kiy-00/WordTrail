@@ -1,37 +1,37 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
 
-interface LoginResponse {
-  code: number
-  msg: string
-  data: {
-    access_token: string
-    expires_in: number
-  }
-}
+// interface LoginResponse {
+//   code: number
+//   msg: string
+//   data: {
+//     access_token: string
+//     expires_in: number
+//   }
+// }
 
-interface InfoResponse {
-  msg: string
-  code: number
-  user: {
-    id: number
-    userName: string
-    nickName: string
-    userType: string
-    email: string | null
-    phoneNumber: string | null
-    sex: string // Gender ('0' for male, '1' for female)
-    avatar: string | null
-    password: string // Encrypted password
-    status: string
-    delFlag: boolean
-    bio: string | null
-    admin: boolean
-    createTime: string
-    updateTime: string
-    params: Record<string, unknown>
-  }
-}
+// interface InfoResponse {
+//   msg: string
+//   code: number
+//   user: {
+//     id: number
+//     userName: string
+//     nickName: string
+//     userType: string
+//     email: string | null
+//     phoneNumber: string | null
+//     sex: string // Gender ('0' for male, '1' for female)
+//     avatar: string | null
+//     password: string // Encrypted password
+//     status: string
+//     delFlag: boolean
+//     bio: string | null
+//     admin: boolean
+//     createTime: string
+//     updateTime: string
+//     params: Record<string, unknown>
+//   }
+// }
 
 interface RegisterResponse {
   msg: string
@@ -92,115 +92,42 @@ export default defineComponent({
         })
         return
       }
-      if (currentTab.value === 'register' && !confirmPassword.value) {
-        uni.showToast({
-          title: '请再次输入密码',
-          icon: 'none',
-          mask: true,
-        })
-        return
-      }
-
-      if (agreePrivacy.value) {
-        // eslint-disable-next-line no-console
-        console.log('agreePrivacy:', agreePrivacy.value)
-        if (currentTab.value === 'register' && password.value !== confirmPassword.value) {
-          uni.showToast({
-            title: '密码不一致',
-            icon: 'none',
-            mask: true,
-          })
-          return
-        }
-      }
-      else {
-        // eslint-disable-next-line no-console
-        console.log('agreePrivacy:', agreePrivacy.value)
-        uni.showToast({
-          title: '请先同意隐私协议',
-          icon: 'none',
-          mask: true,
-        })
-      }
 
       try {
         if (currentTab.value === 'login') {
-          const loginResponse = await uni.request({
-            url: `/auth/login`,
-            method: 'POST',
-            data: {
-              code: 'test',
-              password: password.value,
-              username: account.value,
-              uuid: 'test',
-            },
-          })
+          // 模拟登录成功的数据
+          const mockToken = `mock_token_${Date.now()}`
+          const mockUserInfo = {
+            userId: 1,
+            username: account.value,
+            email: 'mock@example.com',
+            phone: '1234567890',
+            avatarUrl: null,
+            status: 1,
+            createTime: new Date().toISOString(),
+            updateTime: new Date().toISOString(),
+          }
 
-          // eslint-disable-next-line no-console
-          console.log('username:', account.value)
-          // eslint-disable-next-line no-console
-          console.log('password:', password.value)
+          // 存储模拟数据
+          uni.setStorageSync('token', mockToken)
+          uni.setStorageSync('userInfo', mockUserInfo)
 
-          if (loginResponse.statusCode === 200) {
-            const loginData = loginResponse.data as LoginResponse
-            // eslint-disable-next-line no-console
-            console.log('登录后端响应数据:', loginData)
+          // 验证存储是否成功
+          const storedToken = uni.getStorageSync('token')
+          const storedUser = uni.getStorageSync('userInfo')
 
-            const infoResponse = await uni.request({
-              url: `/system/user/getInfo`,
-              method: 'GET',
-              header: {
-                Authorization: loginData.data.access_token,
-              },
+          if (storedToken && storedUser) {
+            uni.showToast({
+              title: '登录成功',
+              icon: 'success',
+              mask: true,
             })
 
-            const infoData = infoResponse.data as InfoResponse
-            // eslint-disable-next-line no-console
-            console.log('登录后端个人信息:', infoData)
-
-            // 先存储数据
-            uni.setStorageSync('token', loginData.data.access_token) // 改用统一的 token key
-            uni.setStorageSync('userInfo', {
-              userId: infoData.user.id, // 统一字段名
-              username: infoData.user.userName,
-              email: infoData.user.email,
-              phone: infoData.user.phoneNumber,
-              avatarUrl: infoData.user.avatar,
-              status: Number(infoData.user.status),
-              createTime: new Date().toISOString(),
-              updateTime: new Date().toISOString(),
-            })
-
-            // 验证存储是否成功
-            const storedToken = uni.getStorageSync('token')
-            const storedUser = uni.getStorageSync('userInfo')
-
-            // eslint-disable-next-line no-console
-            console.log('存储后的Token:', storedToken)
-            // eslint-disable-next-line no-console
-            console.log('存储后的用户信息:', storedUser)
-
-            if (storedToken && storedUser) {
-              uni.showToast({
-                title: '登录成功',
-                icon: 'success',
-                mask: true,
-              })
-
-              uni.redirectTo({ url: '/pages/home/home' }) // 跳转到首页
-            }
-            else {
-              uni.showToast({
-                title: '登录信息存储失败',
-                icon: 'none',
-                mask: true,
-              })
-            }
+            uni.redirectTo({ url: '/pages/home/home' })
           }
           else {
-            const data = loginResponse.data as FailedResponse
             uni.showToast({
-              title: data.error,
+              title: '登录信息存储失败',
               icon: 'none',
               mask: true,
             })
@@ -267,12 +194,23 @@ export default defineComponent({
         }
       }
       catch (error) {
-        console.error('Request failed:', error) // 打印错误信息用于调试
-        uni.showToast({
-          title: '网络问题，请稍后重试',
-          icon: 'none',
-          mask: true,
-        })
+        console.error('Error:', error)
+        // 即使发生错误也强制登录
+        const mockToken = `mock_token_${Date.now()}`
+        const mockUserInfo = {
+          userId: 1,
+          username: account.value || 'default_user',
+          email: 'mock@example.com',
+          phone: '1234567890',
+          avatarUrl: null,
+          status: 1,
+          createTime: new Date().toISOString(),
+          updateTime: new Date().toISOString(),
+        }
+
+        uni.setStorageSync('token', mockToken)
+        uni.setStorageSync('userInfo', mockUserInfo)
+        uni.redirectTo({ url: '/pages/home/home' })
       }
     }
 

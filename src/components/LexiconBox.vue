@@ -31,6 +31,10 @@ export default defineComponent({
       type: String,
       default: '',
     },
+    wordCount: {
+      type: Number,
+      required: true,
+    },
   },
   methods: {
     navigate() {

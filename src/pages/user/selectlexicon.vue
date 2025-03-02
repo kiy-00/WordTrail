@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { LexiconStatus } from '@/components/LexiconBox.vue'
-import type { Lexicon } from '@/types/Lexicon'
+import type { Lexicon, WordbooksResponse } from '@/types/Lexicon'
+import { API_BASE_URL } from '@/config/api'
 import { LexiconAPI } from '@/types/Lexicon'
 import { LanguageStorage } from '@/utils/languageStorage'
 import { LexiconStorage } from '@/utils/lexiconStorage'
@@ -19,6 +20,10 @@ export default defineComponent({
     const searchQuery = ref('')
     const isSearchVisible = ref(false)
     const selectedLanguage = ref(LanguageStorage.getCurrentLanguage())
+    const currentPage = ref(0)
+    const pageSize = ref(10)
+    const totalPages = ref(1)
+    const isLastPage = ref(false)
 
     // 添加语言显示相关代码
     const languages = [
@@ -76,31 +81,70 @@ export default defineComponent({
     // 获取词书数据
     const fetchLexicons = async () => {
       try {
-        const data = await LexiconAPI.getAllLexicons()
-        if (Array.isArray(data)) {
-          // 打印调试信息
-          // uni.showModal({
-          //   title: '调试信息',
-          //   content: `当前选择的语言: ${selectedLanguage.value.name}\n获取到的词书: ${data.map(book => `${book.bookName}(${book.language})`).join(', ')}`,
-          //   showCancel: false,
-          // })
-
-          // 修正筛选逻辑，确保大小写一致
-          allLexicons.value = data.filter((lexicon) => {
-            const bookLanguage = lexicon.language.toLowerCase()
-            const selectedLang = selectedLanguage.value.name.toLowerCase()
-            return bookLanguage === selectedLang
+        // 获取存储的 token
+        const token = uni.getStorageSync('token')
+        console.error('Token:', token)
+        if (!token) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+            duration: 2000,
           })
+          uni.redirectTo({ url: '/pages/user/login' })
+          return
+        }
 
-          // 更新调试信息
-          debugInfo.value.allBooks = data
-          debugInfo.value.currentLanguage = selectedLanguage.value.name
+        const response = await uni.request({
+          url: `${API_BASE_URL}/api/v1/system-wordbooks`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`, // 添加 token 到请求头
+            'Content-Type': 'application/json',
+          },
+          data: {
+            page: currentPage.value,
+            size: pageSize.value,
+            // Add any filters if needed
+            ...(selectedLanguage.value.name !== 'unknown' && {
+              language: selectedLanguage.value.name,
+            }),
+          },
+        })
 
+        if (response.statusCode === 200) {
+          const data = response.data as WordbooksResponse
+
+          // Convert system wordbooks to lexicons
+          const lexicons: Lexicon[] = data.content.map(book => ({
+            id: book.id,
+            bookName: book.bookName,
+            description: book.description,
+            language: book.language,
+            wordCount: book.words.length, // Changed from wordsCount to wordCount
+            createUser: book.createUser,
+            words: book.words,
+          }))
+
+          if (currentPage.value === 0)
+            allLexicons.value = lexicons
+          else
+            allLexicons.value = [...allLexicons.value, ...lexicons]
+
+          totalPages.value = data.totalPages
+          isLastPage.value = data.last
           filterLexicons()
         }
+        else if (response.statusCode === 401 || response.statusCode === 403) {
+          // 如果token过期或无效，重定向到登录页
+          uni.showToast({
+            title: '请重新登录',
+            icon: 'none',
+            duration: 2000,
+          })
+          uni.redirectTo({ url: '/pages/user/login' })
+        }
         else {
-          debugInfo.value.error = 'Invalid data format'
-          throw new TypeError('Invalid data format')
+          throw new Error('Failed to fetch lexicons')
         }
       }
       catch (error) {
@@ -199,15 +243,18 @@ export default defineComponent({
     // 下拉刷新
     const onRefresh = async () => {
       isRefreshing.value = true
+      currentPage.value = 0
+      allLexicons.value = []
       await fetchLexicons()
-      filterLexicons()
       isRefreshing.value = false
     }
 
     // 加载更多
     const onLoadMore = async () => {
-      currentLoad.value++
-      filterLexicons()
+      if (!isLastPage.value) {
+        currentPage.value++
+        await fetchLexicons()
+      }
     }
 
     // 修正当前语言的获取逻辑
@@ -245,6 +292,9 @@ export default defineComponent({
       debugInfo, // 添加调试信息到返回值
       selectedLanguage, // 添加到返回值中
       handleLanguageChange, // 加入到返回值中
+      isLastPage,
+      totalPages,
+      currentPage,
     }
   },
 })
@@ -359,17 +409,20 @@ export default defineComponent({
     @scrolltolower="onLoadMore"
   >
     <view class="p-4">
-      <LexiconBox
-        v-for="lexicon in displayedLexicons"
-        :id="lexicon.id"
-        :key="lexicon.id"
-        :name="lexicon.bookName"
-        :description="lexicon.description"
-        @click="handleSwitchLexicon(lexicon)"
-      >
-        <!-- :status="lexicon.status" -->
+      <template v-if="displayedLexicons.length">
+        <LexiconBox
+          v-for="lexicon in displayedLexicons"
+          :id="lexicon.id"
+          :key="lexicon.id"
+          :name="lexicon.bookName"
+          :description="lexicon.description"
+          :word-count="lexicon.wordCount"
+          @click="handleSwitchLexicon(lexicon)"
         />
-      </lexiconbox>
+      </template>
+      <view v-else class="py-4 text-center text-gray-500">
+        暂无词书数据
+      </view>
     </view>
   </scroll-view>
 </template>
