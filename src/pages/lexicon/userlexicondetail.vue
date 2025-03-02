@@ -1,5 +1,7 @@
 <script lang="ts">
+import type { UserDetail } from '@/services/userService'
 import { API_BASE_URL } from '@/config/api'
+import { getUserDetailById } from '@/services/userService'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
 interface Word {
@@ -54,6 +56,8 @@ export default defineComponent({
     const pageSize = ref(10)
     const totalWords = ref(0)
     const hasMoreWords = ref(true)
+    const creatorInfo = ref<UserDetail | null>(null)
+    const loadingCreator = ref(false)
 
     const loadWords = async () => {
       if (!lexiconDetail.value || !lexiconDetail.value.words?.length) {
@@ -112,6 +116,21 @@ export default defineComponent({
       }
     }
 
+    // 获取创建者信息
+    const fetchCreatorInfo = async (userId: string) => {
+      try {
+        loadingCreator.value = true
+        creatorInfo.value = await getUserDetailById(userId)
+        console.error('创建者信息:', creatorInfo.value)
+      }
+      catch (error) {
+        console.error('获取创建者信息失败:', error)
+      }
+      finally {
+        loadingCreator.value = false
+      }
+    }
+
     const fetchLexiconDetail = async () => {
       try {
         const token = uni.getStorageSync('token')
@@ -144,6 +163,11 @@ export default defineComponent({
 
             // 初始加载词书的前10个单词
             await loadWords()
+
+            // 获取创建者信息
+            if (lexiconDetail.value.createUser) {
+              await fetchCreatorInfo(lexiconDetail.value.createUser)
+            }
           }
         }
         else if (response.statusCode === 401 || response.statusCode === 403) {
@@ -262,11 +286,18 @@ export default defineComponent({
     // 添加其他安全访问的计算属性
     const bookDescription = computed(() => lexiconDetail.value?.description ?? '')
     const bookLanguage = computed(() => lexiconDetail.value?.language ?? '')
-    const bookCreator = computed(() => lexiconDetail.value?.createUser ?? '')
     const bookTags = computed(() => lexiconDetail.value?.tags ?? [])
     const isPublic = computed(() => lexiconDetail.value?.isPublic ?? false)
     const bookStatus = computed(() => lexiconDetail.value?.status ?? '')
     const bookName = computed(() => lexiconDetail.value?.bookName ?? '')
+
+    // 修改创建者信息的计算属性
+    const bookCreator = computed(() => {
+      if (creatorInfo.value) {
+        return creatorInfo.value.username
+      }
+      return lexiconDetail.value?.createUser ?? ''
+    })
 
     onMounted(() => {
       const pages = getCurrentPages()
@@ -294,7 +325,9 @@ export default defineComponent({
       onScrollToLower,
       loadWords,
       createTimeString,
-      // 导出新的计算属性
+      creatorInfo,
+      loadingCreator,
+      // 导出计算属性
       bookDescription,
       bookLanguage,
       bookCreator,
@@ -338,40 +371,50 @@ export default defineComponent({
           <view class="mb-2 text-lg text-yellow font-bold">
             基本信息
           </view>
-          <view class="mb-2">
-            <text class="text-gray-600 font-bold">
+          <view class="mb-2 flex">
+            <text class="w-20 flex-shrink-0 text-gray-600 font-bold">
               描述：
             </text>
             <text class="text-gray-700">
               {{ bookDescription }}
             </text>
           </view>
-          <view class="mb-2">
-            <text class="text-gray-600 font-bold">
+          <view class="mb-2 flex">
+            <text class="w-20 flex-shrink-0 text-gray-600 font-bold">
               语言：
             </text>
             <text class="text-gray-700">
               {{ bookLanguage }}
             </text>
           </view>
-          <view class="mb-2">
-            <text class="text-gray-600 font-bold">
+          <view class="mb-2 flex">
+            <text class="w-20 flex-shrink-0 text-gray-600 font-bold">
               创建者：
             </text>
-            <text class="text-gray-700">
-              {{ bookCreator }}
-            </text>
+            <view class="flex-1">
+              <text v-if="loadingCreator" class="text-gray-400">
+                加载中...
+              </text>
+              <view v-else-if="creatorInfo" class="flex items-center">
+                <text class="text-gray-700">
+                  {{ creatorInfo.username }}
+                </text>
+              </view>
+              <text v-else class="text-gray-700">
+                {{ bookCreator }}
+              </text>
+            </view>
           </view>
-          <view class="mb-2">
-            <text class="text-gray-600 font-bold">
+          <view class="mb-2 flex">
+            <text class="w-20 flex-shrink-0 text-gray-600 font-bold">
               创建时间：
             </text>
             <text class="text-gray-700">
               {{ createTimeString }}
             </text>
           </view>
-          <view class="mb-2">
-            <text class="text-gray-600 font-bold">
+          <view class="mb-2 flex">
+            <text class="w-20 flex-shrink-0 text-gray-600 font-bold">
               单词数量：
             </text>
             <text class="text-gray-700">
