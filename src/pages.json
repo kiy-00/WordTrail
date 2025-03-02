@@ -33,6 +33,12 @@
     {
       "path": "pages/lexicon/lexicondetail",
       "type": "page",
+      "layout": "default",
+      "style": {}
+    },
+    {
+      "path": "pages/lexicon/userlexicondetail",
+      "type": "page",
       "style": {}
     },
     {

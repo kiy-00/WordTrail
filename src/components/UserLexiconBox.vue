@@ -64,35 +64,54 @@ export default defineComponent({
         return '未知日期'
       }
     },
+    truncateText(text: string, length: number): string {
+      return text.length > length ? `${text.substring(0, length)}...` : text
+    },
+    viewDetail() {
+      uni.navigateTo({
+        url: `/pages/lexicon/lexicondetail?id=${this.id}&type=user`,
+      })
+    },
   },
 })
 </script>
 
 <template>
   <view class="mb-4 rounded-lg px-4 py-4 frosted-glass">
-    <view class="flex cursor-pointer" @click="navigate">
-      <!-- 左侧图片区域 -->
-      <view class="mr-4 h-24 w-24 rounded-lg bg-gray-100">
-        <image
-          v-if="imageUrl"
-          :src="imageUrl"
-          class="h-full w-full rounded-lg object-cover"
-        />
+    <view class="flex">
+      <!-- 左侧区域：图片和详情按钮 -->
+      <view class="mr-4 flex flex-col justify-between">
+        <!-- 图片区域 -->
+        <view class="h-24 w-24 rounded-lg bg-gray-100">
+          <image
+            v-if="imageUrl"
+            :src="imageUrl"
+            class="h-full w-full rounded-lg object-cover"
+          />
+        </view>
+
+        <!-- 查看详情按钮 -->
+        <button
+          class="mt-2 w-full rounded bg-blue px-2 py-1 text-xs text-white"
+          @click.stop="viewDetail"
+        >
+          查看详细
+        </button>
       </view>
 
       <!-- 右侧内容区域 -->
-      <view class="flex flex-1 flex-col justify-between">
-        <!-- 词书标题及状态 -->
+      <view class="flex flex-1 flex-col cursor-pointer justify-between" @click="navigate">
+        <!-- 词书标题及描述 -->
         <view class="flex flex-col items-start">
           <view class="mb-2 inline-block rounded-full bg-yellow px-3 py-1">
             <text class="text-base text-white font-bold">
-              {{ name }}
+              {{ truncateText(name, 14) }}
             </text>
           </view>
 
           <!-- 描述文本 -->
           <view class="mb-1 text-sm">
-            {{ description }}
+            {{ truncateText(description, 20) }}
           </view>
 
           <!-- 创建信息 -->
@@ -100,39 +119,40 @@ export default defineComponent({
             <view class="i-carbon:time mr-1" />
             <text>创建于: {{ formatDate(createTime) }}</text>
           </view>
+        </view>
 
-          <!-- 词书标签 -->
-          <view v-if="tags && tags.length" class="mt-1 flex flex-wrap gap-1">
+        <!-- 底部状态标签 -->
+        <view class="flex flex-col items-end">
+          <!-- 标签显示 -->
+          <view v-if="tags && tags.length" class="mb-2 flex flex-wrap justify-end gap-1">
             <view
               v-for="tag in tags"
               :key="tag"
-              class="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700"
+              class="rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700"
             >
               {{ tag }}
             </view>
           </view>
-        </view>
 
-        <!-- 底部状态区域 -->
-        <view class="mt-2 flex items-center justify-end">
-          <!-- 公开/私有状态 -->
-          <view
-            class="mr-2 rounded-full px-2 py-0.5 text-xs"
-            :class="isPublic ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'"
-          >
-            {{ isPublic ? '公开' : '私有' }}
-          </view>
+          <!-- 状态标签 -->
+          <view class="flex items-center">
+            <view
+              class="mr-2 rounded-full px-2 py-0.5 text-xs"
+              :class="isPublic ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'"
+            >
+              {{ isPublic ? '公开' : '私有' }}
+            </view>
 
-          <!-- 审核状态 -->
-          <view
-            class="rounded-full px-2 py-0.5 text-xs"
-            :class="{
-              'bg-green-100 text-green-700': status === 'approved',
-              'bg-yellow-100 text-yellow-700': status === 'pending',
-              'bg-red-100 text-red-700': status === 'rejected',
-            }"
-          >
-            {{ status === 'approved' ? '已审核' : status === 'pending' ? '审核中' : '已拒绝' }}
+            <view
+              class="rounded-full px-2 py-0.5 text-xs"
+              :class="{
+                'bg-green-100 text-green-700': status === 'approved',
+                'bg-yellow-100 text-yellow-700': status === 'pending',
+                'bg-red-100 text-red-700': status === 'rejected',
+              }"
+            >
+              {{ status === 'approved' ? '已审核' : status === 'pending' ? '审核中' : '已拒绝' }}
+            </view>
           </view>
         </view>
       </view>

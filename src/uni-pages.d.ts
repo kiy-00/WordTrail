@@ -10,6 +10,7 @@ interface NavigateToOptions {
        "/pages/community/post" |
        "/pages/community/posteditor" |
        "/pages/lexicon/lexicondetail" |
+       "/pages/lexicon/userlexicondetail" |
        "/pages/user/mycontent" |
        "/pages/user/mydata" |
        "/pages/user/mylexicon" |
