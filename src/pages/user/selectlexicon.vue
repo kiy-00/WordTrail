@@ -7,6 +7,19 @@ import { LanguageStorage } from '@/utils/languageStorage'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, onMounted, ref } from 'vue' // 删除未使用的 watch
 
+// 修改 interface 增加新的用户词书类型
+interface UserWordbook {
+  id: string
+  bookName: string
+  description: string
+  language: string
+  createUser: string
+  createTime: string
+  isPublic: boolean
+  status: string
+  tags: string[] | null
+}
+
 export default defineComponent({
   name: 'SelectLexicon',
 
@@ -25,6 +38,7 @@ export default defineComponent({
     const totalPages = ref(1)
     const isLastPage = ref(false)
     const activeType = ref<'system' | 'user'>('system')
+    const userLexicons = ref<UserWordbook[]>([])
 
     // 添加语言显示相关代码
     const languages = [
@@ -121,6 +135,33 @@ export default defineComponent({
           }
           else {
             throw new Error('Failed to fetch system wordbooks')
+          }
+        }
+        else if (activeType.value === 'user') {
+          const response = await uni.request({
+            url: `${API_BASE_URL}/api/v1/user-wordbooks/by-language/${selectedLanguage.value.name}/approved`,
+            method: 'GET',
+            header: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          })
+          if (response.statusCode === 200 && Array.isArray(response.data)) {
+            userLexicons.value = response.data as UserWordbook[]
+            // 同时保留原有 lexicons 用于兼容
+            allLexicons.value = userLexicons.value.map(book => ({
+              id: book.id,
+              bookName: book.bookName,
+              description: book.description,
+              language: book.language,
+              wordCount: 0,
+              createUser: book.createUser,
+              words: [],
+            }))
+            filterLexicons()
+          }
+          else {
+            throw new Error('Failed to fetch approved public wordbooks')
           }
         }
         else {
@@ -335,6 +376,7 @@ export default defineComponent({
       currentPage,
       activeType,
       handleTypeChange,
+      userLexicons,
     }
   },
 })
@@ -439,7 +481,7 @@ export default defineComponent({
   -->
 
   <!-- 词书类型切换栏 -->
-  <view class="flex border-b frosted-glass">
+  <view class="mt-5 flex border-b rounded-md frosted-glass">
     <view
       class="flex-1 py-3 text-center"
       :class="{ 'border-b-2 border-yellow text-yellow': activeType === 'system' }"
@@ -467,7 +509,7 @@ export default defineComponent({
     @scrolltolower="onLoadMore"
   >
     <view class="p-4">
-      <template v-if="displayedLexicons.length">
+      <template v-if="activeType === 'system' && displayedLexicons.length">
         <LexiconBox
           v-for="lexicon in displayedLexicons"
           :id="lexicon.id"
@@ -476,6 +518,29 @@ export default defineComponent({
           :description="lexicon.description"
           :word-count="lexicon.wordCount"
           @click="handleSwitchLexicon(lexicon)"
+        />
+      </template>
+      <template v-else-if="activeType === 'user' && userLexicons.length">
+        <UserLexiconBox
+          v-for="lexicon in userLexicons"
+          :id="lexicon.id"
+          :key="lexicon.id"
+          :name="lexicon.bookName"
+          :description="lexicon.description"
+          :create-time="lexicon.createTime"
+          :is-public="lexicon.isPublic"
+          :status="lexicon.status"
+          :tags="lexicon.tags || []"
+          :create-user="lexicon.createUser"
+          @click="handleSwitchLexicon({
+            id: lexicon.id,
+            bookName: lexicon.bookName,
+            description: lexicon.description,
+            language: lexicon.language,
+            wordCount: 0,
+            createUser: lexicon.createUser,
+            words: [],
+          })"
         />
       </template>
       <view v-else class="py-4 text-center text-gray-500">

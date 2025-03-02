@@ -20,6 +20,7 @@ declare module 'vue' {
     PostCard: typeof import('./components/PostCard.vue')['default']
     PostHeader: typeof import('./components/PostHeader.vue')['default']
     TabBar: typeof import('./components/TabBar.vue')['default']
+    UserLexiconBox: typeof import('./components/UserLexiconBox.vue')['default']
     WordBox: typeof import('./components/WordBox.vue')['default']
     WordCardContent: typeof import('./components/WordCardContent.vue')['default']
     WordCardsHeader: typeof import('./components/WordCardsHeader.vue')['default']

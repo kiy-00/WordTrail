@@ -81,7 +81,7 @@ export default defineComponent({
               {{ name }}
             </text>
           </view>
-          <view class="text-sm text-gray-600">
+          <view class="text-sm">
             {{ description }}
           </view>
           <!-- <view>
