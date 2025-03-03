@@ -258,7 +258,7 @@ export default defineComponent({
 
     <!-- 签到按钮，绑定闪光效果的类 -->
     <button
-      class="sign-in-button mt-20 px-2"
+      class="sign-in-button mt-5 px-2"
       :class="{ 'flash': isFlashing, 'signed-in': isSignedIn(currentDate.getDate()) }"
       :disabled="isSignedIn(currentDate.getDate())"
       @click="handleSignIn"

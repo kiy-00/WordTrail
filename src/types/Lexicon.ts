@@ -109,28 +109,28 @@ export const LexiconAPI = {
       })
     })
   },
-  selectLexicon: (bookId: string): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      uni.request({
-        url: `${API_BASE_URL}/api/lexicon/select`,
-        method: 'POST',
-        header: { Authorization: `Bearer ${uni.getStorageSync('token')}` },
-        data: { bookId },
-        success: (res) => {
-          if (res.statusCode === 200) {
-            // 后端成功返回：{ "message": "Book selected successfully" }
-            resolve(res.data)
-            console.error('Book selected successfully')
-          }
-          else {
-            // 后端返回失败信息： { "error": "..." }
-            reject(new Error('Failed to select book'))
-          }
-        },
-        fail: (err) => {
-          reject(new Error(`Network error or request failed: ${err.errMsg}`))
-        },
-      })
-    })
-  },
+  // selectLexicon: (bookId: string): Promise<any> => {
+  //   return new Promise((resolve, reject) => {
+  //     uni.request({
+  //       url: `${API_BASE_URL}/api/lexicon/select`,
+  //       method: 'POST',
+  //       header: { Authorization: `Bearer ${uni.getStorageSync('token')}` },
+  //       data: { bookId },
+  //       success: (res) => {
+  //         if (res.statusCode === 200) {
+  //           // 后端成功返回：{ "message": "Book selected successfully" }
+  //           resolve(res.data)
+  //           console.error('Book selected successfully')
+  //         }
+  //         else {
+  //           // 后端返回失败信息： { "error": "..." }
+  //           reject(new Error('Failed to select book'))
+  //         }
+  //       },
+  //       fail: (err) => {
+  //         reject(new Error(`Network error or request failed: ${err.errMsg}`))
+  //       },
+  //     })
+  //   })
+  // },
 }

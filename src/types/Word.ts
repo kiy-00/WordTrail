@@ -130,4 +130,66 @@ export const WordAPI = {
     })
     return response
   },
+
+  // 获取未学习单词总数
+  getNewWordsCount: async (lexiconId: string): Promise<number> => {
+    try {
+      const token = uni.getStorageSync('token')
+      const userId = uni.getStorageSync('userInfo')?.userId
+
+      if (!token || !userId) {
+        throw new Error('未登录或用户信息不完整')
+      }
+
+      const response = await uni.request({
+        url: `${API_BASE_URL}/api/v1/learning/book/${lexiconId}/new-words-count?userId=${userId}`,
+        method: 'GET',
+        header: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.statusCode === 200) {
+        return (response.data as any).count || 0
+      }
+      else {
+        throw new Error('获取未学习单词数量失败')
+      }
+    }
+    catch (error) {
+      console.error('获取未学习单词数量失败:', error)
+      return 0
+    }
+  },
+
+  // 获取今日需要复习的单词数量
+  getTodayReviewCount: async (lexiconId: string): Promise<number> => {
+    try {
+      const token = uni.getStorageSync('token')
+      const userId = uni.getStorageSync('userInfo')?.userId
+
+      if (!token || !userId) {
+        throw new Error('未登录或用户信息不完整')
+      }
+
+      const response = await uni.request({
+        url: `${API_BASE_URL}/api/v1/learning/book/${lexiconId}/today-review-count?userId=${userId}`,
+        method: 'GET',
+        header: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.statusCode === 200) {
+        return (response.data as any).count || 0
+      }
+      else {
+        throw new Error('获取待复习单词数量失败')
+      }
+    }
+    catch (error) {
+      console.error('获取待复习单词数量失败:', error)
+      return 0
+    }
+  },
 }

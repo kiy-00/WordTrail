@@ -38,82 +38,55 @@ export default defineComponent({
 
     const username = ref<string>('')
     const avatarUrl = ref<string>('')
-    const isBanned = ref(false)
     const defaultAvatar = '/static/avatar/avatar.png'
 
     const signInDays = ref<number>(0) // 累计签到天数
     const currentLexicon = ref<CurrentLexicon | null>(LexiconStorage.getCurrentLexicon()) // 当前词书
+    const newWordsCount = ref<number>(0) // 新增变量：未学习单词数量
+    const reviewWordsCount = ref<number>(0) // 新增变量：待复习单词数量
+
+    // 获取未学习单词数量的函数
+    const fetchNewWordsCount = async () => {
+      if (currentLexicon.value) {
+        try {
+          const count = await WordAPI.getNewWordsCount(currentLexicon.value.id)
+          newWordsCount.value = count
+        }
+        catch (error) {
+          console.error('获取未学习单词数量失败:', error)
+          newWordsCount.value = 0
+        }
+      }
+      else {
+        newWordsCount.value = 0
+      }
+    }
+
+    // 获取待复习单词数量的函数
+    const fetchReviewWordsCount = async () => {
+      if (currentLexicon.value) {
+        try {
+          const count = await WordAPI.getTodayReviewCount(currentLexicon.value.id)
+          reviewWordsCount.value = count
+        }
+        catch (error) {
+          console.error('获取待复习单词数量失败:', error)
+          reviewWordsCount.value = 0
+        }
+      }
+      else {
+        reviewWordsCount.value = 0
+      }
+    }
 
     watch(
       () => LexiconStorage.getCurrentLexicon(),
       (newValue) => {
         currentLexicon.value = newValue
+        fetchNewWordsCount() // 词书变化时获取新单词数量
+        fetchReviewWordsCount() // 词书变化时获取待复习单词数量
       },
     )
-
-    // const fetchUserInfo = async () => {
-    //   try {
-    //     // 首先检查token
-    //     const token = uni.getStorageSync('token') // 使用统一的 token key
-    //     if (!token) {
-    //       uni.redirectTo({ url: '/pages/user/login' })
-    //       return
-    //     }
-
-    //     // 获取用户信息
-    //     const response = await uni.request({
-    //       url: `${API_BASE_URL}/user/info`,
-    //       method: 'GET',
-    //       header: {
-    //         Authorization: `Bearer ${token}`,
-    //       },
-    //     })
-
-    //     if (response.statusCode === 200) {
-    //       const userInfo = response.data as UserInfo // 使用类型断言
-
-    //       // 保存用户信息到本地
-    //       UserStorage.setCurrentUser(userInfo)
-
-    //       // 设置页面数据
-    //       username.value = userInfo.username
-    //       avatarUrl.value = userInfo.avatarUrl || defaultAvatar
-    //       isBanned.value = userInfo.status === 1
-
-    //       if (isBanned.value) {
-    //         uni.showToast({
-    //           title: '账号已被封禁',
-    //           icon: 'none',
-    //           duration: 2000,
-    //         })
-    //       }
-    //     }
-    //     else if (response.statusCode === 401) {
-    //       // token失效，清除本地存储并跳转登录
-    //       uni.removeStorageSync('token')
-    //       uni.removeStorageSync('userInfo')
-    //       uni.redirectTo({ url: '/pages/user/login' })
-    //     }
-    //     else {
-    //       throw new Error('获取用户信息失败')
-    //     }
-    //   }
-    //   catch (error) {
-    //     console.error('获取用户信息失败:', error)
-    //     const localUser = UserStorage.getCurrentUser()
-    //     if (localUser) {
-    //       username.value = localUser.username
-    //       avatarUrl.value = localUser.avatarUrl || defaultAvatar
-    //       isBanned.value = localUser.status === 1
-    //     }
-    //     else {
-    //       // 如果本地没有用户信息，跳转到登录页
-    //       uni.redirectTo({
-    //         url: '/pages/user/login',
-    //       })
-    //     }
-    //   }
-    // }
 
     const loadUserInfo = () => {
       try {
@@ -127,7 +100,6 @@ export default defineComponent({
         // 直接使用存储的用户信息
         username.value = userInfo.username || ''
         avatarUrl.value = userInfo.avatarUrl || defaultAvatar
-        isBanned.value = userInfo.status === 1
       }
       catch (error) {
         console.error('加载用户信息失败:', error)
@@ -220,6 +192,8 @@ export default defineComponent({
       }
       else {
         checkLexiconStatus() // 只有在已有语言选择的情况下才检查词书
+        fetchNewWordsCount() // 获取未学习单词数量
+        fetchReviewWordsCount() // 获取待复习单词数量
       }
     })
 
@@ -227,7 +201,8 @@ export default defineComponent({
       // 重新加载用户信息或其他需要刷新的数据
       loadUserInfo()
       checkLexiconStatus()
-      // ...其他刷新逻辑...
+      fetchNewWordsCount() // 添加刷新单词数量的调用
+      fetchReviewWordsCount() // 添加刷新待复习单词数量的调用
     }
 
     onShow(() => {
@@ -235,27 +210,12 @@ export default defineComponent({
     })
 
     const navigateTo = (page: string) => {
-      if (isBanned.value) {
-        uni.showToast({
-          title: '哎呦！被封禁啦！',
-          icon: 'none',
-        })
-        return
-      }
       uni.navigateTo({
         url: page,
       })
     }
 
     const handleLearnClick = async () => {
-      if (isBanned.value) {
-        uni.showToast({
-          title: '哎呦！被封禁啦！',
-          icon: 'none',
-        })
-        return
-      }
-
       const lexicon = LexiconStorage.getCurrentLexicon()
       if (!lexicon) {
         uni.showToast({
@@ -289,14 +249,6 @@ export default defineComponent({
     }
 
     const handleReviewClick = async () => {
-      if (isBanned.value) {
-        uni.showToast({
-          title: '哎呦！被封禁啦！',
-          icon: 'none',
-        })
-        return
-      }
-
       const lexicon = LexiconStorage.getCurrentLexicon()
       if (!lexicon) {
         uni.showToast({
@@ -339,7 +291,6 @@ export default defineComponent({
       languages,
       username,
       avatarUrl,
-      isBanned,
       handleLanguageChange,
       showLanguageModal,
       handleSelectLanguage,
@@ -348,6 +299,8 @@ export default defineComponent({
       handleLearnClick,
       handleReviewClick,
       currentLexicon,
+      newWordsCount, // 暴露新单词数量给模板
+      reviewWordsCount, // 暴露待复习单词数量给模板
     }
   },
 })
@@ -368,18 +321,6 @@ export default defineComponent({
     </view>
     <view class="flex items-center">
       <view class="i-mynaui:cog-two cursor-pointer text-2xl" aria-label="设置" @click="navigateTo('/pages/user/settings')" />
-    </view>
-  </view>
-
-  <!-- 被封禁提示 -->
-  <view v-if="isBanned" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-    <view class="rounded-lg bg-white p-6 text-center">
-      <text class="text-xl text-red-500 font-bold">
-        哎呦！被封禁啦！
-      </text>
-      <text class="mt-2 text-gray-600">
-        您的账号已被封禁，请联系管理员解封。
-      </text>
     </view>
   </view>
 
@@ -426,11 +367,13 @@ export default defineComponent({
       当前词书：{{ currentLexicon?.name || '未选择' }}
     </text>
   </view>  <!-- Learn and Review Buttons -->  <view class="fixed bottom-20 left-5 right-5 flex justify-around">
-    <button class="mr-6 w-sm frosted-glass" @click="handleLearnClick">
-      Learn
+    <button class="mr-6 w-sm flex flex-col items-center justify-center py-2 frosted-glass" @click="handleLearnClick">
+      <span class="text-base">Learn</span>
+      <span v-if="newWordsCount >= 0" class="text-base opacity-75">{{ newWordsCount }}</span>
     </button>
-    <button class="w-sm frosted-glass" @click="handleReviewClick">
-      Review
+    <button class="w-sm flex flex-col items-center justify-center py-2 frosted-glass" @click="handleReviewClick">
+      <span class="text-base">Review</span>
+      <span v-if="reviewWordsCount >= 0" class="text-base opacity-75">{{ reviewWordsCount }}</span>
     </button>
   </view>
 

@@ -13,20 +13,20 @@ export default defineComponent({
         text: '外观设置',
         value: 'appearance',
       },
-      // {
-      //   key: 2,
-      //   url: '/pages/user/mycontent',
-      //   icon: 'i-mynaui:config-vertical',
-      //   text: '学习设置',
-      //   value: 'learning',
-      // },
-      // {
-      //   key: 3,
-      //   url: '/pages/user/settings',
-      //   icon: 'i-mynaui:tool',
-      //   text: '更多设置',
-      //   value: 'more',
-      // },
+      {
+        key: 2,
+        url: '/pages/user/mycontent',
+        icon: 'i-mynaui:config-vertical',
+        text: '学习设置',
+        value: 'learning',
+      },
+      {
+        key: 3,
+        url: '/pages/user/settings',
+        icon: 'i-mynaui:tool',
+        text: '更多设置',
+        value: 'more',
+      },
     ])
     // 返回逻辑
     const handleBack = () => {

@@ -181,42 +181,27 @@ export default defineComponent({
       uni.showModal({
         title: '📚 确认选择',
         content: `确定要选择「${lexiconDetail.value.bookName}」作为您的词书吗？`,
-        success: async (res) => {
+        success: (res) => {
           if (res.confirm) {
             try {
-              const token = uni.getStorageSync('token')
-              const response = await uni.request({
-                url: `${API_BASE_URL}/api/v1/user/select-wordbook/${id.value}`,
-                method: 'POST',
-                header: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json',
-                },
+              // 添加空值检查
+              if (lexiconDetail.value) {
+                // 保存到本地存储
+                uni.setStorageSync('currentLexicon', {
+                  id: lexiconDetail.value.id,
+                  name: lexiconDetail.value.bookName,
+                })
+              }
+
+              uni.showToast({
+                title: '选择成功',
+                icon: 'success',
+                duration: 2000,
               })
 
-              if (response.statusCode === 200) {
-                uni.showToast({
-                  title: '选择成功',
-                  icon: 'success',
-                  duration: 2000,
-                })
-
-                // 添加空值检查
-                if (lexiconDetail.value) {
-                  // 保存到本地存储
-                  uni.setStorageSync('currentLexicon', {
-                    id: lexiconDetail.value.id,
-                    name: lexiconDetail.value.bookName,
-                  })
-                }
-
-                setTimeout(() => {
-                  uni.navigateBack()
-                }, 2000)
-              }
-              else {
-                throw new Error('选择词书失败')
-              }
+              setTimeout(() => {
+                uni.navigateBack()
+              }, 2000)
             }
             catch (error) {
               uni.showToast({

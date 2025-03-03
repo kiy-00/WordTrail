@@ -2,7 +2,6 @@
 import type { LexiconStatus } from '@/components/LexiconBox.vue'
 import type { Lexicon, SystemWordbook, WordbooksResponse } from '@/types/Lexicon'
 import { API_BASE_URL } from '@/config/api'
-import { LexiconAPI } from '@/types/Lexicon'
 import { LanguageStorage } from '@/utils/languageStorage'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, onMounted, ref } from 'vue' // 删除未使用的 watch
@@ -237,10 +236,7 @@ export default defineComponent({
         success: (res) => {
           if (res.confirm) {
             try {
-              // 先调用后端接口完成词书切换操作
-              LexiconAPI.selectLexicon(lexicon.id)
-
-              // 保存词书信息并立即验证
+              // 保存词书信息到本地存储
               LexiconStorage.setCurrentLexicon({
                 id: lexicon.id,
                 name: lexicon.bookName,
@@ -255,7 +251,7 @@ export default defineComponent({
                   duration: 1500,
                   success: () => {
                     setTimeout(() => {
-                      // uni.navigateBack()
+                      uni.navigateBack()
                     }, 1500)
                   },
                 })
