@@ -8,6 +8,7 @@ export {}
 declare global {
   const EffectScope: typeof import('vue')['EffectScope']
   const LanguageStorage: typeof import('./utils/languageStorage')['LanguageStorage']
+  const LearnSettingsStorage: typeof import('./utils/learnSettingsStorage')['LearnSettingsStorage']
   const LexiconStorage: typeof import('./utils/lexiconStorage')['LexiconStorage']
   const SUPPORTED_LANGUAGES: typeof import('./utils/languageStorage')['SUPPORTED_LANGUAGES']
   const UserStorage: typeof import('./utils/userStorage')['UserStorage']
@@ -331,6 +332,7 @@ declare module 'vue' {
   interface ComponentCustomProperties {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly LanguageStorage: UnwrapRef<typeof import('./utils/languageStorage')['LanguageStorage']>
+    readonly LearnSettingsStorage: UnwrapRef<typeof import('./utils/learnSettingsStorage')['LearnSettingsStorage']>
     readonly LexiconStorage: UnwrapRef<typeof import('./utils/lexiconStorage')['LexiconStorage']>
     readonly SUPPORTED_LANGUAGES: UnwrapRef<typeof import('./utils/languageStorage')['SUPPORTED_LANGUAGES']>
     readonly UserStorage: UnwrapRef<typeof import('./utils/userStorage')['UserStorage']>

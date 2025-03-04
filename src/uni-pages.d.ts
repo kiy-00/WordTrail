@@ -9,6 +9,7 @@ interface NavigateToOptions {
        "/pages/community/community" |
        "/pages/community/post" |
        "/pages/community/posteditor" |
+       "/pages/learn/learnsettings" |
        "/pages/lexicon/lexicondetail" |
        "/pages/lexicon/userlexicondetail" |
        "/pages/user/mycontent" |

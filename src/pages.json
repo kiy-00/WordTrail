@@ -31,6 +31,12 @@
       "style": {}
     },
     {
+      "path": "pages/learn/learnsettings",
+      "type": "page",
+      "layout": "home",
+      "style": {}
+    },
+    {
       "path": "pages/lexicon/lexicondetail",
       "type": "page",
       "layout": "default",

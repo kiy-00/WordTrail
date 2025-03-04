@@ -15,7 +15,7 @@ export default defineComponent({
       },
       {
         key: 2,
-        url: '/pages/user/mycontent',
+        url: '/pages/learn/learnsettings', // 更新为正确的学习设置页面路径
         icon: 'i-mynaui:config-vertical',
         text: '学习设置',
         value: 'learning',

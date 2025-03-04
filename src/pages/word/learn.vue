@@ -5,12 +5,29 @@ import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
 import { API_BASE_URL } from '@/config/api'
 import { LexiconStorage } from '@/utils/lexiconStorage'
-import { defineComponent } from 'vue'
+import { defineComponent, onMounted } from 'vue'
 
 export default defineComponent({
   components: {
     WordCardsHeader,
     WordCardContent,
+  },
+
+  setup() {
+    onMounted(() => {
+      // 获取学习设置
+      // const learnSettings = LearnSettingsStorage.getSettings()
+
+      // // 应用设置
+      // // 例如: 如果您有限制单词数量的逻辑
+      // const maxWordsToShow = learnSettings.wordsPerGroup
+
+      // // 应用拼写设置
+      // const requireSpelling = learnSettings.enableSpelling
+
+      // 根据设置修改您的学习逻辑
+      // ...
+    })
   },
 
   data() {
