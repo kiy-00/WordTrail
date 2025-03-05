@@ -1,38 +1,42 @@
+import type { DetailedPartOfSpeech } from '@/types/DetailedWord' // 添加这一行导入
 import { API_BASE_URL } from '@/config/api'
+
+export interface Example {
+  sentence: string
+  translation: string
+}
+
+export interface PartOfSpeech {
+  type: string
+  definitions: string[]
+  exampleSentences?: string[] | null
+  examples?: Example[] | null
+  gender?: string | null
+  plural?: string | null
+  pluralForms?: string[] | null
+}
 
 export interface Phonetic {
   ipa: string
   audio: string
 }
 
-export interface PartOfSpeech {
-  type: string
-  exampleSentences: string[] | null
-  gender: string[] | null
-  pluralForms: string[] | null
-  definitions: string | null // 添加这个字段
-}
-
-// 为WordDetail创建一个更详细的PartOfSpeech接口
-export interface DetailedPartOfSpeech {
-  type: string
-  exampleSentences: string[] | null
-  gender: string[] | null
-  pluralForms: string[] | null
-  definitions: string[] // 在详情中，definitions是字符串数组
-  examples?: Array<{
-    sentence: string
-    translation: string
-  }>
-}
-
 export interface Word {
-  id: string
+  id?: string
+  _id?: {
+    timestamp: number
+    date: string
+  }
   word: string
   language: string
-  category: string[] | null
+  category?: string[] | null
   partOfSpeechList: PartOfSpeech[]
   phonetics: Phonetic[]
+  tags?: string[]
+  synonyms?: string[]
+  antonyms?: string[]
+  difficulty?: number
+  masteryLevel?: number
 }
 
 export interface WordResponse {

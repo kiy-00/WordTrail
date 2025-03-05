@@ -1,11 +1,9 @@
 <script lang="ts">
-import type { DetailedPartOfSpeech, DetailedWord } from '@/types/DetailedWord'
+import type { DetailedPartOfSpeech, DetailedWord, Example } from '@/types/DetailedWord'
 import type { Word } from '@/types/Word'
 import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
-import { API_BASE_URL } from '@/config/api'
-import { LexiconStorage } from '@/utils/lexiconStorage'
-import { defineComponent, onMounted } from 'vue'
+import { defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
   components: {
@@ -14,61 +12,225 @@ export default defineComponent({
   },
 
   setup() {
-    onMounted(() => {
-      // 获取学习设置
-      // const learnSettings = LearnSettingsStorage.getSettings()
+    // 添加调试状态
+    const words = ref<Word[]>([])
+    const currentIndex = ref(0)
+    const isLoading = ref(false)
+    const showDebug = ref(false)
+    const rawWordData = ref<any>(null) // 存储原始单词数据用于调试
+    const errorMessage = ref('')
+    const wordIds = ref<string[]>([])
 
-      // // 应用设置
-      // // 例如: 如果您有限制单词数量的逻辑
-      // const maxWordsToShow = learnSettings.wordsPerGroup
+    // 获取用户ID - 可以从存储中获取，如果没有则使用默认ID
+    const userId = ref(uni.getStorageSync('userInfo')?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b')
 
-      // // 应用拼写设置
-      // const requireSpelling = learnSettings.enableSpelling
-
-      // 根据设置修改您的学习逻辑
-      // ...
+    // 计算当前单词 - 移到前面
+    const currentWord = computed(() => {
+      return words.value[currentIndex.value]
     })
-  },
 
-  data() {
-    return {
-      words: [] as Word[],
-      currentIndex: 0,
-    }
-  },
+    // 获取单词详细信息的函数 - 移动到 onMounted 之前
+    const fetchWordDetails = async (wordId: string) => {
+      isLoading.value = true
+      errorMessage.value = ''
 
-  onLoad(options: any) {
-    console.error('onLoad options:', options)
-    if (options.words) {
       try {
-        const decodedWords = JSON.parse(decodeURIComponent(options.words))
-        console.error('Decoded words:', decodedWords)
-        this.words = decodedWords
+        const token = uni.getStorageSync('token')
+        const response = await uni.request({
+          url: `http://localhost:8082/api/v1/words/${wordId}`,
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.statusCode === 200) {
+          // 存储原始数据用于调试
+          rawWordData.value = response.data
+
+          // 将获取到的单词添加到列表
+          const wordData = response.data as Word
+          words.value.push(wordData)
+
+          // eslint-disable-next-line no-console
+          console.log('Fetched word details:', wordData)
+        }
+        else {
+          errorMessage.value = `获取单词详情失败：${response.statusCode}`
+          console.error('Failed to fetch word details:', response)
+        }
       }
       catch (error) {
-        console.error('Failed to parse words data:', error)
+        errorMessage.value = '网络错误，请重试'
+        console.error('Error fetching word details:', error)
+      }
+      finally {
+        isLoading.value = false
       }
     }
-  },
 
-  computed: {
-    currentWord(): Word | undefined {
-      const word = this.words[this.currentIndex]
-      console.error('Current word:', word)
-      return word
-    },
-    currentCard() {
-      return this.currentIndex + 1
-    },
-    totalCards() {
-      return this.words.length
-    },
-    adaptedWordData(): DetailedWord {
-      const word = this.currentWord
-      console.error('Adapting word:', word)
+    // 从URL参数获取单词ID列表
+    onMounted(() => {
+      const pages = getCurrentPages()
+      const currentPage = pages[pages.length - 1]
+
+      // @ts-expect-error - 获取页面参数
+      const options = currentPage.$page.options
+
+      if (options.wordIds) {
+        try {
+          const decodedWordIds = JSON.parse(decodeURIComponent(options.wordIds))
+          wordIds.value = decodedWordIds
+          // eslint-disable-next-line no-console
+          console.log('Received word IDs:', wordIds.value)
+
+          // 开始获取第一个单词的详细信息
+          if (wordIds.value.length > 0) {
+            fetchWordDetails(wordIds.value[0])
+          }
+        }
+        catch (error) {
+          console.error('Failed to parse word IDs:', error)
+          errorMessage.value = '解析单词ID失败'
+        }
+      }
+    })
+
+    // 跳转到下一个单词
+    const nextWord = async () => {
+      const nextIndex = currentIndex.value + 1
+
+      // 检查是否需要加载下一个单词
+      if (nextIndex >= words.value.length && nextIndex < wordIds.value.length) {
+        // 加载下一个单词
+        await fetchWordDetails(wordIds.value[nextIndex])
+      }
+
+      // 如果有下一个单词，则前进
+      if (nextIndex < words.value.length) {
+        currentIndex.value = nextIndex
+      }
+      else {
+        // 所有单词学习完成
+        uni.showToast({
+          title: '本轮学习完成！',
+          icon: 'none',
+          duration: 2000,
+        })
+
+        setTimeout(() => {
+          uni.navigateBack({
+            delta: 1,
+          })
+        }, 2000)
+      }
+    }
+
+    // 修改：替换原来的 addLog 函数，改用新的学习开始API
+    const markWordLearningStarted = async (wordId: string) => {
+      try {
+        const token = uni.getStorageSync('token')
+
+        // 调用新的 API 接口
+        const response = await uni.request({
+          url: `http://localhost:8082/api/v1/learning/start?userId=${userId.value}&wordId=${wordId}`,
+          method: 'GET', // 使用 GET 方法，参数通过查询字符串传递
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.statusCode === 200) {
+          // eslint-disable-next-line no-console
+          console.log('学习记录已添加:', response.data)
+          return true
+        }
+        else {
+          console.error('添加学习记录失败:', response)
+          return false
+        }
+      }
+      catch (error) {
+        console.error('添加学习记录失败:', error)
+        return false
+      }
+    }
+
+    // 处理"认识"和"不认识"按钮点击
+    // 两个按钮都使用相同的学习开始API，只是UI展示不同
+    const handleKnow = async () => {
+      if (currentWord.value) {
+        // 确保 id 存在，如果不存在则尝试使用 _id
+        const wordId = currentWord.value.id || (currentWord.value._id?.timestamp?.toString() || '')
+
+        if (!wordId) {
+          console.error('无法获取单词ID')
+          uni.showToast({
+            title: '无法识别单词',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 调用学习开始API
+        await markWordLearningStarted(wordId)
+        // 显示提示（可选）
+        uni.showToast({
+          title: '已标记为认识',
+          icon: 'success',
+          duration: 500,
+        })
+        // 前进到下一个单词
+        nextWord()
+      }
+    }
+
+    const handleDontKnow = async () => {
+      if (currentWord.value) {
+        // 确保 id 存在，如果不存在则尝试使用 _id
+        const wordId = currentWord.value.id || (currentWord.value._id?.timestamp?.toString() || '')
+
+        if (!wordId) {
+          console.error('无法获取单词ID')
+          uni.showToast({
+            title: '无法识别单词',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 调用相同的学习开始API
+        await markWordLearningStarted(wordId)
+        // 显示提示（可选）
+        uni.showToast({
+          title: '已添加到学习记录',
+          icon: 'none',
+          duration: 500,
+        })
+        // 前进到下一个单词
+        nextWord()
+      }
+    }
+
+    // 切换调试面板显示
+    const toggleDebug = () => {
+      showDebug.value = !showDebug.value
+    }
+
+    // 计算当前卡片编号和总数
+    const currentCard = computed(() => {
+      return currentIndex.value + 1
+    })
+
+    const totalCards = computed(() => {
+      return wordIds.value.length
+    })
+
+    // 适配单词数据
+    const adaptedWordData = computed(() => {
+      const word = currentWord.value
 
       if (!word) {
-        console.error('No current word, returning empty DetailedWord')
         return {
           id: '',
           word: '',
@@ -79,130 +241,164 @@ export default defineComponent({
         } as DetailedWord
       }
 
-      const adaptedPartOfSpeech: DetailedPartOfSpeech[] = word.partOfSpeechList.map(pos => ({
-        type: pos.type || '',
-        definitions: pos.definitions ? [pos.definitions] : [],
-        exampleSentences: pos.exampleSentences || [],
-        gender: pos.gender || [],
-        pluralForms: pos.pluralForms || [],
-      }))
+      // 打印原始数据用于调试
+      // eslint-disable-next-line no-console
+      console.log('Adapting word data:', word)
+      // eslint-disable-next-line no-console
+      console.log('Raw partOfSpeechList:', word.partOfSpeechList)
 
-      return {
+      // 正确处理 partOfSpeechList
+      const adaptedPartOfSpeech: DetailedPartOfSpeech[] = word.partOfSpeechList.map((pos) => {
+        // 1. 确保 definitions 是字符串数组
+        const definitions: string[] = Array.isArray(pos.definitions)
+          ? pos.definitions.filter((def): def is string => typeof def === 'string')
+          : (typeof pos.definitions === 'string' ? [pos.definitions] : [])
+
+        // 2. 处理 examples
+        let formattedExamples: Example[] | null = null
+        if (pos.examples && Array.isArray(pos.examples)) {
+          formattedExamples = pos.examples.map(ex => ({
+            sentence: ex.sentence || '',
+            translation: ex.translation || '',
+          }))
+        }
+
+        // 3. 返回符合 DetailedPartOfSpeech 的对象
+        return {
+          type: pos.type || '',
+          definitions,
+          exampleSentences: formattedExamples,
+          gender: pos.gender,
+          pluralForms: pos.pluralForms,
+        } as DetailedPartOfSpeech
+      })
+
+      // 创建符合 DetailedWord 的对象
+      const result: DetailedWord = {
         id: word.id || '',
-        word: word.word || '',
-        language: word.language || '',
-        category: word.category || [],
+        word: word.word,
+        language: word.language,
         partOfSpeechList: adaptedPartOfSpeech,
-        phonetics: word.phonetics || [],
-        exampleSentence: '',
-        exampleTranslation: '',
+        phonetics: word.phonetics,
+        category: word.category,
+        tags: word.tags,
+        synonyms: word.synonyms,
+        antonyms: word.antonyms,
+        difficulty: word.difficulty,
       }
-    },
-  },
 
-  methods: {
-    async addLog(wordId: string) {
-      try {
-        const token = uni.getStorageSync('token')
-        const currentLexicon = LexiconStorage.getCurrentLexicon()
-        if (!currentLexicon)
-          return
+      return result
+    })
 
-        await uni.request({
-          url: `${API_BASE_URL}/api/statistics/addLog`,
-          method: 'POST',
-          header: {
-            Authorization: `Bearer ${token}`,
-            lexicon: currentLexicon.id,
-            wordId,
-          },
-        })
-      }
-      catch (error) {
-        console.error('添加学习日志失败:', error)
-      }
-    },
-
-    async handleKnow() {
-      if (this.currentWord) {
-        await this.addLog(this.currentWord.id)
-        this.nextWord()
-      }
-    },
-
-    async handleDontKnow() {
-      if (this.currentWord) {
-        await this.addLog(this.currentWord.id)
-        this.nextWord()
-      }
-    },
-
-    nextWord() {
-      if (this.currentIndex < this.words.length - 1) {
-        this.currentIndex++
-      }
-      else {
-        // 所有单词学习完成，返回首页
-        uni.showToast({
-          title: '本轮学习完成！',
-          icon: 'none',
-          duration: 2000,
-        })
-        setTimeout(() => {
-          uni.navigateBack({
-            delta: 1,
-          })
-        }, 2000)
-      }
-    },
+    return {
+      words,
+      currentIndex,
+      isLoading,
+      showDebug,
+      rawWordData,
+      errorMessage,
+      wordIds,
+      currentWord,
+      currentCard,
+      totalCards,
+      adaptedWordData,
+      handleKnow,
+      handleDontKnow,
+      toggleDebug,
+    }
   },
 })
 </script>
 
 <template>
   <view class="h-full flex flex-col">
-    <!-- Debug Info -->
-    <view v-if="words.length === 0" class="p-4 text-red-500">
-      No words loaded
+    <!-- Loading State -->
+    <view v-if="isLoading" class="p-4 text-center">
+      加载中...
     </view>
 
-    <!-- Header -->
-    <WordCardsHeader
-      :current-card="currentCard"
-      :total-cards="totalCards"
-      :word="currentWord?.word || ''"
-    />
-
-    <!-- Content -->
-    <WordCardContent
-      v-if="currentWord"
-      :word-data="adaptedWordData"
-      class="flex-1"
-    />
-
-    <!-- Footer Buttons -->
-    <view class="fixed bottom-0 left-0 right-0 flex items-center justify-around p-6 shadow-lg frosted-glass">
-      <view
-        class="cursor-pointer rounded-full bg-red-500 px-8 py-3 text-white font-semibold"
-        hover-class="opacity-80"
-        @click="handleDontKnow"
-      >
-        不认识
-      </view>
-      <view
-        class="cursor-pointer rounded-full bg-green-500 px-8 py-3 text-white font-semibold"
-        hover-class="opacity-80"
-        @click="handleKnow"
-      >
-        认识
-      </view>
+    <!-- Error Message -->
+    <view v-if="errorMessage" class="p-4 text-center text-red-500">
+      {{ errorMessage }}
     </view>
+
+    <!-- Debug button -->
+    <!-- <view
+      class="absolute right-2 top-2 rounded-full bg-black px-3 py-1 text-sm"
+      @click="toggleDebug"
+    >
+      调试
+    </view> -->
+
+    <!-- Debug Info Panel -->
+    <!-- <view v-if="showDebug" class="fixed right-0 top-10 z-50 max-h-1/2 w-3/4 overflow-auto border rounded-lg bg-black p-4 shadow-lg">
+      <view class="mb-2 font-bold">
+        调试信息:
+      </view>
+      <view class="mb-2">
+        <text>单词ID数量: {{ wordIds.length }}</text>
+      </view>
+      <view class="mb-2">
+        <text>当前索引: {{ currentIndex }}</text>
+      </view>
+      <view class="mb-2">
+        <text>已加载单词数: {{ words.length }}</text>
+      </view>
+      <view class="mb-2 max-h-40 overflow-auto">
+        <text>原始单词数据:</text>
+        <pre class="whitespace-pre-wrap text-xs">{{ JSON.stringify(rawWordData, null, 2) }}</pre>
+      </view>
+    </view> -->
+
+    <!-- No words message -->
+    <view v-if="words.length === 0 && !isLoading" class="p-4 text-center text-red-500">
+      未加载任何单词
+    </view>
+
+    <!-- Word Card Content -->
+    <template v-if="currentWord && !isLoading">
+      <!-- Header -->
+      <WordCardsHeader
+        :current-card="currentCard"
+        :total-cards="totalCards"
+        :word="currentWord.word || ''"
+      />
+
+      <!-- Content -->
+      <WordCardContent
+        :word-data="adaptedWordData"
+        class="flex-1"
+      />
+
+      <!-- Footer Buttons -->
+      <view class="fixed bottom-0 left-0 right-0 flex items-center justify-around p-6 shadow-lg frosted-glass">
+        <view
+          class="cursor-pointer rounded-full bg-red-500 px-8 py-3 text-white font-semibold"
+          hover-class="opacity-80"
+          @click="handleDontKnow"
+        >
+          不认识
+        </view>
+        <view
+          class="cursor-pointer rounded-full bg-green-500 px-8 py-3 text-white font-semibold"
+          hover-class="opacity-80"
+          @click="handleKnow"
+        >
+          认识
+        </view>
+      </view>
+    </template>
   </view>
 </template>
 
 <style scoped>
 .cursor-pointer {
   cursor: pointer;
+}
+
+.frosted-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
 }
 </style>
 

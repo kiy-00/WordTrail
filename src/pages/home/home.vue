@@ -2,6 +2,7 @@
 import TabBar from '@/components/TabBar.vue' // 添加TabBar组件导入
 // 添加API基础URL导入
 import { WordAPI } from '@/types/Word'
+import { LearnSettingsStorage } from '@/utils/learnSettingsStorage' // 添加导入
 import { type CurrentLexicon, LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, onMounted, ref, watch } from 'vue'
 
@@ -226,15 +227,43 @@ export default defineComponent({
       }
 
       try {
-        const words = await WordAPI.getLearnWords(lexicon.id)
-        if (words && words.length > 0) {
-          uni.navigateTo({
-            url: `/pages/word/learn?words=${encodeURIComponent(JSON.stringify(words))}`,
-          })
+        // 获取学习设置中的每组单词数量
+        const learnSettings = LearnSettingsStorage.getSettings()
+        const batchSize = learnSettings.wordsPerGroup
+
+        // 获取用户ID
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b' // 使用默认ID作为备选
+
+        // 使用新的API获取单词ID列表
+        const token = uni.getStorageSync('token')
+        const response = await uni.request({
+          url: `http://localhost:8082/api/v1/learning/book/${lexicon.id}/new-words?userId=${userId}&batchSize=${batchSize}`,
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.statusCode === 200 && Array.isArray(response.data)) {
+          const wordIds = response.data
+
+          if (wordIds.length > 0) {
+            // 将单词ID列表传递给学习页面
+            uni.navigateTo({
+              url: `/pages/word/learn?wordIds=${encodeURIComponent(JSON.stringify(wordIds))}`,
+            })
+          }
+          else {
+            uni.showToast({
+              title: '没有需要学习的单词',
+              icon: 'none',
+            })
+          }
         }
         else {
           uni.showToast({
-            title: '没有需要学习的单词',
+            title: '获取单词失败',
             icon: 'none',
           })
         }
@@ -255,30 +284,29 @@ export default defineComponent({
           title: '请先选择词书',
           icon: 'none',
         })
-        return
       }
 
-      try {
-        const words = await WordAPI.getReviewWords(lexicon.id)
-        if (words && words.length > 0) {
-          uni.navigateTo({
-            url: `/pages/word/review?words=${encodeURIComponent(JSON.stringify(words))}`,
-          })
-        }
-        else {
-          uni.showToast({
-            title: '没有需要复习的单词',
-            icon: 'none',
-          })
-        }
-      }
-      catch (error) {
-        console.error('获取复习单词失败:', error)
-        uni.showToast({
-          title: '网络错误，请稍后重试',
-          icon: 'none',
-        })
-      }
+      // try {
+      //   const words = await WordAPI.getReviewWords(lexicon.id)
+      //   if (words && words.length > 0) {
+      //     uni.navigateTo({
+      //       url: `/pages/word/review?words=${encodeURIComponent(JSON.stringify(words))}`,
+      //     })
+      //   }
+      //   else {
+      //     uni.showToast({
+      //       title: '没有需要复习的单词',
+      //       icon: 'none',
+      //     })
+      //   }
+      // }
+      // catch (error) {
+      //   console.error('获取复习单词失败:', error)
+      //   uni.showToast({
+      //     title: '网络错误，请稍后重试',
+      //     icon: 'none',
+      //   })
+      // }
     }
 
     // 添加监听词书变化的函数

@@ -9,22 +9,22 @@ interface Phonetic {
 
 interface PartOfSpeech {
   type: string
-  definitions: string[] // 修改为 string[] 而不是 string
+  definitions: string[] // 已是字符串数组
   gender?: string | null
+  plural?: string
   examples?: Array<{
     sentence: string
     translation: string
   }>
-  plural?: string
 }
 
-// 修改 WordData 接口以适配后端返回的实际数据
+// 修改 WordData 接口以完全匹配后端返回的实际数据
 interface WordData {
-  _id?: { // 添加 _id 替代 id
+  _id?: {
     timestamp: number
     date: string
   }
-  id?: string // id 保持可选
+  id?: string
   word: string
   language: string
   difficulty?: number
@@ -33,6 +33,7 @@ interface WordData {
   partOfSpeechList: PartOfSpeech[]
   phonetics: Phonetic[]
   tags?: string[]
+  masteryLevel?: number
 }
 
 export default defineComponent({
@@ -98,13 +99,8 @@ export default defineComponent({
             <span v-if="pos.gender" class="text-xs text-gray-500">({{ pos.gender }})</span>
           </view>
           <view class="mt-1 text-gray-600">
-            <!-- 处理多个定义的情况 -->
-            <view v-if="Array.isArray(pos.definitions) && pos.definitions.length > 0">
-              {{ pos.definitions.join('; ') }}
-            </view>
-            <view v-else>
-              {{ pos.definitions }}
-            </view>
+            <!-- 处理多个定义 - 现在假设 definitions 始终是数组 -->
+            {{ pos.definitions.join('; ') }}
           </view>
         </view>
       </view>

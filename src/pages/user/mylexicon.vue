@@ -9,17 +9,30 @@ interface Phonetic {
 
 interface PartOfSpeech {
   type: string
-  definitions: string
+  definitions: string[] // 修改为字符串数组
   gender?: string | null
+  plural?: string
+  examples?: Array<{
+    sentence: string
+    translation: string
+  }>
 }
 
 interface Word {
-  id: string
+  id?: string
+  _id?: {
+    timestamp: number
+    date: string
+  }
   word: string
   language: string
+  difficulty?: number
+  synonyms?: string[]
+  antonyms?: string[]
   partOfSpeechList: PartOfSpeech[]
   phonetics: Phonetic[]
-  masteryLevel: number // 0: 初识, 1: 模糊, 2: 熟悉
+  tags?: string[]
+  masteryLevel?: number // 保持可选，因为原始数据可能没有这个字段
 }
 
 interface LearningRecord {
@@ -74,54 +87,11 @@ export default defineComponent({
 
       if (activeTab.value !== 'all') {
         filteredWords = filteredWords.filter(word =>
-          word.masteryLevel.toString() === activeTab.value,
+          word.masteryLevel !== undefined && word.masteryLevel.toString() === activeTab.value,
         )
       }
 
       return filteredWords.length
-    })
-
-    // 添加计算属性来获取各个标签页的单词数量
-    const allWordsCount = computed(() => {
-      if (activeTab.value === 'all') {
-        return allWords.value.length
-      }
-      return allWords.value.filter((word) => {
-        if (searchQuery.value) {
-          return word.word.toLowerCase().includes(searchQuery.value.toLowerCase())
-        }
-        return true
-      }).length
-    })
-
-    const level0Count = computed(() => {
-      const words = allWords.value.filter(word => word.masteryLevel === 0)
-      if (activeTab.value === '0' && searchQuery.value) {
-        return words.filter(word =>
-          word.word.toLowerCase().includes(searchQuery.value.toLowerCase()),
-        ).length
-      }
-      return words.length
-    })
-
-    const level1Count = computed(() => {
-      const words = allWords.value.filter(word => word.masteryLevel === 1)
-      if (activeTab.value === '1' && searchQuery.value) {
-        return words.filter(word =>
-          word.word.toLowerCase().includes(searchQuery.value.toLowerCase()),
-        ).length
-      }
-      return words.length
-    })
-
-    const level2Count = computed(() => {
-      const words = allWords.value.filter(word => word.masteryLevel === 2)
-      if (activeTab.value === '2' && searchQuery.value) {
-        return words.filter(word =>
-          word.word.toLowerCase().includes(searchQuery.value.toLowerCase()),
-        ).length
-      }
-      return words.length
     })
 
     // 获取过滤后的单词列表（不修改状态）
@@ -141,7 +111,7 @@ export default defineComponent({
       // 再根据标签过滤
       if (activeTab.value !== 'all') {
         filteredWords = filteredWords.filter(word =>
-          word.masteryLevel.toString() === activeTab.value,
+          word.masteryLevel !== undefined && word.masteryLevel.toString() === activeTab.value,
         )
       }
 
@@ -192,16 +162,24 @@ export default defineComponent({
     const fetchWordDetails = async (wordId: string): Promise<Word | null> => {
       try {
         const token = uni.getStorageSync('token')
-        const response = await uni.request({
+        const response: UniApp.RequestSuccessCallbackResult = await uni.request({
           url: `http://localhost:8082/api/v1/words/${wordId}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
           },
-        })
+        }) as UniApp.RequestSuccessCallbackResult
 
-        if (response.statusCode === 200) {
-          return response.data
+        if (response.statusCode === 200 && response.data) {
+          // 使用类型断言，确保返回正确的Word类型
+          const wordData = response.data as unknown as Word
+
+          // 如果 masteryLevel 未定义，则设置默认值
+          if (wordData.masteryLevel === undefined) {
+            wordData.masteryLevel = 0
+          }
+
+          return wordData
         }
         return null
       }
@@ -253,6 +231,14 @@ export default defineComponent({
       }
     }
 
+    // 确保获取的单词数据都有 masteryLevel 字段
+    const ensureMasteryLevel = (word: Word, defaultLevel: number = 0): Word => {
+      if (word.masteryLevel === undefined) {
+        return { ...word, masteryLevel: defaultLevel }
+      }
+      return word
+    }
+
     // 获取"全部"单词（从系统词书或用户词书）
     const fetchAllWords = async () => {
       const currentLexicon = LexiconStorage.getCurrentLexicon()
@@ -287,11 +273,11 @@ export default defineComponent({
         }
 
         if (response.statusCode === 200 && Array.isArray(response.data)) {
-          // 保持原始数据结构，只添加 masteryLevel
-          const processedWords: Word[] = response.data.map(wordData => ({
-            ...wordData,
-            masteryLevel: 0, // 默认未学习状态
-          })).filter(word => word.word)
+          // 保持原始数据结构，只添加 masteryLevel (如果没有)
+          const processedWords: Word[] = response.data.map((wordData) => {
+            const word = wordData as unknown as Word
+            return ensureMasteryLevel(word, 0) // 默认未学习状态
+          }).filter(word => word.word)
 
           return processedWords
         }
@@ -460,8 +446,23 @@ export default defineComponent({
       })
     }
 
+    // 由于后端返回的数据格式已经与 WordBox 组件期望的格式一致，
+    // 我们不再需要适配器函数，但我们需要处理 id 字段
+    const adaptWordForWordBox = (word: Word): any => {
+      // 确保 WordBox 组件能够正确识别单词 ID
+      return {
+        ...word,
+        id: word.id || (word._id?.timestamp?.toString() || ''),
+      }
+    }
+
     initializeWords()
     updateCurrentLexiconName()
+
+    // 监听搜索词变化，更新所有显示
+    watch(searchQuery, () => {
+      filterWords()
+    })
 
     return {
       activeTab,
@@ -483,10 +484,7 @@ export default defineComponent({
       filteredWordsCount,
       hasMoreWords,
       loadAllWords,
-      allWordsCount,
-      level0Count,
-      level1Count,
-      level2Count,
+      adaptWordForWordBox,
     }
   },
 })
@@ -531,10 +529,10 @@ export default defineComponent({
   <view class="mt-5 flex border-b rounded frosted-glass">
     <view
       v-for="tab in [
-        { key: 'all', label: '全部', count: allWordsCount },
-        { key: '0', label: '初识', count: level0Count },
-        { key: '1', label: '模糊', count: level1Count },
-        { key: '2', label: '熟悉', count: level2Count },
+        { key: 'all', label: '全部' },
+        { key: '0', label: '初识' },
+        { key: '1', label: '模糊' },
+        { key: '2', label: '熟悉' },
       ]"
       :key="tab.key"
       class="relative flex-1 py-3 text-center"
@@ -542,9 +540,6 @@ export default defineComponent({
       @click="handleTabChange(tab.key as 'all' | '0' | '1' | '2')"
     >
       <text>{{ tab.label }}</text>
-      <view class="count-badge" :class="{ 'count-badge-active': activeTab === tab.key }">
-        {{ tab.count }}
-      </view>
     </view>
   </view>
 
@@ -560,7 +555,7 @@ export default defineComponent({
     <view class="p-4">
       <template v-for="word in displayedWords" :key="word.id">
         <WordBox
-          :word-data="word"
+          :word-data="adaptWordForWordBox(word)"
           @click="handleWordClick(word)"
         />
       </template>
@@ -581,25 +576,6 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.count-badge {
-  position: absolute;
-  top: 0;
-  right: 4px;
-  background-color: #666;
-  color: white;
-  border-radius: 50%;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.count-badge-active {
-  background-color: #fbbf24;
-}
 </style>
 
 <route lang="json">
