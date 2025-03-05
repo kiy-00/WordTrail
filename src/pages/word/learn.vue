@@ -126,27 +126,42 @@ export default defineComponent({
       }
     }
 
-    // 修改：替换原来的 addLog 函数，改用新的学习开始API
+    // 修改：使用正确的参数格式调用学习开始API
     const markWordLearningStarted = async (wordId: string) => {
       try {
         const token = uni.getStorageSync('token')
+        // eslint-disable-next-line no-console
+        console.log('使用原始 wordId 进行学习记录:', wordId)
 
-        // 调用新的 API 接口
+        // 调用 API 接口，使用 URL 查询参数传递参数，而不是请求体
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/learning/start?userId=${userId.value}&wordId=${wordId}`,
-          method: 'GET', // 使用 GET 方法，参数通过查询字符串传递
+          url: `http://localhost:8082/api/v1/learning/start?userId=${encodeURIComponent(userId.value)}&wordId=${encodeURIComponent(wordId)}`,
+          method: 'POST',
+          // 不再使用 data 字段发送 JSON
           header: {
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/x-www-form-urlencoded', // 更改为表单格式
           },
         })
 
-        if (response.statusCode === 200) {
+        if (response.statusCode === 200 || response.statusCode === 201) {
           // eslint-disable-next-line no-console
           console.log('学习记录已添加:', response.data)
           return true
         }
         else {
+          // 打印详细错误信息
           console.error('添加学习记录失败:', response)
+          console.error('请求URL:', `http://localhost:8082/api/v1/learning/start?userId=${userId.value}&wordId=${wordId}`)
+
+          // 显示更具体的错误信息
+          if (response.data && response.data) {
+            uni.showToast({
+              title: `错误: ${response.data}`,
+              icon: 'none',
+              duration: 3000,
+            })
+          }
           return false
         }
       }
@@ -155,16 +170,15 @@ export default defineComponent({
         return false
       }
     }
-
     // 处理"认识"和"不认识"按钮点击
     // 两个按钮都使用相同的学习开始API，只是UI展示不同
     const handleKnow = async () => {
       if (currentWord.value) {
-        // 确保 id 存在，如果不存在则尝试使用 _id
-        const wordId = currentWord.value.id || (currentWord.value._id?.timestamp?.toString() || '')
+        // 直接使用后端返回的原始id，不进行任何处理
+        const wordId = currentWord.value.id
 
         if (!wordId) {
-          console.error('无法获取单词ID')
+          console.error('单词对象中没有id字段:', currentWord.value)
           uni.showToast({
             title: '无法识别单词',
             icon: 'none',
@@ -173,25 +187,33 @@ export default defineComponent({
         }
 
         // 调用学习开始API
-        await markWordLearningStarted(wordId)
-        // 显示提示（可选）
-        uni.showToast({
-          title: '已标记为认识',
-          icon: 'success',
-          duration: 500,
-        })
-        // 前进到下一个单词
-        nextWord()
+        const success = await markWordLearningStarted(wordId)
+        if (success) {
+          // 显示提示
+          uni.showToast({
+            title: '已标记为认识',
+            icon: 'success',
+            duration: 500,
+          })
+          // 前进到下一个单词
+          nextWord()
+        }
+        else {
+          uni.showToast({
+            title: '保存失败，请重试',
+            icon: 'none',
+          })
+        }
       }
     }
 
     const handleDontKnow = async () => {
       if (currentWord.value) {
-        // 确保 id 存在，如果不存在则尝试使用 _id
-        const wordId = currentWord.value.id || (currentWord.value._id?.timestamp?.toString() || '')
+        // 同样直接使用后端返回的原始id
+        const wordId = currentWord.value.id
 
         if (!wordId) {
-          console.error('无法获取单词ID')
+          console.error('单词对象中没有id字段:', currentWord.value)
           uni.showToast({
             title: '无法识别单词',
             icon: 'none',
@@ -199,16 +221,21 @@ export default defineComponent({
           return
         }
 
-        // 调用相同的学习开始API
-        await markWordLearningStarted(wordId)
-        // 显示提示（可选）
-        uni.showToast({
-          title: '已添加到学习记录',
-          icon: 'none',
-          duration: 500,
-        })
-        // 前进到下一个单词
-        nextWord()
+        const success = await markWordLearningStarted(wordId)
+        if (success) {
+          uni.showToast({
+            title: '已添加到学习记录',
+            icon: 'none',
+            duration: 500,
+          })
+          nextWord()
+        }
+        else {
+          uni.showToast({
+            title: '保存失败，请重试',
+            icon: 'none',
+          })
+        }
       }
     }
 

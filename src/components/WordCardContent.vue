@@ -30,30 +30,30 @@ export default defineComponent({
           definitions = pos.definitions.filter(def => typeof def === 'string') as string[]
         }
 
-        // 处理示例句子
-        let examples: Array<{ sentence: string, translation: string }> | undefined
+        // 处理示例句子 - 更安全的实现
+        let examples
 
         // 新增：正确处理后端返回的examples字段
-        if (pos.examples && Array.isArray(pos.examples)) {
+        if (pos.examples && Array.isArray(pos.examples) && pos.examples.length > 0) {
           examples = pos.examples.map(ex => ({
-            sentence: ex.sentence || '',
-            translation: ex.translation || '',
+            sentence: ex && typeof ex === 'object' && 'sentence' in ex ? ex.sentence || '' : '',
+            translation: ex && typeof ex === 'object' && 'translation' in ex ? ex.translation || '' : '',
           }))
         }
         // 向后兼容：尝试使用exampleSentences字段
-        else if (pos.exampleSentences) {
-          if (Array.isArray(pos.exampleSentences)) {
-            examples = pos.exampleSentences
-              .filter(ex => ex && typeof ex === 'object')
-              .map((ex) => {
-                if (typeof ex === 'object' && ex.sentence) {
-                  return {
-                    sentence: ex.sentence,
-                    translation: ex.translation || '',
-                  }
-                }
-                return { sentence: String(ex), translation: '' }
+        else if (pos.exampleSentences && Array.isArray(pos.exampleSentences) && pos.exampleSentences.length > 0) {
+          examples = []
+          for (let i = 0; i < pos.exampleSentences.length; i++) {
+            const ex = pos.exampleSentences[i]
+            if (typeof ex === 'string') {
+              examples.push({ sentence: ex, translation: '' })
+            }
+            else if (ex && typeof ex === 'object' && 'sentence' in ex) {
+              examples.push({
+                sentence: ex.sentence || '',
+                translation: ex.translation || '',
               })
+            }
           }
         }
 
@@ -172,7 +172,7 @@ export default defineComponent({
       </view>
 
       <!-- 例句(显示在当前词性下方) -->
-      <view v-if="pos.examples && pos.examples.length > 0" class="mb-3 ml-3 space-y-2">
+      <view v-if="pos.examples && Array.isArray(pos.examples) && pos.examples.length > 0" class="mb-3 ml-3 space-y-2">
         <view v-for="(ex, exIndex) in pos.examples" :key="`ex-${posIndex}-${exIndex}`" class="rounded-md bg-blue-500 p-2">
           <text class="block text-base font-medium">
             {{ ex.sentence }}

@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { DetailedPartOfSpeech, DetailedWord } from '@/types/DetailedWord'
+import type { DetailedPartOfSpeech, DetailedWord, Example } from '@/types/DetailedWord'
 import type { Word } from '@/types/Word'
 import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
@@ -57,13 +57,130 @@ export default defineComponent({
         } as DetailedWord
       }
 
-      const adaptedPartOfSpeech: DetailedPartOfSpeech[] = word.partOfSpeechList.map(pos => ({
-        type: pos.type || '',
-        definitions: pos.definitions ? [pos.definitions] : [],
-        exampleSentences: pos.exampleSentences || [],
-        gender: pos.gender || [],
-        pluralForms: pos.pluralForms || [],
-      }))
+      // 修复 adaptedPartOfSpeech 类型错误
+      const adaptedPartOfSpeech: DetailedPartOfSpeech[] = word.partOfSpeechList.map((pos) => {
+        // 处理 definitions - 确保是字符串数组
+        const definitions: string[] = []
+
+        if (Array.isArray(pos.definitions)) {
+          for (const def of pos.definitions) {
+            if (typeof def === 'string') {
+              definitions.push(def)
+            }
+          }
+        }
+        else if (pos.definitions && typeof pos.definitions === 'string') {
+          definitions.push(pos.definitions)
+        }
+
+        // 如果数组为空，提供默认值
+        if (definitions.length === 0) {
+          definitions.push('无定义')
+        }
+
+        // 处理性别 - 确保是字符串或 null
+        let gender: string | null = null
+        if (typeof pos.gender === 'string') {
+          gender = pos.gender
+        }
+        else if (pos.gender && typeof pos.gender === 'object') {
+          // 特别处理可能是数组或其他对象的情况
+          gender = String(pos.gender)
+        }
+
+        // 处理复数形式 - 确保是字符串数组
+        const pluralForms: string[] = []
+        if (Array.isArray(pos.pluralForms)) {
+          for (const form of pos.pluralForms) {
+            if (form !== null && form !== undefined) {
+              pluralForms.push(String(form))
+            }
+          }
+        }
+        else if (typeof pos.plural === 'string') {
+          pluralForms.push(pos.plural)
+        }
+
+        // 处理例句 - 安全地映射为 Example[] 或 null
+        let exampleSentences: Example[] | null = null
+
+        // 使用类型断言处理例句，避免 never 类型问题
+        if (pos.examples) {
+          const safeExamples: Example[] = []
+
+          // 使用类型断言将 pos.examples 转换为 any[]
+          const examplesArray = pos.examples as any[]
+          if (Array.isArray(examplesArray)) {
+            for (let i = 0; i < examplesArray.length; i++) {
+              const ex = examplesArray[i]
+
+              // 类型检查并构建安全的例句对象
+              if (ex && typeof ex === 'object') {
+                const sentence = typeof ex.sentence === 'string'
+                  ? ex.sentence
+                  : ('sentence' in ex ? String(ex.sentence || '') : '')
+
+                const translation = typeof ex.translation === 'string'
+                  ? ex.translation
+                  : ('translation' in ex ? String(ex.translation || '') : '')
+
+                safeExamples.push({ sentence, translation })
+              }
+              else if (ex !== null && ex !== undefined) {
+                // 如果是基础类型，则将其作为句子，无翻译
+                safeExamples.push({ sentence: String(ex), translation: '' })
+              }
+            }
+          }
+
+          if (safeExamples.length > 0) {
+            exampleSentences = safeExamples
+          }
+        }
+        // 类似地处理 exampleSentences，使用类型断言
+        else if (pos.exampleSentences) {
+          const safeExamples: Example[] = []
+
+          // 使用类型断言将 pos.exampleSentences 转换为 any[]
+          const sentencesArray = pos.exampleSentences as any[]
+          if (Array.isArray(sentencesArray)) {
+            for (let i = 0; i < sentencesArray.length; i++) {
+              const ex = sentencesArray[i]
+
+              if (typeof ex === 'string') {
+                safeExamples.push({ sentence: ex, translation: '' })
+              }
+              else if (ex && typeof ex === 'object') {
+                const sentence = typeof ex.sentence === 'string'
+                  ? ex.sentence
+                  : ('sentence' in ex ? String(ex.sentence || '') : '')
+
+                const translation = typeof ex.translation === 'string'
+                  ? ex.translation
+                  : ('translation' in ex ? String(ex.translation || '') : '')
+
+                safeExamples.push({ sentence, translation })
+              }
+              else if (ex !== null && ex !== undefined) {
+                // 处理其他情况
+                safeExamples.push({ sentence: String(ex), translation: '' })
+              }
+            }
+          }
+
+          if (safeExamples.length > 0) {
+            exampleSentences = safeExamples
+          }
+        }
+
+        return {
+          type: pos.type || '',
+          definitions,
+          exampleSentences,
+          gender,
+          pluralForms,
+        } as DetailedPartOfSpeech
+      })
 
       return {
         id: word.id || '',
@@ -72,9 +189,11 @@ export default defineComponent({
         category: word.category || [],
         partOfSpeechList: adaptedPartOfSpeech,
         phonetics: word.phonetics || [],
-        exampleSentence: '',
-        exampleTranslation: '',
-      }
+        synonyms: word.synonyms || [],
+        antonyms: word.antonyms || [],
+        difficulty: word.difficulty,
+        tags: word.tags || [],
+      } as DetailedWord
     },
   },
 
@@ -149,7 +268,7 @@ export default defineComponent({
       this.selectedDifficulty = difficulty
       this.showDetails = true
 
-      if (this.currentWord) {
+      if (this.currentWord && this.currentWord.id) { // 确保 id 存在
         // 根据难度调用不同的 API
         switch (difficulty) {
           case 'forgotten':
@@ -165,6 +284,9 @@ export default defineComponent({
 
         // 添加学习日志
         await this.addLog(this.currentWord.id)
+      }
+      else {
+        console.error('当前单词没有ID:', this.currentWord)
       }
     },
 
