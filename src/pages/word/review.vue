@@ -323,11 +323,13 @@ export default defineComponent({
     <!-- Content -->
     <scroll-view class="mt-5 box-border flex-1 px-5 pb-32" scroll-y>
       <template v-if="currentWord">
-        <!-- Word and Pronunciation -->
-        <view class="font-verdana mb-2 text-left text-4xl font-bold">
+        <!-- 修改：将单词和发音分两行显示 -->
+        <!-- 单词 -->
+        <view class="font-verdana mb-1 text-left text-4xl font-bold">
           {{ currentWord.word }}
         </view>
-        <view class="mb-3 text-left text-lg text-[#809bae]">
+        <!-- 发音 -->
+        <view class="mb-4 text-left text-lg text-[#809bae]">
           {{ currentWord.phonetics?.[0]?.ipa || '' }}
         </view>
 

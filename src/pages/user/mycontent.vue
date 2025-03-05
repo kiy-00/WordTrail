@@ -31,12 +31,12 @@ export default defineComponent({
         text: '总学习量',
         value: totalLearned,
       },
-      // {
-      //   url: '/pages/user/vocabularycount',
-      //   icon: 'i-mynaui:book',
-      //   text: '词汇量',
-      //   value: vocabularyCount,
-      // },
+      {
+        url: '/pages/user/myuserlexicon',
+        icon: 'i-mynaui:book',
+        text: '我的词书',
+        value: vocabularyCount,
+      },
       // {
       //   url: '/pages/user/notes',
       //   icon: 'i-mynaui:pen',

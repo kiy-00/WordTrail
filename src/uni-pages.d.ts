@@ -10,11 +10,13 @@ interface NavigateToOptions {
        "/pages/community/post" |
        "/pages/community/posteditor" |
        "/pages/learn/learnsettings" |
+       "/pages/lexicon/createuserlexicon" |
        "/pages/lexicon/lexicondetail" |
        "/pages/lexicon/userlexicondetail" |
        "/pages/user/mycontent" |
        "/pages/user/mydata" |
        "/pages/user/mylexicon" |
+       "/pages/user/myuserlexicon" |
        "/pages/user/selectlexicon" |
        "/pages/user/settings" |
        "/pages/word/learn" |

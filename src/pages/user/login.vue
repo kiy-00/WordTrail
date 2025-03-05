@@ -2,73 +2,28 @@
 import { API_BASE_URL } from '@/config/api'
 import { defineComponent, ref } from 'vue'
 
-// interface LoginResponse {
-//   code: number
-//   msg: string
-//   data: {
-//     access_token: string
-//     expires_in: number
-//   }
-// }
-
-// interface InfoResponse {
-//   msg: string
-//   code: number
-//   user: {
-//     id: number
-//     userName: string
-//     nickName: string
-//     userType: string
-//     email: string | null
-//     phoneNumber: string | null
-//     sex: string // Gender ('0' for male, '1' for female)
-//     avatar: string | null
-//     password: string // Encrypted password
-//     status: string
-//     delFlag: boolean
-//     bio: string | null
-//     admin: boolean
-//     createTime: string
-//     updateTime: string
-//     params: Record<string, unknown>
-//   }
-// }
-
-interface RegisterResponse {
-  msg: string
-  code: number
-  data: string
-}
-
-interface EmailCodeResponse {
-  msg: string
-  code: number
-}
-
-interface FailedResponse {
-  error: string
-}
-
+// 严格匹配后端返回的登录响应格式
 interface AuthLoginResponse {
   token: string
-  // 若后端返回其它字段，也可在此处继续扩展
+  userId: string
+  username: string
 }
 
 export default defineComponent({
   name: 'Login',
   setup() {
-    const currentTab = ref<'login' | 'register'>('login') // 新增，记录当前选中的标签
+    const currentTab = ref<'login' | 'register'>('login')
     const loginMethods = ['email', 'phone', 'id'] as const
     type LoginMethodType = typeof loginMethods[number]
-    const loginMethod = ref<LoginMethodType>('email') // 保持不变
-    const account = ref<string>('') // 更新变量名为 account
+    const loginMethod = ref<LoginMethodType>('email')
+    const account = ref<string>('')
     const password = ref<string>('')
-    const confirmPassword = ref<string>('') // 新增，确认密码
-    const email = ref<string>('') // 邮箱输入框的值
-    const verificationCode = ref<string>('') // 验证码输入框的值
-    const sendingCode = ref<boolean>(false) // 是否正在发送验证码
+    const confirmPassword = ref<string>('')
+    const email = ref<string>('')
+    const verificationCode = ref<string>('')
+    const sendingCode = ref<boolean>(false)
     const agreePrivacy = ref<boolean>(false)
-    const showPrivacyModal = ref<boolean>(false) // 新增，控制隐私协议弹框
+    const showPrivacyModal = ref<boolean>(false)
 
     const handleAction = async () => {
       // 首先检查隐私协议
@@ -99,125 +54,79 @@ export default defineComponent({
         return
       }
 
-      try {
-        if (currentTab.value === 'login') {
-          try {
-            const response = await uni.request({
-              url: `${API_BASE_URL}/api/v1/auth/login`,
-              method: 'POST',
-              header: {
-                'Content-Type': 'application/json',
-              },
-              data: {
-                username: account.value,
-                password: password.value,
-              },
-            })
+      if (currentTab.value === 'login') {
+        try {
+          const response = await uni.request({
+            url: `${API_BASE_URL}/api/v1/auth/login`,
+            method: 'POST',
+            header: {
+              'Content-Type': 'application/json',
+            },
+            data: {
+              username: account.value,
+              password: password.value,
+            },
+          })
+
+          // 检查响应状态并处理数据
+          if (response.statusCode === 200) {
             const responseData = response.data as AuthLoginResponse
-            if (response.statusCode === 200 && responseData.token) {
+
+            if (responseData.token) {
+              // 保存token和用户信息，严格按照后端返回的字段
               uni.setStorageSync('token', responseData.token)
+              uni.setStorageSync('userInfo', {
+                userId: responseData.userId,
+                username: responseData.username,
+              })
+
+              // 记录日志，便于调试
+              // eslint-disable-next-line no-console
+              console.log('登录成功，保存的信息:', responseData)
+
               uni.showToast({
                 title: '登录成功',
                 icon: 'success',
                 mask: true,
               })
+
+              // 登录成功后跳转
               uni.redirectTo({ url: '/pages/home/home' })
             }
             else {
+              // token为空的处理
               uni.showToast({
-                title: '登录失败，请检查用户名或密码',
+                title: '登录失败，返回数据格式错误',
                 icon: 'none',
                 mask: true,
               })
             }
           }
-          catch (error) {
-            console.error('登录发生错误:', error)
+          else {
+            // 状态码不是200的处理
             uni.showToast({
-              title: '网络请求错误',
+              title: '登录失败，请检查用户名或密码',
               icon: 'none',
               mask: true,
             })
           }
         }
-        else if (currentTab.value === 'register') {
-          if (!email.value) {
-            uni.showToast({
-              title: '请输入邮箱',
-              icon: 'none',
-              mask: true,
-            })
-            return
-          }
-
-          if (!verificationCode.value) {
-            uni.showToast({
-              title: '请输入验证码',
-              icon: 'none',
-              mask: true,
-            })
-            return
-          }
-
-          // 注册逻辑
-          const registerResponse = await uni.request({
-            url: `/auth/register`,
-            method: 'POST',
-            data: {
-              code: 'test',
-              password: password.value,
-              username: account.value,
-              email: email.value,
-              emailCode: verificationCode.value,
-              phoneNumber: null,
-              uuid: 'test',
-            },
+        catch (error) {
+          console.error('登录发生错误:', error)
+          uni.showToast({
+            title: '网络请求错误',
+            icon: 'none',
+            mask: true,
           })
-
-          const registerData = registerResponse.data as RegisterResponse
-
-          // eslint-disable-next-line no-console
-          console.log('注册后端响应数据:', registerData) // 日志记录
-
-          if (registerResponse.statusCode === 200) {
-            uni.showToast({
-              title: '注册成功',
-              icon: 'success',
-              mask: true,
-            })
-
-            setTimeout(() => {
-              uni.redirectTo({ url: '/pages/user/login' })
-            }, 100)
-          }
-          else {
-            const data = registerResponse.data as FailedResponse
-            uni.showToast({
-              title: data.error,
-              icon: 'none',
-              mask: true,
-            })
-          }
         }
       }
-      catch (error) {
-        console.error('Error:', error)
-        // 即使发生错误也强制登录
-        const mockToken = `mock_token_${Date.now()}`
-        const mockUserInfo = {
-          userId: 1,
-          username: account.value || 'default_user',
-          email: 'mock@example.com',
-          phone: '1234567890',
-          avatarUrl: null,
-          status: 1,
-          createTime: new Date().toISOString(),
-          updateTime: new Date().toISOString(),
-        }
-
-        uni.setStorageSync('token', mockToken)
-        uni.setStorageSync('userInfo', mockUserInfo)
-        uni.redirectTo({ url: '/pages/home/home' })
+      else if (currentTab.value === 'register') {
+        // 保留注册UI，但不实现功能
+        uni.showToast({
+          title: '注册功能暂未开放',
+          icon: 'none',
+          mask: true,
+        })
       }
     }
 
@@ -232,10 +141,10 @@ export default defineComponent({
     const handlePrivacyChange = (e: { detail: { value: string[] } }) => {
       agreePrivacy.value = e.detail.value.length > 0
       // eslint-disable-next-line no-console
-      console.log('隐私协议状态:', agreePrivacy.value) // 添加日志便于调试
+      console.log('隐私协议状态:', agreePrivacy.value)
     }
 
-    // 发送验证码的函数
+    // 发送验证码的函数（仅保留UI交互，不实际调用API）
     const sendVerificationCode = async () => {
       if (!email.value) {
         uni.showToast({
@@ -246,59 +155,30 @@ export default defineComponent({
         return
       }
 
-      try {
-        sendingCode.value = true
-        const response = await uni.request({
-          url: '/system/user/emailCode',
-          method: 'POST',
-          header: {
-            'Content-Type': 'application/x-www-form-urlencoded', // 设置请求头
-          },
-          data: `email=${encodeURIComponent(email.value)}&businessType=register`, // 将请求体编码为URL格式
-        })
-
-        const emailCodeData = response.data as EmailCodeResponse
-
-        if (response.statusCode === 200 && emailCodeData.code === 200) {
-          uni.showToast({
-            title: '验证码已发送，请检查邮箱',
-            icon: 'success',
-            mask: true,
-          })
-        }
-        else {
-          uni.showToast({
-            title: emailCodeData.msg || '验证码发送失败',
-            icon: 'none',
-            mask: true,
-          })
-        }
-      }
-      catch (error) {
-        console.error('验证码发送失败:', error)
+      // 模拟发送验证码
+      sendingCode.value = true
+      setTimeout(() => {
+        sendingCode.value = false
         uni.showToast({
-          title: '网络问题，请稍后重试',
+          title: '验证码功能暂未开放',
           icon: 'none',
           mask: true,
         })
-      }
-      finally {
-        sendingCode.value = false
-      }
+      }, 1000)
     }
 
     return {
-      currentTab, // 新增
+      currentTab,
       loginMethod,
       loginMethods,
       account,
       password,
-      confirmPassword, // 新增
+      confirmPassword,
       agreePrivacy,
-      showPrivacyModal, // 新增
-      openPrivacyModal, // 新增
-      closePrivacyModal, // 新增
-      handleAction, // 修改为通用方法
+      showPrivacyModal,
+      openPrivacyModal,
+      closePrivacyModal,
+      handleAction,
       handlePrivacyChange,
       email,
       verificationCode,
@@ -346,19 +226,6 @@ export default defineComponent({
             />
           </view>
         </view>
-
-        <!-- 登录方式选择按钮 - 使用黄色背景 -->
-        <!-- <view class="mb-4 flex space-x-2">
-          <button
-            v-for="method in loginMethods"
-            :key="method"
-            class="flex-1 rounded-full px-2 py-2 text-center"
-            :class="loginMethod === method ? 'bg-yellow text-white' : 'bg-purple-200 text-gray-600'"
-            @click="loginMethod = method"
-          >
-            {{ method === 'email' ? '邮箱' : method === 'phone' ? '电话号码' : 'ID' }}
-          </button>
-        </view> -->
 
         <!-- 输入框容器使用统一的宽度和对齐方式 -->
         <view class="w-full space-y-3">

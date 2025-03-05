@@ -123,12 +123,14 @@ export default defineComponent({
 
 <template>
   <scroll-view class="mt-6 box-border w-full flex-1 overflow-y-auto px-5" scroll-y>
-    <!-- Word and Pronunciation -->
-    <view class="mb-2 flex items-baseline">
-      <text class="font-verdana text-2xl font-bold">
+    <!-- 修改：将单词和发音分两行显示 -->
+    <!-- 单词 -->
+    <view class="mb-1 flex flex-col">
+      <text class="font-verdana text-3xl font-bold">
         {{ wordData.word }}
       </text>
-      <text v-if="pronunciation" class="ml-3 text-lg">
+      <!-- 发音 -->
+      <text v-if="pronunciation" class="mt-1 text-lg text-gray-500">
         [{{ pronunciation }}]
       </text>
     </view>

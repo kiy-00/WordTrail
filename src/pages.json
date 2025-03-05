@@ -37,6 +37,12 @@
       "style": {}
     },
     {
+      "path": "pages/lexicon/createuserlexicon",
+      "type": "page",
+      "layout": "default",
+      "style": {}
+    },
+    {
       "path": "pages/lexicon/lexicondetail",
       "type": "page",
       "layout": "default",
@@ -62,6 +68,12 @@
     },
     {
       "path": "pages/user/mylexicon",
+      "type": "page",
+      "layout": "default",
+      "style": {}
+    },
+    {
+      "path": "pages/user/myuserlexicon",
       "type": "page",
       "layout": "default",
       "style": {}
