@@ -11,11 +11,11 @@ export interface Example {
 
 export interface DetailedPartOfSpeech {
   type: string
-  definitions: string[] // 定义一定是字符串数组
+  definitions: string[] // 定义是字符串数组
   exampleSentences?: Array<Example> | null
   examples?: Array<Example> | null // 添加新字段，适配后端返回的格式
   gender?: string | null
-  plural?: string | null // 增加 plural 直接字段
+  plural?: string | null
   pluralForms?: string[] | null
 }
 
@@ -29,8 +29,8 @@ export interface DetailedWord {
   phonetics: DetailedPhonetic[]
   exampleSentence?: string
   exampleTranslation?: string
-  synonyms?: string[]
-  antonyms?: string[]
-  difficulty?: number
-  tags?: string[]
+  synonyms?: string[] // 添加同义词字段
+  antonyms?: string[] // 添加反义词字段
+  difficulty?: number // 添加难度字段
+  tags?: string[] // 添加标签字段
 }
