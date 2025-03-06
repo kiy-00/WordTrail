@@ -284,29 +284,29 @@ export default defineComponent({
           title: '请先选择词书',
           icon: 'none',
         })
+        return
       }
 
-      // try {
-      //   const words = await WordAPI.getReviewWords(lexicon.id)
-      //   if (words && words.length > 0) {
-      //     uni.navigateTo({
-      //       url: `/pages/word/review?words=${encodeURIComponent(JSON.stringify(words))}`,
-      //     })
-      //   }
-      //   else {
-      //     uni.showToast({
-      //       title: '没有需要复习的单词',
-      //       icon: 'none',
-      //     })
-      //   }
-      // }
-      // catch (error) {
-      //   console.error('获取复习单词失败:', error)
-      //   uni.showToast({
-      //     title: '网络错误，请稍后重试',
-      //     icon: 'none',
-      //   })
-      // }
+      try {
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b'
+
+        // eslint-disable-next-line no-console
+        console.log('用户ID:', userId)
+
+        // 直接跳转到复习页面，不需要额外传递参数
+        // 复习页面会自己调用接口获取待复习的单词
+        uni.navigateTo({
+          url: '/pages/word/review',
+        })
+      }
+      catch (error) {
+        console.error('跳转到复习页面失败:', error)
+        uni.showToast({
+          title: '网络错误，请稍后重试',
+          icon: 'none',
+        })
+      }
     }
 
     // 添加监听词书变化的函数
