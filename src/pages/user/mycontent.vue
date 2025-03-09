@@ -19,12 +19,12 @@ export default defineComponent({
         text: '在学词书',
         value: bookLearned,
       },
-      // {
-      //   url: '/pages/user/recentlylearned',
-      //   icon: 'i-mynaui:clock-circle',
-      //   text: '最近学习',
-      //   value: recentlyLearned,
-      // },
+      {
+        url: '/pages/user/selectlexicon',
+        icon: 'i-mynaui:arrow-left-right',
+        text: '换本词书',
+        value: recentlyLearned,
+      },
       {
         url: '/pages/user/totallearned',
         icon: 'i-mynaui:chart-bar',

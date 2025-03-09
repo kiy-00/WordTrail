@@ -3,10 +3,7 @@ import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 interface Word {
-  _id: {
-    timestamp: number
-    date: string
-  }
+  _id: string // 修改为字符串类型的ObjectId
   word: string
   language: string
   difficulty: number
@@ -35,7 +32,7 @@ interface SystemWordbook {
   description: string
   language: string
   createUser: string
-  words: string[] // 这里存储的是单词ID列表
+  words: string[] // 这里存储的是单词ID列表 (ObjectId形式)
 }
 
 export default defineComponent({
@@ -216,10 +213,10 @@ export default defineComponent({
       })
     }
 
-    // 打开单词详情
+    // 打开单词详情 - 修改为使用完整的ObjectId
     const openWordDetail = (word: Word) => {
       uni.navigateTo({
-        url: `/pages/word/worddetail?id=${word._id.timestamp}`,
+        url: `/pages/word/worddetail?id=${word._id}`,
       })
     }
 
@@ -339,7 +336,7 @@ export default defineComponent({
           <view v-if="words.length > 0">
             <WordBox
               v-for="word in words"
-              :key="word._id.timestamp"
+              :key="word._id"
               :word-data="word"
               class="mb-4"
               @click="openWordDetail(word)"
