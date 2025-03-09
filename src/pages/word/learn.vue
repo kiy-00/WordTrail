@@ -389,6 +389,7 @@ export default defineComponent({
         :current-card="currentCard"
         :total-cards="totalCards"
         :word="currentWord.word || ''"
+        :word-id="currentWord.id || ''"
       />
 
       <!-- Content -->

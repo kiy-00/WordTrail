@@ -245,7 +245,7 @@ export default defineComponent({
 
   <!-- 内容区域 -->
   <scroll-view
-    class="mt-16 flex-1 px-4"
+    class="mt-24 flex-1"
     scroll-y
     refresher-enabled
     :refresher-triggered="isRefreshing"

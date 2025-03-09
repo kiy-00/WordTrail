@@ -1,6 +1,5 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, ref } from 'vue'
 
 export default defineComponent({
@@ -56,7 +55,7 @@ export default defineComponent({
         const token = uni.getStorageSync('token')
         const userId = uni.getStorageSync('userInfo')?.userId
 
-        if (!token || !userId) {
+        if (!token) {
           uni.showToast({
             title: '请先登录',
             icon: 'none',
@@ -68,29 +67,36 @@ export default defineComponent({
         // 处理标签
         const tagList = tags.value.trim() ? tags.value.split(',').map(tag => tag.trim()) : []
 
-        // 发送创建词书请求
+        // 构建请求数据
+        const requestData = {
+          bookName: bookName.value.trim(),
+          description: description.value.trim(),
+          language: selectedLanguage.value,
+          isPublic: isPublic.value,
+          tags: tagList,
+          words: [], // 初始为空数组
+        }
+
+        // 使用新的API端点进行词书创建
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/user-wordbooks`,
+          url: `http://localhost:8082/api/v1/user-wordbooks/user/${userId}`,
           method: 'POST',
-          data: {
-            bookName: bookName.value.trim(),
-            description: description.value.trim(),
-            language: selectedLanguage.value,
-            isPublic: isPublic.value,
-            tags: tagList,
-            createUser: userId,
-          },
+          data: requestData,
           header: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         })
 
+        // 检查响应状态
         if (response.statusCode === 201 || response.statusCode === 200) {
           uni.showToast({
             title: '创建成功',
             icon: 'success',
           })
+
+          // eslint-disable-next-line no-console
+          console.log('词书创建成功:', response.data)
 
           // 创建成功后返回上一页
           setTimeout(() => {
@@ -98,7 +104,7 @@ export default defineComponent({
           }, 1500)
         }
         else {
-          errorMessage.value = '创建词书失败'
+          errorMessage.value = `创建词书失败: ${response.statusCode}`
           console.error('创建词书失败:', response)
         }
       }
@@ -129,112 +135,138 @@ export default defineComponent({
 </script>
 
 <template>
-  <view class="h-full flex flex-col">
-    <!-- 顶部栏 -->
-    <view class="fixed top-0 z-10 w-full flex items-center justify-between bg-white px-4 py-3 shadow-sm">
-      <BackButton @back="handleBack" />
-      <text class="text-xl font-bold">
-        创建词书
-      </text>
-      <view class="h-8 w-8">
-        <!-- 占位 -->
-      </view>
+  <BackButton @back="handleBack" />
+  <!-- 顶部栏 -->
+  <view class="fixed relative left-0 top-8 w-full flex items-center justify-center rounded-sm py-3 shadow-sm frosted-glass">
+    <text class="text-xl font-bold">
+      创建词书
+    </text>
+    <!-- 为了保持布局平衡，添加一个占位元素 -->
+    <view class="absolute right-4 h-8 w-8" />
+  </view>
+
+  <!-- 表单区域 -->
+  <view class="mt-16 flex-1 px-4 py-4">
+    <!-- 错误信息 -->
+    <view v-if="errorMessage" class="mb-6 rounded-lg bg-red-50 p-4 text-center text-red-500 shadow-sm">
+      {{ errorMessage }}
     </view>
 
-    <!-- 表单区域 -->
-    <view class="mt-16 flex-1 px-4 py-4">
-      <!-- 错误信息 -->
-      <view v-if="errorMessage" class="mb-4 rounded-lg bg-red-50 p-3 text-center text-red-500">
-        {{ errorMessage }}
+    <view class="rounded-xl bg-white/30 p-5 shadow-sm backdrop-blur-sm space-y-6">
+      <!-- 词书名称 -->
+      <view class="space-y-2">
+        <text class="block text-sm text-gray-700 font-medium">
+          词书名称
+        </text>
+        <input
+          v-model="bookName"
+          class="border border-gray-300 rounded-lg bg-white/70 px-4 py-3 shadow-sm transition-all focus:border-yellow focus:outline-none focus:ring-1 focus:ring-yellow"
+          placeholder="请输入词书名称"
+        >
       </view>
 
-      <view class="space-y-4">
-        <!-- 词书名称 -->
-        <view class="space-y-1">
-          <text class="text-sm text-gray-600">
-            词书名称
-          </text>
-          <input
-            v-model="bookName"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2"
-            placeholder="请输入词书名称"
-          >
-        </view>
+      <!-- 词书描述 -->
+      <view class="space-y-2">
+        <text class="block text-sm text-gray-700 font-medium">
+          词书描述
+        </text>
+        <!-- 待解决的bug：这里使用w-full出问题了 -->
+        <textarea
+          v-model="description"
+          class="h-28 w-86% border border-gray-300 rounded-lg bg-white/70 px-4 py-3 shadow-sm transition-all focus:border-yellow focus:outline-none focus:ring-1 focus:ring-yellow"
+          placeholder="请输入词书描述"
+        />
+      </view>
 
-        <!-- 词书描述 -->
-        <view class="space-y-1">
-          <text class="text-sm text-gray-600">
-            词书描述
-          </text>
-          <textarea
-            v-model="description"
-            class="h-24 w-full border border-gray-300 rounded-lg px-3 py-2"
-            placeholder="请输入词书描述"
-          />
-        </view>
+      <!-- 语言选择 -->
+      <view class="space-y-2">
+        <text class="block text-sm text-gray-700 font-medium">
+          选择语言
+        </text>
+        <picker
+          mode="selector"
+          :range="languages"
+          range-key="label"
+          class="w-full overflow-hidden border border-gray-300 rounded-lg bg-white/70 shadow-sm transition-all"
+          @change="handleLanguageChange"
+        >
+          <view class="flex items-center px-4 py-3">
+            <text class="mr-2 text-lg">
+              {{ languages.find(l => l.value === selectedLanguage)?.emoji }}
+            </text>
+            <text class="flex-1">
+              {{ languages.find(l => l.value === selectedLanguage)?.label }}
+            </text>
+            <view class="i-carbon:chevron-down text-gray-500" />
+          </view>
+        </picker>
+      </view>
 
-        <!-- 语言选择 -->
-        <view class="space-y-1">
-          <text class="text-sm text-gray-600">
-            选择语言
-          </text>
-          <picker
-            mode="selector"
-            :range="languages"
-            range-key="label"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2"
-            @change="handleLanguageChange"
-          >
-            <view class="flex items-center">
-              <text class="mr-2">
-                {{ languages.find(l => l.value === selectedLanguage)?.emoji }}
-              </text>
-              <text>
-                {{ languages.find(l => l.value === selectedLanguage)?.label }}
-              </text>
-            </view>
-          </picker>
-        </view>
-
-        <!-- 标签 -->
-        <view class="space-y-1">
-          <text class="text-sm text-gray-600">
-            标签（多个标签请用逗号分隔）
-          </text>
+      <!-- 标签 -->
+      <view class="space-y-2">
+        <text class="block text-sm text-gray-700 font-medium">
+          标签
+        </text>
+        <view class="relative">
           <input
             v-model="tags"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+            class="border border-gray-300 rounded-lg bg-white/70 px-4 py-3 shadow-sm transition-all focus:border-yellow focus:outline-none focus:ring-1 focus:ring-yellow"
             placeholder="例如：基础,日常,学校"
           >
         </view>
+      </view>
 
-        <!-- 是否公开 -->
-        <view class="flex items-center space-x-2">
-          <switch
-            :checked="isPublic"
-            color="#f59e0b"
-            @change="e => isPublic = e.detail.value"
-          />
-          <text class="text-sm text-gray-600">
-            词书公开（其他用户可以查看和使用）
+      <!-- 是否公开 -->
+      <view class="flex items-center rounded-lg bg-white/50 p-3">
+        <switch
+          :checked="isPublic"
+          color="#f59e0b"
+          class="mr-3 scale-90"
+          @change="e => isPublic = e.detail.value"
+        />
+        <view>
+          <text class="block text-base text-gray-800">
+            词书公开
+          </text>
+          <text class="text-xs text-gray-500">
+            开启后其他用户可以查看和使用
           </text>
         </view>
-
-        <!-- 创建按钮 -->
-        <button
-          class="mt-6 w-full rounded-lg bg-yellow py-3 text-white"
-          :disabled="isCreating"
-          @click="createLexicon"
-        >
-          {{ isCreating ? '创建中...' : '创建词书' }}
-        </button>
       </view>
     </view>
+
+    <!-- 创建按钮 -->
+    <button
+      class="mt-10 w-full rounded-lg bg-yellow py-4 text-white font-semibold shadow-md transition-all active:scale-98 active:shadow-sm"
+      :class="{ 'opacity-70': isCreating }"
+      :disabled="isCreating"
+      @click="createLexicon"
+    >
+      {{ isCreating ? '创建中...' : '创建词书' }}
+    </button>
   </view>
 </template>
 
 <style scoped>
-/* 可以根据需要添加样式 */
+/* 添加过渡效果 */
+.transition-all {
+  transition: all 0.2s ease;
+}
+
+/* 按钮按下缩小效果 */
+.active\:scale-98:active {
+  transform: scale(0.98);
+}
+
+/* 按钮按下阴影减小效果 */
+.active\:shadow-sm:active {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 输入框焦点效果 */
+input:focus, textarea:focus {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
+}
 </style>
 
 <route lang="json">
