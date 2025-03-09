@@ -79,7 +79,7 @@ export default defineComponent({
 
         // 使用新的API端点进行词书创建
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/user-wordbooks/user/${userId}`,
+          url: `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId}`,
           method: 'POST',
           data: requestData,
           header: {

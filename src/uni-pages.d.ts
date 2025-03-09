@@ -19,6 +19,7 @@ interface NavigateToOptions {
        "/pages/user/myuserlexicon" |
        "/pages/user/selectlexicon" |
        "/pages/user/settings" |
+       "/pages/user/totallearned" |
        "/pages/word/learn" |
        "/pages/word/review";
 }

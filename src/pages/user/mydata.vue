@@ -1,350 +1,355 @@
 <script lang="ts">
-import type { EChartOption } from 'echarts/types/dist/echarts' // 修改导入
-import { LexiconStorage } from '@/utils/lexiconStorage'
-import * as echarts from 'echarts'
-import { defineComponent, onMounted, ref, watch } from 'vue'
+import BackButton from '@/components/BackButton.vue'
+import { API_BASE_URL } from '@/config/api'
+import { defineComponent, onMounted, ref } from 'vue'
+
+// 定义学习记录统计接口
+interface LearningStats {
+  totalLearnedWords: number
+  totalReviewedWords: number
+  averageSuccessRate: number
+  consecutiveDays: number
+  totalLearningTime: number
+  dailyAverageWords: number
+}
 
 export default defineComponent({
-  name: 'MyData',
+  name: 'MyDataPage',
+  components: {
+    BackButton,
+  },
   setup() {
-    const checkDays = ref(0)
-    const todayLearned = ref(9)
-    const totalLearned = ref(0)
-    const todayTime = ref(0)
-    const totalTime = ref(0)
-    const bookName = ref('')
-    const vocabularyCount = ref(0)
-    const bookLearned = ref(0)
-    const bookTotal = ref(0)
-    const bookUrl = ref('')
-    const percent = ref(0)
-    const overviewItems = ref([
-      { icon: 'i-mynaui:chart-bar-two', content: '今日学习', data: todayLearned, unit: '词', color: 'yellow' },
-      { icon: 'i-mynaui:chart-bar-solid', content: '累计学习', data: totalLearned, unit: '词', color: '' },
-      { icon: 'i-mynaui:chevron-down-right-circle', content: '今日总时长', data: todayTime, unit: '分钟', color: 'yellow' },
-      { icon: 'i-mynaui:chevron-down-left-waves-solid', content: '累计时长', data: totalTime, unit: '分钟', color: '' },
-    ])
-    const week = ref(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'])
-    const firstDay = ref(0)
+    const isLoading = ref(true)
+    const errorMessage = ref('')
+    const userId = ref(uni.getStorageSync('userInfo')?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b')
 
-    // 添加用于存储和显示API返回数据的ref
-    const weeklyStats = ref<any>(null)
-    const debugVisible = ref(true)
+    // 连续学习天数
+    const streak = ref(0)
 
-    // 添加一个 DOM 引用用于图表容器
-    const chartRef = ref<HTMLDivElement | HTMLCanvasElement | null>(null)
-
-    // 图表实例
-    let chartInstance: echarts.ECharts | null = null
-
-    // 处理后的图表数据
-    const chartData = ref({
-      dates: [] as string[],
-      learnCounts: [] as number[],
-      reviewCounts: [] as number[],
+    // 学习统计数据
+    const stats = ref<LearningStats>({
+      totalLearnedWords: 0,
+      totalReviewedWords: 0,
+      averageSuccessRate: 0,
+      consecutiveDays: 0,
+      totalLearningTime: 0,
+      dailyAverageWords: 0,
     })
 
-    // 定义更新图表的函数，提前放在调用之前
-    const updateChart = () => {
-      if (chartInstance) {
-        const option: EChartOption = {
-          tooltip: {
-            trigger: 'axis',
-            formatter: (params: any) => {
-              const date = params[0].name
-              const reviewCount = params[0].value
-              const reviewGreaterCount = params[1].value
-              return `${date}<br/>
-                     首次学习：${reviewCount}个<br/>
-                     重复复习：${reviewGreaterCount}个`
-            },
-          },
-          legend: {
-            data: ['首次学习', '重复复习'],
-          },
-          xAxis: [{
-            type: 'category',
-            data: chartData.value.dates,
-            axisLabel: {
-              formatter: (value: string) => {
-                // 只显示月份和日期
-                return value.slice(5)
-              },
-            },
-          }],
-          yAxis: [{
-            type: 'value',
-            name: '单词数量',
-            min: 0,
-            max: 100, // 修改上限为100
-            interval: 10, // 修改间隔为10
-            axisLabel: {
-              formatter: '{value}个',
-            },
-          }],
-          series: [
-            {
-              name: '首次学习',
-              type: 'bar',
-              data: chartData.value.learnCounts,
-              itemStyle: {
-                color: '#FFCB00',
-              },
-              barGap: '30%',
-              emphasis: {
-                itemStyle: {
-                  color: '#FFD700',
-                },
-              },
-            },
-            {
-              name: '重复复习',
-              type: 'bar',
-              data: chartData.value.reviewCounts,
-              itemStyle: {
-                color: '#4B99FF',
-              },
-              emphasis: {
-                itemStyle: {
-                  color: '#6CB6FF',
-                },
-              },
-            },
-          ],
-        }
-        chartInstance.setOption(option)
+    // 计算过去一个月的日期范围
+    const getDateRange = () => {
+      const endDate = new Date()
+      const startDate = new Date()
+      startDate.setMonth(startDate.getMonth() - 1)
+
+      return {
+        startDate: `${startDate.toISOString().split('T')[0]}T00:00:00.000Z`,
+        endDate: `${endDate.toISOString().split('T')[0]}T23:59:59.999Z`,
       }
     }
 
-    // 监听 weeklyStats 的变化，更新 chartData
-    watch(weeklyStats, (newStats) => {
-      if (newStats && Array.isArray(newStats)) {
-        // 直接使用原始顺序，不再反转
-        chartData.value.dates = newStats.map(item => item.date)
-        // reviewCount1 对应首次学习的数量
-        chartData.value.learnCounts = newStats.map(item => item.reviewCount1)
-        // reviewCountGreater1 对应重复复习的数量
-        chartData.value.reviewCounts = newStats.map(item => item.reviewCountGreater1)
-        updateChart()
-      }
-    })
-
-    // 初始化图表
-    const initChart = () => {
-      const chartDom = chartRef.value
-      if (chartDom) {
-        chartInstance = echarts.init(chartDom as HTMLDivElement)
-        updateChart()
-      }
-    }
-
-    // 获取每周统计数据
-    const fetchWeeklyStats = async () => {
+    // 获取连续学习天数
+    const fetchStreak = async () => {
       try {
         const token = uni.getStorageSync('token')
+        if (!token) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        const url = `${API_BASE_URL}/api/v1/learning-records/${userId.value}/streak`
+
         const response = await uni.request({
-          url: '/word/api/statistics/weekly',
+          url,
           method: 'GET',
           header: {
-            Authorization: `${token}`,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
         })
 
         if (response.statusCode === 200) {
-          weeklyStats.value = response.data
+          // 如果响应是一个数字，直接使用
+          if (typeof response.data === 'number') {
+            streak.value = response.data
+          }
+          // 如果响应是一个对象，查找连续天数字段
+          else if (typeof response.data === 'object' && response.data !== null) {
+            streak.value = response.data.streak || response.data.consecutiveDays || 0
+          }
+
+          // eslint-disable-next-line no-console
+          console.log('获取到的连续学习天数:', streak.value)
         }
         else {
-          throw new Error(`请求失败: ${response.statusCode}`)
+          console.error('获取连续学习天数失败:', response)
         }
       }
-      catch {
-        uni.showToast({
-          title: '获取统计数据失败',
-          icon: 'none',
-        })
+      catch (error) {
+        console.error('获取连续学习天数错误:', error)
       }
     }
 
-    const currentLexiconName = ref('')
+    // 获取学习统计数据
+    const fetchLearningStats = async () => {
+      try {
+        const token = uni.getStorageSync('token')
+        if (!token) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
 
-    const updateCurrentLexiconName = () => {
-      const lexicon = LexiconStorage.getCurrentLexicon()
-      currentLexiconName.value = lexicon?.name || '未选择词书'
+        const { startDate, endDate } = getDateRange()
+        const url = `${API_BASE_URL}/api/v1/learning-records/${userId.value}/stats?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+
+        // eslint-disable-next-line no-console
+        console.log('请求学习统计数据:', url)
+
+        const response = await uni.request({
+          url,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.statusCode === 200 && response.data) {
+          stats.value = response.data as LearningStats
+          // eslint-disable-next-line no-console
+          console.log('获取到的学习统计:', stats.value)
+        }
+        else {
+          errorMessage.value = '获取学习统计失败'
+          console.error('获取学习统计失败:', response)
+        }
+      }
+      catch (error) {
+        errorMessage.value = '网络错误，请稍后再试'
+        console.error('获取学习统计错误:', error)
+      }
+    }
+
+    // 初始化数据
+    const initData = async () => {
+      isLoading.value = true
+      errorMessage.value = ''
+
+      try {
+        // 并行发起两个请求
+        await Promise.all([fetchStreak(), fetchLearningStats()])
+      }
+      catch (error) {
+        errorMessage.value = '获取数据失败，请重试'
+        console.error('初始化数据失败:', error)
+      }
+      finally {
+        isLoading.value = false
+      }
+    }
+
+    // 返回上一页
+    const handleBack = () => {
+      uni.navigateBack()
+    }
+
+    // 刷新数据
+    const refreshData = () => {
+      initData()
+    }
+
+    // 查看详细统计
+    const viewDetailedStats = () => {
+      uni.navigateTo({ url: '/pages/user/totallearned' })
+    }
+
+    // 格式化时间（将秒转换为时:分）
+    const formatTime = (seconds: number) => {
+      const hours = Math.floor(seconds / 3600)
+      const minutes = Math.floor((seconds % 3600) / 60)
+
+      return `${hours}小时${minutes}分钟`
     }
 
     onMounted(() => {
-      checkDays.value = 100
-      todayLearned.value = 100
-      totalLearned.value = 1000
-      todayTime.value = 60
-      totalTime.value = 1000
-      fetchWeeklyStats()
-      // 初始化图表
-      initChart()
-      updateCurrentLexiconName()
+      initData()
     })
 
-    // 返回逻辑
-    const handleBack = () => {
-      // 实现返回逻辑，例如跳转到上一页
-      uni.navigateTo({
-        url: '/pages/home/home',
-      })
-    }
-
-    const handleSwitchLexicon = () => {
-      uni.navigateTo({
-        url: '/pages/user/selectlexicon',
-      })
-    }
-
     return {
-      checkDays,
-      todayLearned,
-      totalLearned,
-      todayTime,
-      totalTime,
-      bookName,
-      vocabularyCount,
-      bookLearned,
-      bookTotal,
-      bookUrl,
-      percent,
-      overviewItems,
-      week,
-      firstDay,
+      isLoading,
+      errorMessage,
+      streak,
+      stats,
+      formatTime,
       handleBack,
-      handleSwitchLexicon,
-      weeklyStats,
-      debugVisible,
-      chartRef,
-      currentLexiconName,
+      refreshData,
+      viewDetailedStats,
     }
   },
 })
 </script>
 
 <template>
-  <!-- Back Button -->
   <BackButton @back="handleBack" />
 
-  <view class="header mt-5">
-    <text class="header-text z-10 text-sm font-bold">
-      Dashboard
+  <!-- 标题 -->
+  <view class="mb-6 mt-10 flex items-center justify-between">
+    <text class="text-2xl font-bold">
+      我的学习数据
     </text>
-  </view>
-  <view class="body-head mt-5 flex items-center justify-between">
-    <text class="ml-2 font-bold">
-      {{ currentLexiconName }}
-    </text>
-    <button
-      class="action-button mr-0 h-8 rounded-lg bg-yellow p-2 text-align-center text-sm font-bold"
-      @click="handleSwitchLexicon"
+    <view
+      class="h-10 w-10 flex cursor-pointer items-center justify-center rounded-full bg-white/80"
+      @click="refreshData"
     >
-      换本词书
-    </button>
+      <view class="i-mynaui:refresh text-xl text-gray-700" />
+    </view>
   </view>
-  <!-- <view class="content">
-    <view class="box relative my-2 ml-1 flex flex-col rounded-md p-5 frosted-glass">
-      <view class="flex items-start">
-        <image class="box-image h-16 w-18 rounded-md" :src="bookUrl" />
-        <view class="ml-4 h-16 flex flex-col justify-between">
-          <text class="book-name text-xl">
-            {{ bookName }}
+
+  <!-- 加载状态 -->
+  <view v-if="isLoading" class="flex flex-col items-center justify-center py-10">
+    <view class="i-carbon:progress-bar animate-spin text-2xl" />
+    <text class="mt-2 block text-gray-600">
+      加载中...
+    </text>
+  </view>
+
+  <!-- 错误信息 -->
+  <view v-else-if="errorMessage" class="rounded-lg bg-red-50 p-4 text-center text-red-500">
+    {{ errorMessage }}
+  </view>
+
+  <!-- 数据展示 -->
+  <view v-else class="space-y-6">
+    <!-- 连续学习天数卡片 -->
+    <view class="relative overflow-hidden rounded-xl from-yellow to-amber-400 bg-gradient-to-r p-5 shadow-md">
+      <view class="relative z-10">
+        <text class="mb-1 block text-lg font-medium">
+          当前连续学习
+        </text>
+        <view class="flex items-baseline">
+          <text class="text-4xl font-bold">
+            {{ streak }}
           </text>
-          <view class="learned flex items-center">
-            <view class="i-mynaui:check-circle-one" />
-            <text class="vocabulary text-m mb-0">
-              &nbsp;生词本&nbsp;{{ vocabularyCount }}
+          <text class="ml-2 text-xl">
+            天
+          </text>
+        </view>
+        <text class="mt-2 block text-sm">
+          继续保持，不要中断你的学习记录！
+        </text>
+      </view>
+      <!-- 背景装饰 -->
+      <view class="absolute bottom-0 right-0 opacity-20">
+        <view class="i-carbon:calendar-heat-map text-6xl" />
+      </view>
+    </view>
+
+    <!-- 本月学习概览 -->
+    <view class="rounded-xl bg-white/70 p-5 shadow-sm backdrop-blur-sm">
+      <text class="mb-4 block text-lg text-gray-800 font-medium">
+        过去30天学习概览
+      </text>
+
+      <view class="grid grid-cols-2 gap-4">
+        <!-- 已学单词 -->
+        <view class="rounded-lg bg-blue-50 p-4">
+          <view class="flex items-center">
+            <view class="i-carbon:book text-xl text-blue-500" />
+            <text class="ml-2 text-sm text-gray-600">
+              已学单词
             </text>
           </view>
+          <text class="mt-1 block text-2xl text-gray-800 font-bold">
+            {{ stats.totalLearnedWords }}
+          </text>
+        </view>
+
+        <!-- 已复习 -->
+        <view class="rounded-lg bg-green-50 p-4">
+          <view class="flex items-center">
+            <view class="i-carbon:review text-xl text-green-500" />
+            <text class="ml-2 text-sm text-gray-600">
+              已复习单词
+            </text>
+          </view>
+          <text class="mt-1 block text-2xl text-gray-800 font-bold">
+            {{ stats.totalReviewedWords }}
+          </text>
+        </view>
+
+        <!-- 记忆成功率 -->
+        <view class="rounded-lg bg-purple-50 p-4">
+          <view class="flex items-center">
+            <view class="i-carbon:chart-radar text-xl text-purple-500" />
+            <text class="ml-2 text-sm text-gray-600">
+              记忆成功率
+            </text>
+          </view>
+          <text class="mt-1 block text-2xl text-gray-800 font-bold">
+            {{ (stats.averageSuccessRate * 100).toFixed(1) }}%
+          </text>
+        </view>
+
+        <!-- 日均学习 -->
+        <view class="rounded-lg bg-orange-50 p-4">
+          <view class="flex items-center">
+            <view class="i-carbon:chart-bar text-xl text-orange-500" />
+            <text class="ml-2 text-sm text-gray-600">
+              日均学习
+            </text>
+          </view>
+          <text class="mt-1 block text-2xl text-gray-800 font-bold">
+            {{ stats.dailyAverageWords }}词
+          </text>
         </view>
       </view>
-      <progress class="box-progress mt-10" color="#FFCB00FF" :percent="bookLearned / bookTotal * 100" />
-      <view class="mt-2 flex justify-between">
-        <text class="book-learned ml-0 mt-0">
-          已学习{{ bookLearned }}
-        </text>
-        <text class="book-total mr-0 mt-0">
-          总词数{{ bookTotal }}
-        </text>
-      </view>
-    </view> -->
-  <!-- <text class="my-data-text absolute mt-12 text-left -ml-40">
-    我的数据
-  </text> -->
+    </view>
 
-  <!-- <view class="box relative my-4 ml-1 mt-22 flex flex-col rounded-md p-5 frosted-glass">
-      <text class="box-text absolute left-2 top-2">
-        概览
-      </text>
-      <view class="i-mynaui:chevron-right absolute right-2 top-2" />
-      <view class="boxes grid grid-cols-2 grid-rows-2 mt-4 gap-4">
-        <OverviewContent
-          v-for="(item, index) in overviewItems"
-          :key="index"
-          :icon="item.icon"
-          :content="item.content"
-          :data="item.data.toString()"
-          :unit="item.unit"
-          :color="item.color"
-        />
-      </view>
-    </view> -->
-
-  <!-- <view class="box relative my-4 ml-1 flex flex-col rounded-md p-5 frosted-glass">
-    <view class="flex items-center justify-between">
-      <text class="box-text absolute left-2 top-2">
-        日历
-      </text>
-      <view class="absolute right-2 top-2 flex items-center">
-        <text class="box-text mr-1 text-xs">
-          连续签到{{ checkDays }}天
-        </text>
-        <view class="i-mynaui:chevron-right" />
+    <!-- 查看更多按钮 -->
+    <view class="mt-4 flex justify-center">
+      <view
+        class="cursor-pointer rounded-lg bg-yellow px-6 py-3 text-white font-semibold shadow-sm transition-all active:scale-98"
+        @click="viewDetailedStats"
+      >
+        查看详细学习统计
       </view>
     </view>
-    <view class="calendar-box mt-4 flex">
-      <CalendarDate
-        v-for="(day, index) in week"
-        :key="index"
-        :day-of-week="day"
-        :date="(firstDay + index).toString()"
-        :is-today="index === 2"
-        class="custom-calendar-date flex-grow text-center"
-      />
-    </view>
-  </view> -->
 
-  <!-- 在合适的位置添加图表容器 -->
-  <div ref="chartRef" class="chart-container rounded p-4 frosted-glass" style="width: 90%; height: 300px;" />
-
-  <!-- <view v-if="debugVisible" class="fixed right-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
-    <view class="mb-2 flex items-center justify-between">
-      <text class="font-bold">
-        每周统计数据(调试)
-      </text>
+    <!-- 激励文案 -->
+    <view class="mt-6 border border-yellow/30 rounded-lg bg-yellow/10 p-4">
+      <view class="flex">
+        <view class="i-carbon:idea text-xl text-yellow" />
+        <text class="ml-2 text-sm text-gray-700">
+          <text class="font-medium">
+            学习小贴士:
+          </text>
+          坚持每日学习和复习，能够有效提高单词记忆效果。即使只有5分钟，也比不学习要好！
+        </text>
+      </view>
     </view>
-    <view v-if="weeklyStats" class="text-xs">
-      <pre class="whitespace-pre-wrap break-all">{{ JSON.stringify(weeklyStats, null, 2) }}</pre>
-    </view>
-    <view v-else class="text-gray-500">
-      加载中...
-    </view>
-  </view> -->
+  </view>
 </template>
 
 <style scoped>
-/* 添加必要的样式 */
-.chart-container {
-  margin-top: 20px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
+/* 渐变背景 */
+.bg-gradient-to-r {
+  background: linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to));
+}
+
+/* 按钮按下效果 */
+.active\:scale-98:active {
+  transform: scale(0.98);
 }
 </style>
 
 <route lang="json">
-  {
-    "layout": "default"
-  }
+{
+  "layout": "default"
+}
 </route>

@@ -61,7 +61,7 @@ export default defineComponent({
 
         // 调用API获取用户的词书列表
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/user-wordbooks/user/${userId.value}?page=0&size=100`,
+          url: `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId.value}?page=0&size=100`,
           method: 'GET',
           header: {
             'Authorization': `Bearer ${token}`,
@@ -164,7 +164,7 @@ export default defineComponent({
 
         // 调用API将单词添加到词书
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/user-wordbooks/${selectedLexiconId.value}/words/user/${userId.value}`,
+          url: `${API_BASE_URL}/api/v1/user-wordbooks/${selectedLexiconId.value}/words/user/${userId.value}`,
           method: 'POST',
           data: requestBody, // 直接发送数组
           header: {

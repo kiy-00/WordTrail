@@ -90,6 +90,12 @@
       "style": {}
     },
     {
+      "path": "pages/user/totallearned",
+      "type": "page",
+      "layout": "default",
+      "style": {}
+    },
+    {
       "path": "pages/word/learn",
       "type": "page",
       "layout": "default",

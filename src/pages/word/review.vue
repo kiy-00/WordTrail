@@ -253,7 +253,7 @@ export default defineComponent({
 
         // 调用API获取今日需要复习的单词学习记录，使用批次大小限制
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/learning/today-review?userId=${this.userId}&bookId=${currentLexicon.id}&limit=${this.batchSize}`,
+          url: `${API_BASE_URL}/api/v1/learning/today-review?userId=${this.userId}&bookId=${currentLexicon.id}&limit=${this.batchSize}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -308,7 +308,7 @@ export default defineComponent({
         const wordId = this.learningRecords[this.currentIndex].wordId
 
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/words/${wordId}`,
+          url: `${API_BASE_URL}/api/v1/words/${wordId}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -357,7 +357,7 @@ export default defineComponent({
 
         // 使用复习API记录单词复习结果
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/learning/review?userId=${this.userId}&wordId=${wordId}&remembered=${remembered}`,
+          url: `${API_BASE_URL}/api/v1/learning/review?userId=${this.userId}&wordId=${wordId}&remembered=${remembered}`,
           method: 'POST',
           header: {
             'Authorization': `Bearer ${token}`,
@@ -439,7 +439,7 @@ export default defineComponent({
 
         // 发送批量复习记录
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/learning-records/${this.userId}`,
+          url: `${API_BASE_URL}/api/v1/learning-records/${this.userId}`,
           method: 'POST',
           data: requestBody,
           header: {

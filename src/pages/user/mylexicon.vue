@@ -1,4 +1,5 @@
 <script lang="ts">
+import { API_BASE_URL } from '@/config/api'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import { computed, defineComponent, ref, watch } from 'vue'
 
@@ -163,7 +164,7 @@ export default defineComponent({
       try {
         const token = uni.getStorageSync('token')
         const response: UniApp.RequestSuccessCallbackResult = await uni.request({
-          url: `http://localhost:8082/api/v1/words/${wordId}`,
+          url: `${API_BASE_URL}/api/v1/words/${wordId}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -202,13 +203,13 @@ export default defineComponent({
 
         switch (masteryLevel) {
           case 0:
-            url = `http://localhost:8082/api/v1/learning/book/${currentLexicon.id}/unlearned-words?userId=${userId.value}`
+            url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/unlearned-words?userId=${userId.value}`
             break
           case 1:
-            url = `http://localhost:8082/api/v1/learning/book/${currentLexicon.id}/fuzzy-words?userId=${userId.value}`
+            url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/fuzzy-words?userId=${userId.value}`
             break
           case 2:
-            url = `http://localhost:8082/api/v1/learning/book/${currentLexicon.id}/familiar-words?userId=${userId.value}`
+            url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/familiar-words?userId=${userId.value}`
             break
         }
 
@@ -251,7 +252,7 @@ export default defineComponent({
 
         // 先尝试从系统词书获取
         let response = await uni.request({
-          url: `http://localhost:8082/api/v1/system-wordbooks/${currentLexicon.id}/words`,
+          url: `${API_BASE_URL}/api/v1/system-wordbooks/${currentLexicon.id}/words`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -264,7 +265,7 @@ export default defineComponent({
           console.log('系统词书API未返回有效数据，尝试用户词书API')
 
           response = await uni.request({
-            url: `http://localhost:8082/api/v1/user-wordbooks/${currentLexicon.id}/words`,
+            url: `${API_BASE_URL}/api/v1/user-wordbooks/${currentLexicon.id}/words`,
             method: 'GET',
             header: {
               Authorization: `Bearer ${token}`,

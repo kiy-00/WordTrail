@@ -37,7 +37,7 @@ export default defineComponent({
       try {
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/words/${wordId}`,
+          url: `${API_BASE_URL}/api/v1/words/${wordId}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -135,7 +135,7 @@ export default defineComponent({
 
         // 调用 API 接口，使用 URL 查询参数传递参数，而不是请求体
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/learning/start?userId=${encodeURIComponent(userId.value)}&wordId=${encodeURIComponent(wordId)}`,
+          url: `${API_BASE_URL}/api/v1/learning/start?userId=${encodeURIComponent(userId.value)}&wordId=${encodeURIComponent(wordId)}`,
           method: 'POST',
           // 不再使用 data 字段发送 JSON
           header: {
@@ -152,7 +152,7 @@ export default defineComponent({
         else {
           // 打印详细错误信息
           console.error('添加学习记录失败:', response)
-          console.error('请求URL:', `http://localhost:8082/api/v1/learning/start?userId=${userId.value}&wordId=${wordId}`)
+          console.error('请求URL:', `${API_BASE_URL}/api/v1/learning/start?userId=${userId.value}&wordId=${wordId}`)
 
           // 显示更具体的错误信息
           if (response.data && response.data) {

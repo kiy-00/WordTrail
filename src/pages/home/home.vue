@@ -238,7 +238,7 @@ export default defineComponent({
         // 使用新的API获取单词ID列表
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `http://localhost:8082/api/v1/learning/book/${lexicon.id}/new-words?userId=${userId}&batchSize=${batchSize}`,
+          url: `${API_BASE_URL}/api/v1/learning/book/${lexicon.id}/new-words?userId=${userId}&batchSize=${batchSize}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
