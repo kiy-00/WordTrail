@@ -373,7 +373,7 @@ export default defineComponent({
       <text class="mb-4 block text-center text-xl font-bold">
         选择学习语言
       </text>
-      <view class="space-y-3">
+      <view class="text-gray-700 space-y-3">
         <view
           v-for="lang in languages.slice(1)"
           :key="lang.name"

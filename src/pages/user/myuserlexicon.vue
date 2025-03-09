@@ -77,7 +77,6 @@ export default defineComponent({
         }
 
         // 构建API URL - 根据后端接口定义修改
-        // 注意: 根据接口定义，这里应该是 /user/{userId}，而不是 /user-wordbooks/user/{userId}
         const requestUrl = `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId.value}`
 
         // eslint-disable-next-line no-console
@@ -281,7 +280,7 @@ export default defineComponent({
         :create-user="lexicon.createUser"
         :word-count="lexicon.words?.length || 0"
         :url="`/pages/lexicon/userlexicondetail?id=${lexicon.id}&type=user`"
-        :image-url="`/static/flags/${lexicon.language || 'unknown'}.png`"
+        image-url="/static/lexicon.png"
         @click="handleLexiconClick(lexicon)"
       />
     </view>

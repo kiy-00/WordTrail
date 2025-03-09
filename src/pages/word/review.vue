@@ -516,16 +516,7 @@ export default defineComponent({
             class="flex-1"
           />
 
-          <!-- Next Word Button -->
-          <view class="mb-4 mt-6 flex justify-center">
-            <text
-              class="cursor-pointer rounded-full bg-blue-500 px-8 py-3 text-white font-semibold"
-              hover-class="opacity-80"
-              @click="nextWord"
-            >
-              下一词
-            </text>
-          </view>
+          <!-- 移除原来的按钮位置 -->
         </template>
       </scroll-view>
 
@@ -566,6 +557,20 @@ export default defineComponent({
         >
           忘记
         </view>
+      </view>
+
+      <!-- 新增: 浮动的下一词按钮 -->
+      <view
+        v-if="showDetails"
+        class="fixed bottom-24 right-6 z-10 flex justify-center"
+      >
+        <text
+          class="cursor-pointer rounded-full bg-blue-500 px-8 py-3 text-white font-semibold shadow-lg"
+          hover-class="opacity-80"
+          @click="nextWord"
+        >
+          下一词
+        </text>
       </view>
     </template>
   </view>
