@@ -13,6 +13,18 @@ interface LearningStats {
   dailyAverageWords: number
 }
 
+// 定义streak响应数据接口
+interface StreakResponse {
+  streak?: number
+  consecutiveDays?: number
+}
+
+// 定义带有content属性的响应数据接口
+interface ContentResponse {
+  content: any
+  [key: string]: any
+}
+
 export default defineComponent({
   name: 'MyDataPage',
   components: {
@@ -78,7 +90,9 @@ export default defineComponent({
           }
           // 如果响应是一个对象，查找连续天数字段
           else if (typeof response.data === 'object' && response.data !== null) {
-            streak.value = response.data.streak || response.data.consecutiveDays || 0
+            // 使用类型断言解决类型检查错误
+            const data = response.data as StreakResponse
+            streak.value = data.streak || data.consecutiveDays || 0
           }
 
           // eslint-disable-next-line no-console
@@ -121,7 +135,27 @@ export default defineComponent({
         })
 
         if (response.statusCode === 200 && response.data) {
-          stats.value = response.data as LearningStats
+          // 如果response.data是字符串，尝试解析为JSON
+          if (typeof response.data === 'string') {
+            try {
+              const parsedData = JSON.parse(response.data)
+              stats.value = (parsedData.content || parsedData) as unknown as LearningStats
+            }
+            catch (e) {
+              console.error('解析响应数据失败:', e)
+              errorMessage.value = '解析数据失败'
+            }
+          }
+          // 如果response.data有content属性，需要使用类型断言
+          else if (typeof response.data === 'object' && response.data !== null) {
+            const data = response.data as ContentResponse
+            if (data.content) {
+              stats.value = data.content as unknown as LearningStats
+            }
+            else {
+              stats.value = response.data as unknown as LearningStats
+            }
+          }
           // eslint-disable-next-line no-console
           console.log('获取到的学习统计:', stats.value)
         }

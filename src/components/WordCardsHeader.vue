@@ -1,4 +1,5 @@
 <script lang="ts">
+import { API_BASE_URL } from '@/config/api'
 import { computed, defineComponent, ref } from 'vue'
 
 interface UserLexicon {
@@ -12,6 +13,12 @@ interface UserLexicon {
   createTime: string
   status: string
   tags?: string[]
+}
+
+// 定义带有content属性的响应数据接口
+interface ContentResponse {
+  content: any[]
+  [key: string]: any
 }
 
 export default defineComponent({
@@ -69,20 +76,68 @@ export default defineComponent({
           },
         })
 
-        if (response.statusCode === 200 && response.data && response.data.content) {
-          // 提取词书数据
-          userLexicons.value = response.data.content.map((item: any) => ({
-            id: item.id || '',
-            bookName: item.bookName || '',
-            description: item.description || '',
-            language: item.language || '',
-            createUser: item.createUser || '',
-            words: Array.isArray(item.words) ? item.words : [],
-            isPublic: typeof item.isPublic === 'boolean' ? item.isPublic : false,
-            createTime: item.createTime || '',
-            status: item.status || 'pending',
-            tags: Array.isArray(item.tags) ? item.tags : [],
-          }))
+        if (response.statusCode === 200 && response.data) {
+          // 确保response.data是对象并且有content属性
+          if (typeof response.data === 'object' && response.data !== null) {
+            const responseData = response.data as ContentResponse
+
+            if (responseData.content && Array.isArray(responseData.content)) {
+              // 提取词书数据
+              userLexicons.value = responseData.content.map((item: any) => ({
+                id: item.id || '',
+                bookName: item.bookName || '',
+                description: item.description || '',
+                language: item.language || '',
+                createUser: item.createUser || '',
+                words: Array.isArray(item.words) ? item.words : [],
+                isPublic: typeof item.isPublic === 'boolean' ? item.isPublic : false,
+                createTime: item.createTime || '',
+                status: item.status || 'pending',
+                tags: Array.isArray(item.tags) ? item.tags : [],
+              }))
+
+              // 查看过滤后是否有可用的词书
+              if (filteredLexicons.value.length > 0) {
+                // 如果有匹配当前语言的词书，默认选中第一个
+                selectedLexiconId.value = filteredLexicons.value[0].id
+              }
+              else if (userLexicons.value.length > 0) {
+                // 如果没有匹配当前语言的词书但有其他词书，则不预选
+                selectedLexiconId.value = ''
+                errorMessage.value = '没有找到当前语言的词书，请先创建匹配的词书'
+              }
+            }
+            else {
+              errorMessage.value = '响应数据格式不正确'
+              console.error('响应数据没有content数组:', responseData)
+            }
+          }
+          else if (typeof response.data === 'string') {
+            try {
+              // 尝试解析字符串为JSON
+              const parsedData = JSON.parse(response.data) as ContentResponse
+
+              if (parsedData.content && Array.isArray(parsedData.content)) {
+                userLexicons.value = parsedData.content.map((item: any) => ({
+                  // ...同上的映射逻辑
+                  id: item.id || '',
+                  bookName: item.bookName || '',
+                  description: item.description || '',
+                  language: item.language || '',
+                  createUser: item.createUser || '',
+                  words: Array.isArray(item.words) ? item.words : [],
+                  isPublic: typeof item.isPublic === 'boolean' ? item.isPublic : false,
+                  createTime: item.createTime || '',
+                  status: item.status || 'pending',
+                  tags: Array.isArray(item.tags) ? item.tags : [],
+                }))
+              }
+            }
+            catch (e) {
+              errorMessage.value = '解析响应数据失败'
+              console.error('解析字符串响应数据失败:', e)
+            }
+          }
 
           // 查看过滤后是否有可用的词书
           if (filteredLexicons.value.length > 0) {

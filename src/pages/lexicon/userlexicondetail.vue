@@ -121,7 +121,8 @@ export default defineComponent({
       try {
         loadingCreator.value = true
         creatorInfo.value = await getUserDetailById(userId)
-        console.error('创建者信息:', creatorInfo.value)
+        // eslint-disable-next-line no-console
+        console.log('创建者信息:', creatorInfo.value)
       }
       catch (error) {
         console.error('获取创建者信息失败:', error)
@@ -157,7 +158,8 @@ export default defineComponent({
 
         if (response.statusCode === 200) {
           lexiconDetail.value = response.data as UserWordbook
-          console.error('用户词书详情:', lexiconDetail.value)
+          // eslint-disable-next-line no-console
+          console.log('用户词书详情:', lexiconDetail.value)
           if (lexiconDetail.value && lexiconDetail.value.words) {
             totalWords.value = lexiconDetail.value.words.length || 0
 
