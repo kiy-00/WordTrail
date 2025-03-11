@@ -1,5 +1,6 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
+import { API_BASE_URL } from '@/config/api'
 import { defineComponent, ref } from 'vue'
 
 export default defineComponent({

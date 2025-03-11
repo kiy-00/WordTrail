@@ -26,6 +26,34 @@ interface Word {
   tags: string[]
 }
 
+// 新增WordData接口来匹配WordBox组件所需的类型
+interface WordData {
+  _id: {
+    timestamp: number
+    date: string
+  }
+  word: string
+  language: string
+  difficulty: number
+  synonyms: string[]
+  antonyms: string[]
+  partOfSpeechList: Array<{
+    type: string
+    definitions: string[]
+    gender?: string
+    plural?: string
+    examples?: Array<{
+      sentence: string
+      translation: string
+    }>
+  }>
+  phonetics: Array<{
+    ipa: string
+    audio: string
+  }>
+  tags: string[]
+}
+
 interface SystemWordbook {
   id: string
   bookName: string
@@ -220,6 +248,17 @@ export default defineComponent({
       })
     }
 
+    // 添加转换函数，将Word类型转换为WordData类型
+    const convertToWordData = (word: Word): WordData => {
+      return {
+        ...word,
+        _id: {
+          timestamp: Date.now(),
+          date: new Date().toISOString(),
+        },
+      }
+    }
+
     // 滚动到底部时加载更多单词
     const onScrollToLower = () => {
       if (!loadingWords.value && hasMoreWords.value) {
@@ -251,6 +290,7 @@ export default defineComponent({
       openWordDetail,
       onScrollToLower,
       loadWords, // 添加这一行，暴露 loadWords 函数给模板使用
+      convertToWordData, // 添加转换函数到返回值中
     }
   },
 })
@@ -332,12 +372,12 @@ export default defineComponent({
             </text>
           </view>
 
-          <!-- 单词卡片 -->
+          <!-- 单词卡片 - 使用转换函数将Word类型转换为WordData类型 -->
           <view v-if="words.length > 0">
             <WordBox
               v-for="word in words"
               :key="word._id"
-              :word-data="word"
+              :word-data="convertToWordData(word)"
               class="mb-4"
               @click="openWordDetail(word)"
             />

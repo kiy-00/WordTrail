@@ -1,5 +1,6 @@
 <script lang="ts">
 import TabBar from '@/components/TabBar.vue' // 添加TabBar组件导入
+import { API_BASE_URL } from '@/config/api'
 // 添加API基础URL导入
 import { WordAPI } from '@/types/Word'
 import { LearnSettingsStorage } from '@/utils/learnSettingsStorage' // 添加导入

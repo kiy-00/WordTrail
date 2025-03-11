@@ -3,6 +3,7 @@ import type { DetailedPartOfSpeech, DetailedWord, Example } from '@/types/Detail
 import type { Word } from '@/types/Word'
 import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
+import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
