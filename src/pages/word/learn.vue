@@ -4,7 +4,7 @@ import type { Word } from '@/types/Word'
 import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
 import { API_BASE_URL } from '@/config/api'
-import { defineComponent, onMounted, ref } from 'vue'
+import { computed, defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
   components: {
@@ -21,6 +21,7 @@ export default defineComponent({
     const rawWordData = ref<any>(null) // 存储原始单词数据用于调试
     const errorMessage = ref('')
     const wordIds = ref<string[]>([])
+    const showWordDetails = ref(false) // 控制是否显示单词详细信息
 
     // 获取用户ID - 可以从存储中获取，如果没有则使用默认ID
     const userId = ref(uni.getStorageSync('userInfo')?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b')
@@ -99,6 +100,9 @@ export default defineComponent({
 
     // 跳转到下一个单词
     const nextWord = async () => {
+      // 重置状态，隐藏详细信息
+      showWordDetails.value = false
+
       const nextIndex = currentIndex.value + 1
 
       // 检查是否需要加载下一个单词
@@ -175,6 +179,9 @@ export default defineComponent({
     // 两个按钮都使用相同的学习开始API，只是UI展示不同
     const handleKnow = async () => {
       if (currentWord.value) {
+        // 显示单词详细信息
+        showWordDetails.value = true
+
         // 直接使用后端返回的原始id，不进行任何处理
         const wordId = currentWord.value.id
 
@@ -210,6 +217,9 @@ export default defineComponent({
 
     const handleDontKnow = async () => {
       if (currentWord.value) {
+        // 显示单词详细信息
+        showWordDetails.value = true
+
         // 同样直接使用后端返回的原始id
         const wordId = currentWord.value.id
 
@@ -333,6 +343,7 @@ export default defineComponent({
       handleKnow,
       handleDontKnow,
       toggleDebug,
+      showWordDetails,
     }
   },
 })
@@ -393,9 +404,10 @@ export default defineComponent({
         :word-id="currentWord.id || ''"
       />
 
-      <!-- Content -->
+      <!-- 直接调用 WordCardContent，并根据 showWordDetails 控制 minimal 属性 -->
       <WordCardContent
         :word-data="adaptedWordData"
+        :minimal="!showWordDetails"
         class="flex-1"
       />
 
@@ -428,6 +440,11 @@ export default defineComponent({
 .frosted-glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
+}
+
+/* 确保遮罩层正确显示 */
+.opacity-0 {
+  opacity: 0;
 }
 </style>
 

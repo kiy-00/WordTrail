@@ -9,6 +9,10 @@ export default defineComponent({
       type: Object as PropType<DetailedWord>,
       required: true,
     },
+    minimal: { // 新增 minimal prop，用于控制展示模式
+      type: Boolean,
+      default: false,
+    },
   },
   computed: {
     pronunciation(): string {
@@ -123,115 +127,124 @@ export default defineComponent({
 
 <template>
   <scroll-view class="mt-6 box-border w-full flex-1 overflow-y-auto px-5" scroll-y>
-    <!-- 修改：将单词和发音分两行显示 -->
-    <!-- 单词 -->
-    <view class="mb-1 flex flex-col">
-      <text class="font-verdana text-3xl font-bold">
-        {{ wordData.word }}
-      </text>
-      <!-- 发音 -->
-      <text v-if="pronunciation" class="mt-1 text-lg text-gray-500">
-        [{{ pronunciation }}]
-      </text>
-    </view>
-
-    <!-- Tags -->
-    <view v-if="tags && tags.length > 0" class="mb-3 mt-5 flex flex-wrap gap-1">
-      <text
-        v-for="(tag, idx) in tags"
-        :key="idx"
-        class="rounded bg-yellow px-2 py-1 text-xs font-bold"
-      >
-        {{ tag }}
-      </text>
-    </view>
-
-    <!-- Part of Speech and Definitions -->
-    <view v-for="(pos, posIndex) in partOfSpeechInfo" :key="`pos-${posIndex}`" class="mb-5">
-      <!-- 词性、性别和复数形式 -->
-      <view class="mb-2 mt-5 flex flex-wrap items-center gap-2">
-        <text class="rounded bg-blue-100 px-2 py-1 text-sm text-blue-700 font-semibold">
-          {{ pos.type }}
+    <!-- 如果处于 minimal 模式，只显示单词 -->
+    <template v-if="minimal">
+      <view class="h-full flex items-center justify-center">
+        <text class="font-verdana text-4xl font-bold">
+          {{ wordData.word }}
         </text>
-        <text v-if="pos.gender" class="text-sm">
-          {{ pos.gender }}
+      </view>
+    </template>
+    <!-- 非 minimal 模式：显示完整内容 -->
+    <template v-else>
+      <!-- 单词与发音 -->
+      <view class="mb-1 flex flex-col">
+        <text class="font-verdana text-3xl font-bold">
+          {{ wordData.word }}
         </text>
-        <text v-if="pos.plural" class="text-sm italic">
-          {{ pos.plural }}
+        <text v-if="pronunciation" class="mt-1 text-lg text-gray-500">
+          [{{ pronunciation }}]
         </text>
       </view>
 
-      <!-- 定义列表 -->
-      <view class="mb-3 ml-1">
-        <view v-for="(def, defIndex) in pos.definitions" :key="`def-${posIndex}-${defIndex}`" class="mb-1 flex">
-          <text class="mr-2">
-            •
+      <!-- Tags -->
+      <view v-if="tags && tags.length > 0" class="mb-3 mt-5 flex flex-wrap gap-1">
+        <text
+          v-for="(tag, idx) in tags"
+          :key="idx"
+          class="rounded bg-yellow px-2 py-1 text-xs font-bold"
+        >
+          {{ tag }}
+        </text>
+      </view>
+
+      <!-- Part of Speech and Definitions -->
+      <view v-for="(pos, posIndex) in partOfSpeechInfo" :key="`pos-${posIndex}`" class="mb-5">
+        <!-- 词性、性别和复数形式 -->
+        <view class="mb-2 mt-5 flex flex-wrap items-center gap-2">
+          <text class="rounded bg-blue-100 px-2 py-1 text-sm text-blue-700 font-semibold">
+            {{ pos.type }}
           </text>
-          <text class="text-base">
-            {{ def }}
+          <text v-if="pos.gender" class="text-sm">
+            {{ pos.gender }}
+          </text>
+          <text v-if="pos.plural" class="text-sm italic">
+            {{ pos.plural }}
+          </text>
+        </view>
+
+        <!-- 定义列表 -->
+        <view class="mb-3 ml-1">
+          <view v-for="(def, defIndex) in pos.definitions" :key="`def-${posIndex}-${defIndex}`" class="mb-1 flex">
+            <text class="mr-2">
+              •
+            </text>
+            <text class="text-base">
+              {{ def }}
+            </text>
+          </view>
+        </view>
+
+        <!-- 例句(显示在当前词性下方) -->
+        <view v-if="pos.examples && Array.isArray(pos.examples) && pos.examples.length > 0" class="mb-3 ml-3 space-y-2">
+          <view v-for="(ex, exIndex) in pos.examples" :key="`ex-${posIndex}-${exIndex}`" class="rounded-md bg-blue-500 p-2">
+            <text class="block text-base font-medium">
+              {{ ex.sentence }}
+            </text>
+            <text v-if="ex.translation" class="block text-sm">
+              {{ ex.translation }}
+            </text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 同义词/反义词 (可选) -->
+      <view v-if="synonyms.length > 0" class="mt-4">
+        <text class="mb-4 block text-left text-sm font-semibold">
+          同义词:
+        </text>
+        <view class="flex flex-wrap gap-1">
+          <text
+            v-for="(syn, synIndex) in synonyms"
+            :key="`syn-${synIndex}`"
+            class="rounded bg-green-50 px-2 py-1 text-sm text-green-700"
+          >
+            {{ syn }}
           </text>
         </view>
       </view>
 
-      <!-- 例句(显示在当前词性下方) -->
-      <view v-if="pos.examples && Array.isArray(pos.examples) && pos.examples.length > 0" class="mb-3 ml-3 space-y-2">
-        <view v-for="(ex, exIndex) in pos.examples" :key="`ex-${posIndex}-${exIndex}`" class="rounded-md bg-blue-500 p-2">
-          <text class="block text-base font-medium">
-            {{ ex.sentence }}
-          </text>
-          <text v-if="ex.translation" class="block text-sm">
-            {{ ex.translation }}
+      <view v-if="antonyms.length > 0" class="mt-3">
+        <text class="mb-1 block text-left text-sm font-semibold">
+          反义词:
+        </text>
+        <view class="flex flex-wrap gap-1">
+          <text
+            v-for="(ant, antIndex) in antonyms"
+            :key="`ant-${antIndex}`"
+            class="rounded bg-red-50 px-2 py-1 text-sm text-red-700"
+          >
+            {{ ant }}
           </text>
         </view>
       </view>
-    </view>
 
-    <!-- 同义词/反义词 (可选) -->
-    <view v-if="synonyms.length > 0" class="mt-4">
-      <text class="mb-4 block text-left text-sm font-semibold">
-        同义词:
-      </text>
-      <view class="flex flex-wrap gap-1">
-        <text
-          v-for="(syn, synIndex) in synonyms"
-          :key="`syn-${synIndex}`"
-          class="rounded bg-green-50 px-2 py-1 text-sm text-green-700"
-        >
-          {{ syn }}
+      <!-- 难度指示器 (可选) - 修改使文本靠左 -->
+      <view v-if="difficulty > 0" class="mb-3 mt-5">
+        <text class="mb-5 block text-left text-sm">
+          难度:
         </text>
+        <view class="mt-1 flex justify-start">
+          <view
+            v-for="n in 5"
+            :key="n"
+            class="mx-0.5 h-2 w-6 rounded first:ml-0" :class="[
+              n <= difficulty ? 'bg-yellow-500' : 'bg-gray-200',
+            ]"
+          />
+        </view>
       </view>
-    </view>
-
-    <view v-if="antonyms.length > 0" class="mt-3">
-      <text class="mb-1 block text-left text-sm font-semibold">
-        反义词:
-      </text>
-      <view class="flex flex-wrap gap-1">
-        <text
-          v-for="(ant, antIndex) in antonyms"
-          :key="`ant-${antIndex}`"
-          class="rounded bg-red-50 px-2 py-1 text-sm text-red-700"
-        >
-          {{ ant }}
-        </text>
-      </view>
-    </view>
-
-    <!-- 难度指示器 (可选) - 修改使文本靠左 -->
-    <view v-if="difficulty > 0" class="mb-3 mt-5">
-      <text class="mb-5 block text-left text-sm">
-        难度:
-      </text>
-      <view class="mt-1 flex justify-start">
-        <view
-          v-for="n in 5"
-          :key="n"
-          class="mx-0.5 h-2 w-6 rounded first:ml-0" :class="[
-            n <= difficulty ? 'bg-yellow-500' : 'bg-gray-200',
-          ]"
-        />
-      </view>
-    </view>
+    </template>
   </scroll-view>
 </template>
 
