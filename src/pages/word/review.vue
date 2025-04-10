@@ -519,9 +519,9 @@ export default defineComponent({
           />
 
           <!-- Next Word Button -->
-          <view class="mb-4 mt-6 flex justify-center">
+          <view class="fixed bottom-30 right-6 z-10">
             <text
-              class="cursor-pointer rounded-full bg-blue-500 px-8 py-3 text-white font-semibold"
+              class="cursor-pointer rounded-full bg-blue-500 px-8 py-3 text-white font-semibold shadow-lg"
               hover-class="opacity-80"
               @click="nextWord"
             >
