@@ -55,7 +55,7 @@ export default defineComponent({
   name: 'MyLexicon',
 
   setup() {
-    const activeTab = ref<'all' | '0' | '1' | '2'>('all')
+    const activeTab = ref<'all' | 'unlearned' | 'newly' | 'fuzzy' | 'familiar'>('all')
     const allWords = ref<Word[]>([])
     const displayedWords = ref<Word[]>([])
     const isRefreshing = ref(false)
@@ -67,12 +67,24 @@ export default defineComponent({
       rawResponse: null as any,
       currentLexicon: null as any,
       error: '',
+      apiStatus: '',
+      recordsCount: 0,
     })
     const currentLexiconName = ref('')
     const isLoadingMore = ref(false)
     const hasMoreWords = ref(true)
     const shouldCheckAutoLoad = ref(false)
-    const userId = ref('ed62add4-bf40-4246-b7ab-2555015b383b') // 用户ID
+    const userId = ref('') // 用户ID
+    const showDebug = ref(false)
+
+    const toggleDebug = () => {
+      showDebug.value = !showDebug.value
+    }
+
+    const logRawResponse = () => {
+      // eslint-disable-next-line no-console
+      console.log('原始响应数据:', debugInfo.value.rawResponse)
+    }
 
     // 添加计算属性来获取过滤后的总单词数
     const filteredWordsCount = computed(() => {
@@ -98,7 +110,7 @@ export default defineComponent({
     // 获取过滤后的单词列表（不修改状态）
     function getFilteredWords() {
       // 先根据搜索关键字过滤
-      let filteredWords = allWords.value.filter((word) => {
+      const filteredWords = allWords.value.filter((word) => {
         if (!word || !word.word)
           return false
 
@@ -109,12 +121,8 @@ export default defineComponent({
         return true
       })
 
-      // 再根据标签过滤
-      if (activeTab.value !== 'all') {
-        filteredWords = filteredWords.filter(word =>
-          word.masteryLevel !== undefined && word.masteryLevel.toString() === activeTab.value,
-        )
-      }
+      // 不再根据标签过滤，因为fetchWords已经根据标签获取了相应的单词
+      // 每个标签对应不同的API，返回的是已经过滤好的单词
 
       return filteredWords
     }
@@ -191,7 +199,7 @@ export default defineComponent({
     }
 
     // 获取学习记录并转换为单词，包含掌握程度
-    const fetchLearningRecords = async (masteryLevel: number) => {
+    const fetchLearningRecords = async (tabType: string) => {
       const currentLexicon = LexiconStorage.getCurrentLexicon()
       if (!currentLexicon) {
         return []
@@ -201,16 +209,21 @@ export default defineComponent({
         const token = uni.getStorageSync('token')
         let url = ''
 
-        switch (masteryLevel) {
-          case 0:
+        switch (tabType) {
+          case 'unlearned':
             url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/unlearned-words?userId=${userId.value}`
             break
-          case 1:
+          case 'newly':
+            url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/newly-learned-words?userId=${userId.value}`
+            break
+          case 'fuzzy':
             url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/fuzzy-words?userId=${userId.value}`
             break
-          case 2:
+          case 'familiar':
             url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/familiar-words?userId=${userId.value}`
             break
+          default:
+            return [] // 对于 'all' 标签，使用 fetchAllWords 函数
         }
 
         const response = await uni.request({
@@ -222,12 +235,13 @@ export default defineComponent({
         })
 
         if (response.statusCode === 200 && Array.isArray(response.data)) {
+          debugInfo.value.recordsCount = response.data.length
           return response.data as LearningRecord[]
         }
         return []
       }
       catch (error) {
-        console.error(`获取${masteryLevel}级单词记录失败:`, error)
+        console.error(`获取${tabType}单词记录失败:`, error)
         return []
       }
     }
@@ -280,11 +294,14 @@ export default defineComponent({
             return ensureMasteryLevel(word, 0) // 默认未学习状态
           }).filter(word => word.word)
 
+          debugInfo.value.apiStatus = '成功'
           return processedWords
         }
+        debugInfo.value.apiStatus = '失败'
         return []
       }
       catch (error) {
+        debugInfo.value.apiStatus = '错误'
         console.error('获取全部单词失败:', error)
         return []
       }
@@ -320,8 +337,7 @@ export default defineComponent({
         }
         else {
           // 获取指定掌握程度的单词
-          const masteryLevel = Number.parseInt(activeTab.value)
-          const records = await fetchLearningRecords(masteryLevel)
+          const records = await fetchLearningRecords(activeTab.value)
 
           // 获取单词详情并合并成最终的单词列表
           const wordsPromises = records.map(async (record) => {
@@ -329,7 +345,7 @@ export default defineComponent({
             if (wordDetail) {
               return {
                 ...wordDetail,
-                masteryLevel,
+                masteryLevel: activeTab.value === 'unlearned' ? 0 : activeTab.value === 'newly' ? 1 : activeTab.value === 'fuzzy' ? 2 : 3,
                 proficiency: record.proficiency,
                 lastReviewTime: record.lastReviewTime,
               } as Word
@@ -346,7 +362,7 @@ export default defineComponent({
           else {
             // 替换为提示信息而非抛出错误
             allWords.value = [] // 设置为空数组
-            const masteryText = masteryLevel === 0 ? '初识' : masteryLevel === 1 ? '模糊' : '熟悉'
+            const masteryText = activeTab.value === 'unlearned' ? '未学习' : activeTab.value === 'newly' ? '新学' : activeTab.value === 'fuzzy' ? '模糊' : '熟悉'
             uni.showToast({
               title: `未找到任何${masteryText}单词`,
               icon: 'none',
@@ -380,7 +396,7 @@ export default defineComponent({
       filterWords()
     }
 
-    const handleTabChange = async (tab: 'all' | '0' | '1' | '2') => {
+    const handleTabChange = async (tab: 'all' | 'unlearned' | 'newly' | 'fuzzy' | 'familiar') => {
       if (tab !== activeTab.value) {
         activeTab.value = tab
         currentLoad.value = 1
@@ -486,6 +502,9 @@ export default defineComponent({
       hasMoreWords,
       loadAllWords,
       adaptWordForWordBox,
+      showDebug,
+      toggleDebug,
+      logRawResponse,
     }
   },
 })
@@ -504,10 +523,64 @@ export default defineComponent({
           {{ currentLexiconName }}
         </text>
       </view>
-      <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
-        <view class="i-mynaui:search text-2xl" />
+      <view class="flex items-center">
+        <view class="mr-3 h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleDebug">
+          <view class="i-mynaui:code text-2xl" />
+        </view>
+        <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
+          <view class="i-mynaui:search text-2xl" />
+        </view>
       </view>
     </view>
+  </view>
+
+  <!-- 调试面板 -->
+  <view v-if="showDebug" class="debug-panel mb-2 border border-yellow-500 rounded p-3">
+    <view class="mb-2 flex justify-between">
+      <text class="font-bold">
+        调试信息
+      </text>
+      <text class="cursor-pointer text-red-500" @click="toggleDebug">
+        关闭
+      </text>
+    </view>
+    <scroll-view style="max-height: 300px;" scroll-y>
+      <view class="mb-2">
+        <text class="text-sm font-bold">
+          当前标签: {{ activeTab }}
+        </text>
+      </view>
+      <view class="mb-2">
+        <text class="text-sm font-bold">
+          API状态: {{ debugInfo.apiStatus }}
+        </text>
+      </view>
+      <view class="mb-2">
+        <text class="text-sm font-bold">
+          学习记录数: {{ debugInfo.recordsCount }}
+        </text>
+      </view>
+      <view class="mb-2">
+        <text class="text-sm font-bold">
+          单词数: {{ allWords.length }}
+        </text>
+      </view>
+      <view class="mb-2">
+        <text class="text-sm font-bold">
+          显示单词数: {{ displayedWords.length }}
+        </text>
+      </view>
+      <view class="mb-2">
+        <text class="text-sm font-bold">
+          错误信息: {{ debugInfo.error || "无" }}
+        </text>
+      </view>
+      <view class="mb-2">
+        <button class="rounded bg-yellow-500 px-2 py-1 text-sm text-white" @click="logRawResponse">
+          查看原始响应
+        </button>
+      </view>
+    </scroll-view>
   </view>
 
   <transition name="fade">
@@ -531,14 +604,15 @@ export default defineComponent({
     <view
       v-for="tab in [
         { key: 'all', label: '全部' },
-        { key: '0', label: '初识' },
-        { key: '1', label: '模糊' },
-        { key: '2', label: '熟悉' },
+        { key: 'unlearned', label: '未学习' },
+        { key: 'newly', label: '新学' },
+        { key: 'fuzzy', label: '模糊' },
+        { key: 'familiar', label: '熟悉' },
       ]"
       :key="tab.key"
       class="relative flex-1 py-3 text-center"
       :class="{ 'border-b-2 border-yellow text-yellow': activeTab === tab.key }"
-      @click="handleTabChange(tab.key as 'all' | '0' | '1' | '2')"
+      @click="handleTabChange(tab.key as 'all' | 'unlearned' | 'newly' | 'fuzzy' | 'familiar')"
     >
       <text>{{ tab.label }}</text>
     </view>
