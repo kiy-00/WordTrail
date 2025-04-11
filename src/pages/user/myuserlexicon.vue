@@ -47,8 +47,26 @@ export default defineComponent({
     const errorMessage = ref('')
     const userId = ref(uni.getStorageSync('userInfo')?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b')
 
+    // 获取当前选择的语言系统
+    const currentLanguage = ref<string>(uni.getStorageSync('selectedLanguage') || 'unknown')
+
+    // 获取语言的显示名称
+    const getLanguageDisplayName = (code: string): string => {
+      switch (code) {
+        case 'en': return '英语'
+        case 'fr': return '法语'
+        case 'de': return '德语'
+        default: return '未知语言'
+      }
+    }
+
+    // 显示当前语言的名称
+    const languageDisplayName = ref(getLanguageDisplayName(currentLanguage.value))
+
     // eslint-disable-next-line no-console
     console.log('当前用户ID:', userId.value)
+    // eslint-disable-next-line no-console
+    console.log('当前语言系统:', currentLanguage.value)
 
     // 根据语言获取国旗表情
     const getLanguageEmoji = (language: string): string => {
@@ -82,8 +100,14 @@ export default defineComponent({
         // eslint-disable-next-line no-console
         console.log('请求URL:', requestUrl)
 
-        // 请求参数 - 根据接口定义
-        const queryParams = `page=${page}&size=${pageSize.value}`
+        // 请求参数 - 根据接口定义，添加语言过滤参数
+        let queryParams = `page=${page}&size=${pageSize.value}`
+
+        // 如果有选择语言，则添加语言过滤
+        if (currentLanguage.value && currentLanguage.value !== 'unknown') {
+          queryParams += `&language=${currentLanguage.value}`
+        }
+
         const fullUrl = `${requestUrl}?${queryParams}`
 
         // eslint-disable-next-line no-console
@@ -225,6 +249,8 @@ export default defineComponent({
       handleLexiconClick,
       handleBack,
       getLanguageEmoji,
+      currentLanguage,
+      languageDisplayName,
     }
   },
 })
@@ -237,6 +263,9 @@ export default defineComponent({
   <view class="fixed left-0 top-0 z-10 mt-20 w-full flex items-center justify-between px-4 py-3 frosted-glass">
     <text class="text-xl font-bold">
       我的词书
+    </text>
+    <text class="text-sm">
+      当前语言: {{ languageDisplayName }}
     </text>
     <view class="h-8 w-8">
       <!-- 占位 -->

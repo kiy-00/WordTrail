@@ -74,7 +74,7 @@ export default defineComponent({
     const isLoadingMore = ref(false)
     const hasMoreWords = ref(true)
     const shouldCheckAutoLoad = ref(false)
-    const userId = ref('') // 用户ID
+    const userId = ref('ed62add4-bf40-4246-b7ab-2555015b383b') // 用户ID
     const showDebug = ref(false)
 
     const toggleDebug = () => {

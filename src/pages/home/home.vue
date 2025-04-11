@@ -234,7 +234,7 @@ export default defineComponent({
 
         // 获取用户ID
         const userInfo = uni.getStorageSync('userInfo')
-        const userId = userInfo?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b' // 使用默认ID作为备选
+        const userId = userInfo?.userId || ' ' // 使用默认ID作为备选
 
         // 使用新的API获取单词ID列表
         const token = uni.getStorageSync('token')
