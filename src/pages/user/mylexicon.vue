@@ -524,9 +524,9 @@ export default defineComponent({
         </text>
       </view>
       <view class="flex items-center">
-        <view class="mr-3 h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleDebug">
+        <!-- <view class="mr-3 h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleDebug">
           <view class="i-mynaui:code text-2xl" />
-        </view>
+        </view> -->
         <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
           <view class="i-mynaui:search text-2xl" />
         </view>
@@ -535,7 +535,7 @@ export default defineComponent({
   </view>
 
   <!-- 调试面板 -->
-  <view v-if="showDebug" class="debug-panel mb-2 border border-yellow-500 rounded p-3">
+  <!-- <view v-if="showDebug" class="debug-panel mb-2 border border-yellow-500 rounded p-3">
     <view class="mb-2 flex justify-between">
       <text class="font-bold">
         调试信息
@@ -581,7 +581,7 @@ export default defineComponent({
         </button>
       </view>
     </scroll-view>
-  </view>
+  </view> -->
 
   <transition name="fade">
     <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-16 z-50 px-4 py-2 shadow-md frosted-glass">
