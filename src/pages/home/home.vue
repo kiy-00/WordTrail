@@ -7,18 +7,6 @@ import { LearnSettingsStorage } from '@/utils/learnSettingsStorage' // 添加导
 import { type CurrentLexicon, LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, onMounted, ref, watch } from 'vue'
 
-// // 添加用户信息接口
-// interface UserInfo {
-//   userId: string // 改为 string 类型
-//   username: string
-//   email: string
-//   phone: string | null
-//   avatarUrl: string | null
-//   status: number
-//   createTime: string
-//   updateTime: string
-// }
-
 export default defineComponent({
   name: 'Home',
   components: {

@@ -14,6 +14,9 @@ function navigateTo(page: string) {
     <view cursor-pointer @click="navigateTo('/pages/user/mycontent')">
       <view class="i-mynaui:academic-hat text-2xl" />
     </view>
+    <view cursor-pointer @click="navigateTo('/pages/user/myclockin')">
+      <view class="i-mynaui:check-square-one text-2xl" />
+    </view>
     <view cursor-pointer @click="navigateTo('/pages/user/mydata')">
       <view class="i-mynaui:activity text-2xl" />
     </view>

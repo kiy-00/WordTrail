@@ -13,6 +13,7 @@ interface NavigateToOptions {
        "/pages/lexicon/createuserlexicon" |
        "/pages/lexicon/lexicondetail" |
        "/pages/lexicon/userlexicondetail" |
+       "/pages/user/myclockin" |
        "/pages/user/mycontent" |
        "/pages/user/mydata" |
        "/pages/user/mylexicon" |
