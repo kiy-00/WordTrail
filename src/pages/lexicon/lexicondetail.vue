@@ -160,7 +160,8 @@ export default defineComponent({
 
         if (response.statusCode === 200) {
           lexiconDetail.value = response.data as SystemWordbook
-          console.error('词书详情:', lexiconDetail.value)
+          // eslint-disable-next-line no-console
+          console.log('词书详情:', lexiconDetail.value)
           // 添加空值检查
           if (lexiconDetail.value) {
             totalWords.value = lexiconDetail.value.words.length

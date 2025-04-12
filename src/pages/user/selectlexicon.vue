@@ -4,9 +4,8 @@ import type { Lexicon, SystemWordbook, WordbooksResponse } from '@/types/Lexicon
 import { API_BASE_URL } from '@/config/api'
 import { LanguageStorage } from '@/utils/languageStorage'
 import { LexiconStorage } from '@/utils/lexiconStorage'
-import { defineComponent, onMounted, ref } from 'vue' // 删除未使用的 watch
+import { defineComponent, onMounted, ref } from 'vue'
 
-// 修改 interface 增加新的用户词书类型
 interface UserWordbook {
   id: string
   bookName: string
@@ -17,13 +16,14 @@ interface UserWordbook {
   isPublic: boolean
   status: string
   tags: string[] | null
+  words?: string[] | null // 添加words属性，设为可选
 }
 
 export default defineComponent({
   name: 'SelectLexicon',
 
   setup() {
-    const activeTab = ref<'all' | LexiconStatus>('all') // 注释而不是删除
+    const activeTab = ref<'all' | LexiconStatus>('all')
     const allLexicons = ref<Lexicon[]>([])
     const displayedLexicons = ref<Lexicon[]>([])
     const isRefreshing = ref(false)
@@ -36,10 +36,11 @@ export default defineComponent({
     const pageSize = ref(10)
     const totalPages = ref(1)
     const isLastPage = ref(false)
-    const activeType = ref<'system' | 'user'>('system')
+    const activeType = ref<'system' | 'user' | 'my'>('system')
     const userLexicons = ref<UserWordbook[]>([])
+    const myWordbooks = ref<UserWordbook[]>([])
+    const userId = ref<string>('')
 
-    // 添加语言显示相关代码
     const languages = [
       {
         name: 'unknown',
@@ -75,27 +76,22 @@ export default defineComponent({
       lang => lang.name === uni.getStorageSync('selectedLanguage'),
     ) || languages[0])
 
-    // 添加调试信息
     const debugInfo = ref({
       allBooks: [] as Lexicon[],
       currentLanguage: '',
       error: '',
     })
 
-    // 根据当前标签筛选词书
     const filterLexicons = () => {
       const filteredLexicons = allLexicons.value.filter((lexicon) => {
-        // const matchesTab = activeTab.value === 'all' || lexicon.status === activeTab.value
         const matchesSearch = lexicon.bookName.toLowerCase().includes(searchQuery.value.toLowerCase())
-        return /* matchesTab && */ matchesSearch
+        return matchesSearch
       })
       displayedLexicons.value = filteredLexicons.slice(0, currentLoad.value * lexiconsPerLoad)
     }
 
-    // 获取词书数据
     const fetchLexicons = async () => {
       try {
-        // 获取存储的 token
         const token = uni.getStorageSync('token')
         // eslint-disable-next-line no-console
         console.log('Token:', token)
@@ -107,6 +103,34 @@ export default defineComponent({
           })
           uni.redirectTo({ url: '/pages/user/login' })
           return
+        }
+
+        if (!userId.value) {
+          try {
+            const userInfo = uni.getStorageSync('userInfo')
+            // eslint-disable-next-line no-console
+            console.log('Raw userInfo:', userInfo)
+
+            // 直接从userInfo对象中获取userId
+            if (userInfo && userInfo.userId) {
+              userId.value = userInfo.userId
+            }
+            else if (userInfo && userInfo.id) {
+              userId.value = userInfo.id
+            }
+
+            // 如果仍未获取到userId，尝试获取默认值
+            if (!userId.value) {
+              userId.value = '' // 使用默认ID
+            }
+
+            // eslint-disable-next-line no-console
+            console.log('Resolved User ID:', userId.value)
+          }
+          catch (e) {
+            console.error('Failed to get user info:', e)
+            userId.value = '' // 出错时使用默认ID
+          }
         }
 
         if (activeType.value === 'system') {
@@ -127,7 +151,7 @@ export default defineComponent({
               bookName: book.bookName,
               description: book.description,
               language: book.language,
-              wordCount: 0, // 可根据需要调整
+              wordCount: 0,
               createUser: book.createUser,
               words: [],
             }))
@@ -149,7 +173,6 @@ export default defineComponent({
           })
           if (response.statusCode === 200 && Array.isArray(response.data)) {
             userLexicons.value = response.data as UserWordbook[]
-            // 同时保留原有 lexicons 用于兼容
             allLexicons.value = userLexicons.value.map(book => ({
               id: book.id,
               bookName: book.bookName,
@@ -165,18 +188,53 @@ export default defineComponent({
             throw new Error('Failed to fetch approved public wordbooks')
           }
         }
+        else if (activeType.value === 'my') {
+          if (!userId.value) {
+            throw new Error('无法获取用户ID，请重新登录')
+          }
+
+          const response = await uni.request({
+            url: `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId.value}`,
+            method: 'GET',
+            header: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          })
+
+          if (response.statusCode === 200 && response.data) {
+            const data = response.data as { content: UserWordbook[] }
+            myWordbooks.value = data.content || []
+            const filteredBooks = myWordbooks.value.filter(
+              book => book.language === selectedLanguage.value.name,
+            )
+            userLexicons.value = filteredBooks
+            allLexicons.value = filteredBooks.map(book => ({
+              id: book.id,
+              bookName: book.bookName,
+              description: book.description,
+              language: book.language,
+              wordCount: book.words?.length || 0,
+              createUser: book.createUser,
+              words: [],
+            }))
+            filterLexicons()
+          }
+          else {
+            throw new Error('获取我的词书失败')
+          }
+        }
         else {
           const response = await uni.request({
             url: `${API_BASE_URL}/api/v1/system-wordbooks`,
             method: 'GET',
             header: {
-              'Authorization': `Bearer ${token}`, // 添加 token 到请求头
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
             data: {
               page: currentPage.value,
               size: pageSize.value,
-              // Add any filters if needed
               ...(selectedLanguage.value.name !== 'unknown' && {
                 language: selectedLanguage.value.name,
               }),
@@ -186,13 +244,12 @@ export default defineComponent({
           if (response.statusCode === 200) {
             const data = response.data as WordbooksResponse
 
-            // Convert system wordbooks to lexicons
             const lexicons: Lexicon[] = data.content.map((book: SystemWordbook) => ({
               id: book.id,
               bookName: book.bookName,
               description: book.description,
               language: book.language,
-              wordCount: book.words.length, // Changed from wordsCount to wordCount
+              wordCount: book.words.length,
               createUser: book.createUser,
               words: book.words,
             }))
@@ -207,7 +264,6 @@ export default defineComponent({
             filterLexicons()
           }
           else if (response.statusCode === 401 || response.statusCode === 403) {
-            // 如果token过期或无效，重定向到登录页
             uni.showToast({
               title: '请重新登录',
               icon: 'none',
@@ -230,7 +286,6 @@ export default defineComponent({
       }
     }
 
-    // 执行词书切换
     const switchLexicon = async (lexicon: Lexicon) => {
       uni.showModal({
         title: '📚 确认选择',
@@ -238,13 +293,11 @@ export default defineComponent({
         success: (res) => {
           if (res.confirm) {
             try {
-              // 保存词书信息到本地存储
               LexiconStorage.setCurrentLexicon({
                 id: lexicon.id,
                 name: lexicon.bookName,
               })
 
-              // 立即验证是否保存成功
               const savedLexicon = LexiconStorage.getCurrentLexicon()
               if (savedLexicon && savedLexicon.id === lexicon.id) {
                 uni.showToast({
@@ -273,18 +326,15 @@ export default defineComponent({
       })
     }
 
-    // 切换词书的处理函数
     const handleSwitchLexicon = async (lexicon: Lexicon) => {
       switchLexicon(lexicon)
     }
 
-    // 初始化加载
     const initializeLexicons = async () => {
       await fetchLexicons()
       filterLexicons()
     }
 
-    // 搜索功能
     const handleSearch = (event: UniHelper.InputOnInputEvent) => {
       searchQuery.value = event.detail.value
       currentLoad.value = 1
@@ -301,16 +351,13 @@ export default defineComponent({
       if (searchQuery.value.trim()) {
         filterLexicons()
       }
-      // toggleSearch() // 可选：是否在搜索后关闭搜索框
     }
 
-    // 监听语言变化 - 使用普通函数替代 watch
     const handleLanguageChange = (newLanguage: any) => {
       selectedLanguage.value = newLanguage
-      fetchLexicons() // 重新获取对应语言的词书
+      fetchLexicons()
     }
 
-    // 下拉刷新
     const onRefresh = async () => {
       isRefreshing.value = true
       currentPage.value = 0
@@ -319,7 +366,6 @@ export default defineComponent({
       isRefreshing.value = false
     }
 
-    // 加载更多
     const onLoadMore = async () => {
       if (!isLastPage.value) {
         currentPage.value++
@@ -327,16 +373,14 @@ export default defineComponent({
       }
     }
 
-    const handleTypeChange = (type: 'system' | 'user') => {
+    const handleTypeChange = (type: 'system' | 'user' | 'my') => {
       activeType.value = type
       currentPage.value = 0
       allLexicons.value = []
       fetchLexicons()
     }
 
-    // 修正当前语言的获取逻辑
     onMounted(() => {
-      // 确保从存储中获取正确的语言
       const storedLanguage = uni.getStorageSync('selectedLanguage')
       const foundLanguage = languages.find(lang => lang.name === storedLanguage)
       if (foundLanguage) {
@@ -352,36 +396,35 @@ export default defineComponent({
     }
 
     return {
-      activeTab, // 保留但不使用
+      activeTab,
       displayedLexicons,
       isRefreshing,
       handleSearch,
-      // handleTabChange, // 保留但不使用
       handleSwitchLexicon,
       onRefresh,
       onLoadMore,
       isSearchVisible,
       toggleSearch,
       onSearch,
-      searchQuery, // 添加这一行
+      searchQuery,
       handleBack,
       currentLanguage,
-      debugInfo, // 添加调试信息到返回值
-      selectedLanguage, // 添加到返回值中
-      handleLanguageChange, // 加入到返回值中
+      debugInfo,
+      selectedLanguage,
+      handleLanguageChange,
       isLastPage,
       totalPages,
       currentPage,
       activeType,
       handleTypeChange,
       userLexicons,
+      myWordbooks,
     }
   },
 })
 </script>
 
 <template>
-  <!-- 添加返回按钮组件 -->
   <BackButton @back="handleBack" />
 
   <view class="mt-8 rounded p-4 shadow-sm frosted-glass">
@@ -412,7 +455,6 @@ export default defineComponent({
     </view>
   </transition>
 
-  <!-- 语言显示栏 -->
   <view class="fixed bottom-4 right-4 z-50 flex items-center rounded-lg bg-yellow px-4 py-2">
     <view :class="currentLanguage.icon" class="mr-2 text-lg" />
     <text class="text-white">
@@ -420,65 +462,6 @@ export default defineComponent({
     </text>
   </view>
 
-  <!-- 调试信息面板 -->
-  <!-- <view v-if="true" class="fixed left-4 top-20 z-50 max-h-100 w-80 overflow-auto rounded bg-white/80 p-4 shadow-lg">
-    <text class="mb-2 block text-black font-bold">
-      调试信息
-    </text>
-    <text class="mb-2 block text-black">
-      选择的语言: {{ selectedLanguage.name }}
-    </text>
-    <text class="mb-2 block text-black">
-      显示的语言: {{ currentLanguage.name }}
-    </text>
-    <text class="mb-2 block text-black">
-      词书总数: {{ debugInfo.allBooks.length }}
-    </text>
-    <text class="mb-2 block text-black">
-      筛选后词书数: {{ displayedLexicons.length }}
-    </text>
-    <view class="max-h-60 overflow-auto">
-      <view v-for="book in debugInfo.allBooks" :key="book.id" class="mb-2 border rounded p-2">
-        <text class="block text-black">
-          名称: {{ book.bookName }}
-        </text>
-        <text class="block text-black">
-          语言: {{ book.language }}
-        </text>
-        <text class="block text-black">
-          描述: {{ book.description }}
-        </text>
-        <text class="block text-black">
-          ID: {{ book.id }}
-        </text>
-        <text class="block text-black">
-          是否匹配: {{ book.language.toLowerCase() === selectedLanguage.name.toLowerCase() }}
-        </text>
-      </view>
-    </view>
-  </view> -->
-
-  <!-- Tab栏 -->
-  <!--
-  <view class="flex border-b frosted-glass">
-    <view
-      v-for="tab in [
-        { key: 'all', label: '全部' },
-        { key: 'learning', label: '学习中' },
-        { key: 'completed', label: '已完成' },
-        { key: 'not-started', label: '未开始' },
-      ]"
-      :key="tab.key"
-      class="flex-1 py-3 text-center"
-      :class="{ 'border-b-2 border-yellow text-yellow': activeTab === tab.key }"
-      @click="handleTabChange(tab.key as 'all' | LexiconStatus)"
-    >
-      {{ tab.label }}
-    </view>
-  </view>
-  -->
-
-  <!-- 词书类型切换栏 -->
   <view class="mt-5 flex border-b rounded-md frosted-glass">
     <view
       class="flex-1 py-3 text-center"
@@ -492,11 +475,17 @@ export default defineComponent({
       :class="{ 'border-b-2 border-yellow text-yellow': activeType === 'user' }"
       @click="handleTypeChange('user')"
     >
-      用户创建词书
+      公开词书
+    </view>
+    <view
+      class="flex-1 py-3 text-center"
+      :class="{ 'border-b-2 border-yellow text-yellow': activeType === 'my' }"
+      @click="handleTypeChange('my')"
+    >
+      我的词书
     </view>
   </view>
 
-  <!-- 词书列表 -->
   <scroll-view
     :scroll-y="true"
     refresher-enabled
@@ -518,7 +507,7 @@ export default defineComponent({
           @click="handleSwitchLexicon(lexicon)"
         />
       </template>
-      <template v-else-if="activeType === 'user' && userLexicons.length">
+      <template v-else-if="(activeType === 'user' || activeType === 'my') && userLexicons.length">
         <UserLexiconBox
           v-for="lexicon in userLexicons"
           :id="lexicon.id"
@@ -535,7 +524,7 @@ export default defineComponent({
             bookName: lexicon.bookName,
             description: lexicon.description,
             language: lexicon.language,
-            wordCount: 0,
+            wordCount: lexicon.words?.length || 0,
             createUser: lexicon.createUser,
             words: [],
           })"
