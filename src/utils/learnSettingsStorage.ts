@@ -1,11 +1,9 @@
 export interface LearnSettings {
   wordsPerGroup: number
-  enableSpelling: boolean
 }
 
 const DEFAULT_SETTINGS: LearnSettings = {
   wordsPerGroup: 10,
-  enableSpelling: true,
 }
 
 export class LearnSettingsStorage {
@@ -43,15 +41,6 @@ export class LearnSettingsStorage {
   static updateWordsPerGroup(count: number): void {
     const settings = this.getSettings()
     settings.wordsPerGroup = count
-    this.saveSettings(settings)
-  }
-
-  /**
-   * 更新学习设置中的拼写增强选项
-   */
-  static updateEnableSpelling(enable: boolean): void {
-    const settings = this.getSettings()
-    settings.enableSpelling = enable
     this.saveSettings(settings)
   }
 }

@@ -39,20 +39,6 @@ export default defineComponent({
       })
     }
 
-    // 处理拼写加强设置变更
-    const handleSpellingChange = (e: any) => {
-      const enable = e.detail.value
-      currentSettings.value.enableSpelling = enable
-      LearnSettingsStorage.updateEnableSpelling(enable)
-
-      // 显示保存成功提示
-      uni.showToast({
-        title: '设置已保存',
-        icon: 'success',
-        duration: 1500,
-      })
-    }
-
     // 加载设置
     const loadSettings = () => {
       currentSettings.value = LearnSettingsStorage.getSettings()
@@ -75,7 +61,6 @@ export default defineComponent({
       currentSettings,
       selectedWordsPerGroupIndex,
       handleWordsPerGroupChange,
-      handleSpellingChange,
       handleBack,
     }
   },
@@ -94,7 +79,7 @@ export default defineComponent({
     </view>
 
     <view class="settings-group mb-6 rounded-lg p-4 frosted-glass">
-      <view class="setting-row flex items-center justify-between border-b border-gray-200 py-3">
+      <view class="setting-row flex items-center justify-between py-3">
         <text class="setting-label text-lg">
           每组单词数量
         </text>
@@ -111,22 +96,6 @@ export default defineComponent({
             <view class="i-mynaui:chevron-right ml-2" />
           </view>
         </picker>
-      </view>
-
-      <view class="setting-row flex items-center justify-between py-3">
-        <view>
-          <text class="setting-label text-lg">
-            开启单词拼写加强记忆
-          </text>
-          <text class="mt-1 block text-sm text-gray-500">
-            学习时，需要输入单词完整拼写
-          </text>
-        </view>
-        <switch
-          :checked="currentSettings.enableSpelling"
-          color="#e6b11e"
-          @change="handleSpellingChange"
-        />
       </view>
     </view>
 

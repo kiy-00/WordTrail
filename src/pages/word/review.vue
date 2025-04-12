@@ -61,7 +61,8 @@ export default defineComponent({
       return this.currentIndex + 1
     },
     totalCards() {
-      return this.words.length
+      // 修改为使用用户设置的批次大小和实际记录数的较小值
+      return Math.min(this.learningRecords.length, this.batchSize)
     },
     adaptedWordData(): DetailedWord {
       const word = this.currentWord
@@ -221,7 +222,7 @@ export default defineComponent({
 
   created() {
     // 获取用户ID
-    this.userId = uni.getStorageSync('userInfo')?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b'
+    this.userId = uni.getStorageSync('userInfo')?.userId || ' '
 
     // 获取批次大小
     const settings = LearnSettingsStorage.getSettings()
@@ -398,25 +399,23 @@ export default defineComponent({
 
     // 修改：移动到下一个单词 - 重置选择状态
     async nextWord() {
-      if (this.currentIndex < this.learningRecords.length - 1) {
+      // 当当前索引小于学习记录个数且未达到用户设置的批次大小时继续复习
+      if (this.currentIndex < this.learningRecords.length - 1 && this.currentIndex < this.batchSize - 1) {
         this.currentIndex++
         this.showDetails = false
         this.selectedDifficulty = ''
-        this.hasResponded = false // 重置选择状态，允许对下一个单词做出选择
-
+        this.hasResponded = false // 重置选择状态
         // 获取下一个单词的详细信息
         await this.fetchWordDetails()
       }
       else {
-        // 所有单词复习完成，提交总体复习记录
+        // 已复习完设置的批次，提交复习结果并返回主页
         await this.submitBatchReviewResults()
-
         uni.showToast({
           title: '本轮复习完成！',
           icon: 'success',
           duration: 2000,
         })
-
         setTimeout(() => {
           uni.navigateBack()
         }, 2000)
@@ -484,10 +483,10 @@ export default defineComponent({
 
     <!-- 正常内容区域 -->
     <template v-if="!isLoading && !errorMessage && currentWord">
-      <!-- Header -->
+      <!-- Header - 更新 total-cards 属性使用计算属性 -->
       <WordCardsHeader
         :current-card="currentIndex + 1"
-        :total-cards="learningRecords.length"
+        :total-cards="totalCards"
         :word="currentWord?.word || ''"
         :word-id="currentWord?.id || ''"
       />

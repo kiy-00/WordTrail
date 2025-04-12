@@ -97,7 +97,8 @@ export default defineComponent({
       try {
         // 获取存储的 token
         const token = uni.getStorageSync('token')
-        console.error('Token:', token)
+        // eslint-disable-next-line no-console
+        console.log('Token:', token)
         if (!token) {
           uni.showToast({
             title: '请先登录',
@@ -119,7 +120,8 @@ export default defineComponent({
           })
           if (response.statusCode === 200) {
             const data = response.data as SystemWordbook[]
-            console.error('System wordbooks:', data)
+            // eslint-disable-next-line no-console
+            console.log('System wordbooks:', data)
             const lexicons: Lexicon[] = data.map(book => ({
               id: book.id,
               bookName: book.bookName,

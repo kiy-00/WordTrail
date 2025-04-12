@@ -149,7 +149,8 @@ export default defineComponent({
 
         showCancel: false,
         success: () => {
-          console.error('当前语言系统:', uni.getStorageSync('selectedLanguage'))
+          // eslint-disable-next-line no-console
+          console.log('当前语言系统:', uni.getStorageSync('selectedLanguage'))
           uni.navigateTo({ url: '/pages/user/selectlexicon' })
         },
       })

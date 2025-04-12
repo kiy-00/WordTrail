@@ -5,10 +5,7 @@ import { getUserDetailById } from '@/services/userService'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
 interface Word {
-  _id: {
-    timestamp: number
-    date: string
-  }
+  id: string // 修改 _id 为 id 字符串
   word: string
   language: string
   difficulty: number
@@ -254,7 +251,7 @@ export default defineComponent({
     // 打开单词详情
     const openWordDetail = (word: Word) => {
       uni.navigateTo({
-        url: `/pages/word/worddetail?id=${word._id.timestamp}`,
+        url: `/pages/word/worddetail?id=${word.id}`, // 使用 id 而不是 _id.timestamp
       })
     }
 
@@ -475,7 +472,7 @@ export default defineComponent({
           <view v-if="words.length > 0">
             <WordBox
               v-for="word in words"
-              :key="word._id.timestamp"
+              :key="word.id"
               :word-data="word"
               class="mb-4"
               @click="openWordDetail(word)"

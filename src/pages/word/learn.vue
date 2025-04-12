@@ -4,6 +4,7 @@ import type { Word } from '@/types/Word'
 import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
 import { API_BASE_URL } from '@/config/api'
+import { LearnSettingsStorage } from '@/utils/learnSettingsStorage'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
@@ -22,6 +23,10 @@ export default defineComponent({
     const errorMessage = ref('')
     const wordIds = ref<string[]>([])
     const showWordDetails = ref(false) // 控制是否显示单词详细信息
+
+    // 添加学习设置相关状态
+    const learnSettings = ref(LearnSettingsStorage.getSettings())
+    const wordsPerGroup = computed(() => learnSettings.value.wordsPerGroup)
 
     // 获取用户ID - 可以从存储中获取，如果没有则使用默认ID
     const userId = ref(uni.getStorageSync('userInfo')?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b')
@@ -98,6 +103,21 @@ export default defineComponent({
       }
     })
 
+    // 完成学习
+    const finishLearning = () => {
+      uni.showToast({
+        title: '本轮学习完成！',
+        icon: 'none',
+        duration: 2000,
+      })
+
+      setTimeout(() => {
+        uni.navigateBack({
+          delta: 1,
+        })
+      }, 2000)
+    }
+
     // 跳转到下一个单词
     const nextWord = async () => {
       // 重置状态，隐藏详细信息
@@ -117,17 +137,7 @@ export default defineComponent({
       }
       else {
         // 所有单词学习完成
-        uni.showToast({
-          title: '本轮学习完成！',
-          icon: 'none',
-          duration: 2000,
-        })
-
-        setTimeout(() => {
-          uni.navigateBack({
-            delta: 1,
-          })
-        }, 2000)
+        finishLearning()
       }
     }
 
@@ -175,8 +185,8 @@ export default defineComponent({
         return false
       }
     }
+
     // 处理"认识"和"不认识"按钮点击
-    // 两个按钮都使用相同的学习开始API，只是UI展示不同
     const handleKnow = async () => {
       if (currentWord.value) {
         // 显示单词详细信息
@@ -261,7 +271,7 @@ export default defineComponent({
     })
 
     const totalCards = computed(() => {
-      return wordIds.value.length
+      return Math.min(wordIds.value.length, wordsPerGroup.value)
     })
 
     // 适配单词数据
@@ -359,39 +369,6 @@ export default defineComponent({
     <!-- Error Message -->
     <view v-if="errorMessage" class="p-4 text-center text-red-500">
       {{ errorMessage }}
-    </view>
-
-    <!-- Debug button -->
-    <!-- <view
-      class="absolute right-2 top-2 rounded-full bg-black px-3 py-1 text-sm"
-      @click="toggleDebug"
-    >
-      调试
-    </view> -->
-
-    <!-- Debug Info Panel -->
-    <!-- <view v-if="showDebug" class="fixed right-0 top-10 z-50 max-h-1/2 w-3/4 overflow-auto border rounded-lg bg-black p-4 shadow-lg">
-      <view class="mb-2 font-bold">
-        调试信息:
-      </view>
-      <view class="mb-2">
-        <text>单词ID数量: {{ wordIds.length }}</text>
-      </view>
-      <view class="mb-2">
-        <text>当前索引: {{ currentIndex }}</text>
-      </view>
-      <view class="mb-2">
-        <text>已加载单词数: {{ words.length }}</text>
-      </view>
-      <view class="mb-2 max-h-40 overflow-auto">
-        <text>原始单词数据:</text>
-        <pre class="whitespace-pre-wrap text-xs">{{ JSON.stringify(rawWordData, null, 2) }}</pre>
-      </view>
-    </view> -->
-
-    <!-- No words message -->
-    <view v-if="words.length === 0 && !isLoading" class="p-4 text-center text-red-500">
-      未加载任何单词
     </view>
 
     <!-- Word Card Content -->
