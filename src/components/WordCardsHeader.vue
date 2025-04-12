@@ -1,6 +1,6 @@
 <script lang="ts">
 import { API_BASE_URL } from '@/config/api'
-import { computed, defineComponent, ref } from 'vue'
+import { computed, defineComponent, onMounted, ref, watch } from 'vue'
 
 interface UserLexicon {
   id: string
@@ -40,6 +40,7 @@ export default defineComponent({
     const errorMessage = ref('')
     const selectedLexiconId = ref('')
     const userId = ref(uni.getStorageSync('userInfo')?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b')
+    const collectedWordbooks = ref<{ id: string, name: string }[]>([]) // 新增：保存单词已被收藏到的词书信息
 
     // 获取当前选择的语言
     const currentLanguage = ref(uni.getStorageSync('selectedLanguage') || 'en')
@@ -164,6 +165,51 @@ export default defineComponent({
       }
     }
 
+    // 检查单词是否已被收藏到用户词书
+    const checkIfWordIsCollected = async () => {
+      if (!props.wordId) {
+        console.error('无法检查收藏状态：单词ID为空')
+        return
+      }
+
+      try {
+        const token = uni.getStorageSync('token')
+        if (!token) {
+          console.error('无法检查收藏状态：未登录')
+          return
+        }
+
+        const response = await uni.request({
+          url: `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId.value}/check-word/${props.wordId}`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.statusCode === 200 && response.data) {
+          const result = response.data as { exists: boolean, wordbooks?: { id: string, name: string }[] }
+
+          // 更新收藏状态
+          isCollected.value = result.exists === true
+
+          // 保存词书信息
+          if (result.wordbooks && Array.isArray(result.wordbooks)) {
+            collectedWordbooks.value = result.wordbooks
+            // eslint-disable-next-line no-console
+            console.log('单词已收藏到词书:', collectedWordbooks.value)
+          }
+        }
+        else {
+          console.error('检查单词收藏状态失败:', response)
+        }
+      }
+      catch (error) {
+        console.error('检查单词收藏状态出错:', error)
+      }
+    }
+
     // 收藏单词到指定词书
     const addWordToLexicon = async () => {
       // 调试输出 - 去掉词书ID显示，保留单词ID显示
@@ -240,7 +286,10 @@ export default defineComponent({
             title: '收藏成功',
             icon: 'success',
           })
-          isCollected.value = true
+
+          // 收藏成功后更新状态
+          await checkIfWordIsCollected()
+
           showCollectModal.value = false
         }
         else {
@@ -277,20 +326,28 @@ export default defineComponent({
       // eslint-disable-next-line no-console
       console.log('打开收藏模态框，当前wordId:', props.wordId)
 
-      if (isCollected.value) {
-        uni.showToast({
-          title: '单词已收藏',
-          icon: 'none',
-        })
-        return
-      }
-
       if (!props.wordId) {
         uni.showToast({
           title: '无法收藏：单词ID不存在',
           icon: 'none',
         })
         console.error('无法收藏，缺少单词ID，props:', props)
+        return
+      }
+
+      // 如果已收藏，显示已收藏的词书信息
+      if (isCollected.value) {
+        let message = '单词已收藏到：\n'
+        collectedWordbooks.value.forEach((book) => {
+          message += `- ${book.name}\n`
+        })
+
+        uni.showModal({
+          title: '已收藏',
+          content: message,
+          showCancel: false,
+          confirmText: '确定',
+        })
         return
       }
 
@@ -337,6 +394,25 @@ export default defineComponent({
       showCollectModal.value = false
     }
 
+    // 在组件挂载时和wordId变化时检查收藏状态
+    onMounted(() => {
+      if (props.wordId) {
+        checkIfWordIsCollected()
+      }
+    })
+
+    // 监听wordId变化
+    watch(() => props.wordId, (newWordId) => {
+      if (newWordId) {
+        checkIfWordIsCollected()
+      }
+      else {
+        // 如果wordId为空，重置收藏状态
+        isCollected.value = false
+        collectedWordbooks.value = []
+      }
+    })
+
     return {
       isCollected,
       showCollectModal,
@@ -346,6 +422,7 @@ export default defineComponent({
       errorMessage,
       selectedLexiconId,
       currentLanguage,
+      collectedWordbooks, // 新增：导出收藏词书列表
       onCollect,
       onBack,
       onMarkAsKnown,
