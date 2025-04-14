@@ -51,6 +51,16 @@ interface WeeklyClockInResponse {
   status: boolean
 }
 
+// 定义打卡响应接口
+interface ClockInResponse {
+  streakDays: number
+  reviewWordsTarget: number
+  success: boolean
+  newWordsCompleted: number
+  reviewWordsCompleted: number
+  newWordsTarget: number
+}
+
 export default defineComponent({
   name: 'MyClockInPage',
   components: {
@@ -77,6 +87,9 @@ export default defineComponent({
 
     // 好友列表
     const friends = ref<Friend[]>([])
+
+    // 打卡按钮状态
+    const isClockingIn = ref(false)
 
     // 切换标签页
     const switchTab = (tab: string) => {
@@ -306,6 +319,100 @@ export default defineComponent({
       }
     }
 
+    // 执行打卡操作
+    const handleClockIn = async () => {
+      if (isClockingIn.value)
+        return
+
+      isClockingIn.value = true
+
+      try {
+        const token = uni.getStorageSync('token')
+        if (!token) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        const url = `${API_BASE_URL}/api/v1/clock-in/try`
+
+        // eslint-disable-next-line no-console
+        console.log('发送打卡请求:', url)
+
+        const response = await uni.request({
+          url,
+          method: 'POST',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.statusCode === 200) {
+          const data = response.data as ClockInResponse
+
+          if (data.success) {
+            // 打卡成功
+            uni.showToast({
+              title: '打卡成功！',
+              icon: 'success',
+            })
+
+            // 更新连续打卡天数
+            clockInData.value.streak = data.streakDays
+
+            // 更新今日完成状态
+            clockInData.value.todayCompleted = true
+
+            // 更新学习目标
+            clockInData.value.learningGoal.dailyNewWords = data.newWordsTarget
+            clockInData.value.learningGoal.dailyReviewWords = data.reviewWordsTarget
+
+            // 更新今日学习数据
+            const today = new Date().toISOString().split('T')[0]
+            const todayIndex = clockInData.value.weeklyData.findIndex(day => day.date === today)
+
+            if (todayIndex !== -1) {
+              clockInData.value.weeklyData[todayIndex].completed = true
+              clockInData.value.weeklyData[todayIndex].newWordsLearned = data.newWordsCompleted
+              clockInData.value.weeklyData[todayIndex].wordsReviewed = data.reviewWordsCompleted
+            }
+
+            // 重新获取一周数据以确保显示最新状态
+            await fetchWeeklyClockIn()
+          }
+          else {
+            // 打卡失败
+            uni.showToast({
+              title: '打卡失败: 学习任务未完成',
+              icon: 'none',
+            })
+          }
+
+          // eslint-disable-next-line no-console
+          console.log('打卡响应:', data)
+        }
+        else {
+          uni.showToast({
+            title: '打卡失败，请稍后重试',
+            icon: 'none',
+          })
+          console.error('打卡失败:', response)
+        }
+      }
+      catch (error) {
+        console.error('打卡请求错误:', error)
+        uni.showToast({
+          title: '网络错误，请稍后重试',
+          icon: 'none',
+        })
+      }
+      finally {
+        isClockingIn.value = false
+      }
+    }
+
     // 初始化数据
     const initData = async () => {
       isLoading.value = true
@@ -357,6 +464,8 @@ export default defineComponent({
       handleBack,
       initiateChallenge,
       getDayOfWeek,
+      handleClockIn,
+      isClockingIn,
     }
   },
 })
@@ -484,6 +593,23 @@ export default defineComponent({
           <text class="text-lg text-yellow-700 font-medium">
             今日学习任务未完成
           </text>
+        </view>
+
+        <!-- 添加打卡按钮 -->
+        <view class="mt-4 flex justify-center">
+          <button
+            class="flex items-center justify-center rounded-lg px-6 py-3 transition-all active:scale-98"
+            :class="[
+              clockInData.todayCompleted
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                : 'bg-yellow text-white font-medium shadow-sm',
+            ]"
+            :disabled="clockInData.todayCompleted || isClockingIn"
+            @click="handleClockIn"
+          >
+            <view v-if="isClockingIn" class="i-carbon:progress-bar mr-2 animate-spin text-xl" />
+            <text>{{ isClockingIn ? '打卡中...' : '立即打卡' }}</text>
+          </button>
         </view>
       </view>
 
