@@ -450,6 +450,13 @@ export default defineComponent({
       }, 1500)
     }
 
+    // 跳转到查找好友页面
+    const navigateToFindFriends = () => {
+      uni.navigateTo({
+        url: '/pages/user/findfriends',
+      })
+    }
+
     onMounted(() => {
       initData()
     })
@@ -466,6 +473,7 @@ export default defineComponent({
       getDayOfWeek,
       handleClockIn,
       isClockingIn,
+      navigateToFindFriends,
     }
   },
 })
@@ -716,6 +724,14 @@ export default defineComponent({
             和好友一起打卡学习，互相监督，共同进步！组队挑战成功后双方都将获得额外积分奖励。
           </text>
         </view>
+      </view>
+
+      <!-- 添加"去添加好友"按钮 -->
+      <view
+        class="fixed bottom-24 right-6 z-10 h-14 w-14 flex cursor-pointer items-center justify-center rounded-full bg-yellow shadow-lg transition-transform active:scale-95"
+        @click="navigateToFindFriends"
+      >
+        <view class="i-carbon:user-follow text-2xl text-white" />
       </view>
     </view>
   </view>

@@ -55,6 +55,12 @@
       "style": {}
     },
     {
+      "path": "pages/user/findfriends",
+      "type": "page",
+      "layout": "default",
+      "style": {}
+    },
+    {
       "path": "pages/user/myclockin",
       "type": "page",
       "layout": "default",
