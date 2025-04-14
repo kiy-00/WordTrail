@@ -14,29 +14,25 @@ export default defineComponent({
   },
 
   setup() {
-    // 添加调试状态
     const words = ref<Word[]>([])
     const currentIndex = ref(0)
     const isLoading = ref(false)
     const showDebug = ref(false)
-    const rawWordData = ref<any>(null) // 存储原始单词数据用于调试
+    const rawWordData = ref<any>(null)
     const errorMessage = ref('')
     const wordIds = ref<string[]>([])
-    const showWordDetails = ref(false) // 控制是否显示单词详细信息
+    const showWordDetails = ref(false)
+    const hasResponded = ref(false) // 添加标记变量，防止自动跳转
 
-    // 添加学习设置相关状态
     const learnSettings = ref(LearnSettingsStorage.getSettings())
     const wordsPerGroup = computed(() => learnSettings.value.wordsPerGroup)
 
-    // 获取用户ID - 可以从存储中获取，如果没有则使用默认ID
     const userId = ref(uni.getStorageSync('userInfo')?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b')
 
-    // 计算当前单词 - 移到前面
     const currentWord = computed(() => {
       return words.value[currentIndex.value]
     })
 
-    // 获取单词详细信息的函数 - 移动到 onMounted 之前
     const fetchWordDetails = async (wordId: string) => {
       isLoading.value = true
       errorMessage.value = ''
@@ -52,13 +48,9 @@ export default defineComponent({
         })
 
         if (response.statusCode === 200) {
-          // 存储原始数据用于调试
           rawWordData.value = response.data
-
-          // 将获取到的单词添加到列表
           const wordData = response.data as Word
           words.value.push(wordData)
-
           // eslint-disable-next-line no-console
           console.log('Fetched word details:', wordData)
         }
@@ -76,13 +68,12 @@ export default defineComponent({
       }
     }
 
-    // 从URL参数获取单词ID列表
     onMounted(() => {
       const pages = getCurrentPages()
       const currentPage = pages[pages.length - 1]
 
-      // @ts-expect-error - 获取页面参数
-      const options = currentPage.$page.options
+      // 使用类型断言处理页面参数
+      const options = (currentPage as any).options
 
       if (options.wordIds) {
         try {
@@ -91,7 +82,6 @@ export default defineComponent({
           // eslint-disable-next-line no-console
           console.log('Received word IDs:', wordIds.value)
 
-          // 开始获取第一个单词的详细信息
           if (wordIds.value.length > 0) {
             fetchWordDetails(wordIds.value[0])
           }
@@ -103,7 +93,6 @@ export default defineComponent({
       }
     })
 
-    // 完成学习
     const finishLearning = () => {
       uni.showToast({
         title: '本轮学习完成！',
@@ -118,44 +107,36 @@ export default defineComponent({
       }, 2000)
     }
 
-    // 跳转到下一个单词
     const nextWord = async () => {
-      // 重置状态，隐藏详细信息
       showWordDetails.value = false
+      hasResponded.value = false // 重置响应状态
 
       const nextIndex = currentIndex.value + 1
 
-      // 检查是否需要加载下一个单词
       if (nextIndex >= words.value.length && nextIndex < wordIds.value.length) {
-        // 加载下一个单词
         await fetchWordDetails(wordIds.value[nextIndex])
       }
 
-      // 如果有下一个单词，则前进
       if (nextIndex < words.value.length) {
         currentIndex.value = nextIndex
       }
       else {
-        // 所有单词学习完成
         finishLearning()
       }
     }
 
-    // 修改：使用正确的参数格式调用学习开始API
     const markWordLearningStarted = async (wordId: string) => {
       try {
         const token = uni.getStorageSync('token')
         // eslint-disable-next-line no-console
         console.log('使用原始 wordId 进行学习记录:', wordId)
 
-        // 调用 API 接口，使用 URL 查询参数传递参数，而不是请求体
         const response = await uni.request({
           url: `${API_BASE_URL}/api/v1/learning/start?userId=${encodeURIComponent(userId.value)}&wordId=${encodeURIComponent(wordId)}`,
           method: 'POST',
-          // 不再使用 data 字段发送 JSON
           header: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/x-www-form-urlencoded', // 更改为表单格式
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
         })
 
@@ -165,11 +146,9 @@ export default defineComponent({
           return true
         }
         else {
-          // 打印详细错误信息
           console.error('添加学习记录失败:', response)
           console.error('请求URL:', `${API_BASE_URL}/api/v1/learning/start?userId=${userId.value}&wordId=${wordId}`)
 
-          // 显示更具体的错误信息
           if (response.data && response.data) {
             uni.showToast({
               title: `错误: ${response.data}`,
@@ -186,13 +165,15 @@ export default defineComponent({
       }
     }
 
-    // 处理"认识"和"不认识"按钮点击
     const handleKnow = async () => {
+      if (hasResponded.value)
+        return
+
+      hasResponded.value = true
+
       if (currentWord.value) {
-        // 显示单词详细信息
         showWordDetails.value = true
 
-        // 直接使用后端返回的原始id，不进行任何处理
         const wordId = currentWord.value.id
 
         if (!wordId) {
@@ -204,33 +185,33 @@ export default defineComponent({
           return
         }
 
-        // 调用学习开始API
         const success = await markWordLearningStarted(wordId)
         if (success) {
-          // 显示提示
           uni.showToast({
             title: '已标记为认识',
             icon: 'success',
-            duration: 500,
+            duration: 1000,
           })
-          // 前进到下一个单词
-          nextWord()
         }
         else {
           uni.showToast({
             title: '保存失败，请重试',
             icon: 'none',
           })
+          hasResponded.value = false
         }
       }
     }
 
     const handleDontKnow = async () => {
+      if (hasResponded.value)
+        return
+
+      hasResponded.value = true
+
       if (currentWord.value) {
-        // 显示单词详细信息
         showWordDetails.value = true
 
-        // 同样直接使用后端返回的原始id
         const wordId = currentWord.value.id
 
         if (!wordId) {
@@ -247,25 +228,23 @@ export default defineComponent({
           uni.showToast({
             title: '已添加到学习记录',
             icon: 'none',
-            duration: 500,
+            duration: 1000,
           })
-          nextWord()
         }
         else {
           uni.showToast({
             title: '保存失败，请重试',
             icon: 'none',
           })
+          hasResponded.value = false
         }
       }
     }
 
-    // 切换调试面板显示
     const toggleDebug = () => {
       showDebug.value = !showDebug.value
     }
 
-    // 计算当前卡片编号和总数
     const currentCard = computed(() => {
       return currentIndex.value + 1
     })
@@ -274,7 +253,6 @@ export default defineComponent({
       return Math.min(wordIds.value.length, wordsPerGroup.value)
     })
 
-    // 适配单词数据
     const adaptedWordData = computed(() => {
       const word = currentWord.value
 
@@ -289,20 +267,16 @@ export default defineComponent({
         } as DetailedWord
       }
 
-      // 打印原始数据用于调试
       // eslint-disable-next-line no-console
       console.log('Adapting word data:', word)
       // eslint-disable-next-line no-console
       console.log('Raw partOfSpeechList:', word.partOfSpeechList)
 
-      // 正确处理 partOfSpeechList
       const adaptedPartOfSpeech: DetailedPartOfSpeech[] = word.partOfSpeechList.map((pos) => {
-        // 1. 确保 definitions 是字符串数组
         const definitions: string[] = Array.isArray(pos.definitions)
           ? pos.definitions.filter((def): def is string => typeof def === 'string')
           : (typeof pos.definitions === 'string' ? [pos.definitions] : [])
 
-        // 2. 处理 examples
         let formattedExamples: Example[] | null = null
         if (pos.examples && Array.isArray(pos.examples)) {
           formattedExamples = pos.examples.map(ex => ({
@@ -311,7 +285,6 @@ export default defineComponent({
           }))
         }
 
-        // 3. 返回符合 DetailedPartOfSpeech 的对象
         return {
           type: pos.type || '',
           definitions,
@@ -321,7 +294,6 @@ export default defineComponent({
         } as DetailedPartOfSpeech
       })
 
-      // 创建符合 DetailedWord 的对象
       const result: DetailedWord = {
         id: word.id || '',
         word: word.word,
@@ -354,6 +326,8 @@ export default defineComponent({
       handleDontKnow,
       toggleDebug,
       showWordDetails,
+      nextWord,
+      hasResponded,
     }
   },
 })
@@ -361,19 +335,15 @@ export default defineComponent({
 
 <template>
   <view class="h-full flex flex-col">
-    <!-- Loading State -->
     <view v-if="isLoading" class="p-4 text-center">
       加载中...
     </view>
 
-    <!-- Error Message -->
     <view v-if="errorMessage" class="p-4 text-center text-red-500">
       {{ errorMessage }}
     </view>
 
-    <!-- Word Card Content -->
     <template v-if="currentWord && !isLoading">
-      <!-- Header -->
       <WordCardsHeader
         :current-card="currentCard"
         :total-cards="totalCards"
@@ -381,24 +351,40 @@ export default defineComponent({
         :word-id="currentWord.id || ''"
       />
 
-      <!-- 直接调用 WordCardContent，并根据 showWordDetails 控制 minimal 属性 -->
       <WordCardContent
         :word-data="adaptedWordData"
         :minimal="!showWordDetails"
         class="flex-1"
       />
 
-      <!-- Footer Buttons -->
+      <view v-if="showWordDetails" class="fixed bottom-30 right-6 z-10">
+        <text
+          class="cursor-pointer rounded-full bg-blue-500 px-8 py-3 text-white font-semibold shadow-lg"
+          hover-class="opacity-80"
+          @click="nextWord"
+        >
+          下一词
+        </text>
+      </view>
+
       <view class="fixed bottom-0 left-0 right-0 flex items-center justify-around p-6 shadow-lg frosted-glass">
         <view
-          class="cursor-pointer rounded-full bg-red-500 px-8 py-3 text-white font-semibold"
+          class="cursor-pointer rounded-full px-8 py-3 text-white font-semibold"
+          :class="[
+            hasResponded ? 'bg-red-300' : 'bg-red-500',
+            hasResponded ? 'cursor-not-allowed' : 'cursor-pointer',
+          ]"
           hover-class="opacity-80"
           @click="handleDontKnow"
         >
           不认识
         </view>
         <view
-          class="cursor-pointer rounded-full bg-green-500 px-8 py-3 text-white font-semibold"
+          class="cursor-pointer rounded-full px-8 py-3 text-white font-semibold"
+          :class="[
+            hasResponded ? 'bg-green-300' : 'bg-green-500',
+            hasResponded ? 'cursor-not-allowed' : 'cursor-pointer',
+          ]"
           hover-class="opacity-80"
           @click="handleKnow"
         >
@@ -419,7 +405,6 @@ export default defineComponent({
   backdrop-filter: blur(10px);
 }
 
-/* 确保遮罩层正确显示 */
 .opacity-0 {
   opacity: 0;
 }
