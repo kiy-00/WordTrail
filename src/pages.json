@@ -79,6 +79,12 @@
       "style": {}
     },
     {
+      "path": "pages/user/myinfo",
+      "type": "page",
+      "layout": "default",
+      "style": {}
+    },
+    {
       "path": "pages/user/mylexicon",
       "type": "page",
       "layout": "default",

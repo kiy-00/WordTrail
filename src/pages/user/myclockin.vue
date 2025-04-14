@@ -25,12 +25,14 @@ interface WeeklyClockIn {
   wordsReviewed: number
 }
 
-// 定义好友接口
+// 更新好友接口定义，移除streak字段
 interface Friend {
-  id: string
-  name: string
-  avatar: string
-  streak: number
+  friendshipId: number
+  friendId: string
+  username: string
+  nickname: string | null
+  avatar: string | null
+  email: string
 }
 
 // 定义学习目标响应接口
@@ -271,7 +273,7 @@ export default defineComponent({
       }
     }
 
-    // 获取好友列表
+    // 获取好友列表 - 使用实际API
     const fetchFriends = async () => {
       try {
         const token = uni.getStorageSync('token')
@@ -283,36 +285,29 @@ export default defineComponent({
           return
         }
 
-        // 模拟获取数据，实际项目中应该替换为真实API
-        // const url = `${API_BASE_URL}/api/v1/friends/${userId.value}`
+        // 使用真实API获取好友列表
+        const url = `${API_BASE_URL}/api/v1/friends/list`
 
-        // 模拟数据
-        friends.value = [
-          {
-            id: '1',
-            name: '王小明',
-            avatar: '/static/avatar1.png',
-            streak: 20,
+        // eslint-disable-next-line no-console
+        console.log('获取好友列表:', url)
+
+        const response = await uni.request({
+          url,
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${token}`,
           },
-          {
-            id: '2',
-            name: '李小红',
-            avatar: '/static/avatar2.png',
-            streak: 15,
-          },
-          {
-            id: '3',
-            name: '张三',
-            avatar: '/static/avatar3.png',
-            streak: 30,
-          },
-          {
-            id: '4',
-            name: '赵四',
-            avatar: '/static/avatar4.png',
-            streak: 5,
-          },
-        ]
+        })
+
+        if (response.statusCode === 200 && Array.isArray(response.data)) {
+          friends.value = response.data as Friend[]
+
+          // eslint-disable-next-line no-console
+          console.log('获取到的好友列表:', friends.value)
+        }
+        else {
+          console.error('获取好友列表失败:', response)
+        }
       }
       catch (error) {
         console.error('获取好友列表错误:', error)
@@ -358,9 +353,6 @@ export default defineComponent({
               title: '打卡成功！',
               icon: 'success',
             })
-
-            // 更新连续打卡天数
-            clockInData.value.streak = data.streakDays
 
             // 更新今日完成状态
             clockInData.value.todayCompleted = true
@@ -525,30 +517,6 @@ export default defineComponent({
 
     <!-- 个人打卡 -->
     <view v-else-if="activeTab === 'personal'" class="space-y-6">
-      <!-- 连续打卡统计 -->
-      <view class="relative overflow-hidden rounded-xl from-yellow to-amber-400 bg-gradient-to-r p-5 shadow-md">
-        <view class="relative z-10">
-          <text class="mb-1 block text-lg font-medium">
-            当前连续打卡
-          </text>
-          <view class="flex items-baseline">
-            <text class="text-4xl font-bold">
-              {{ clockInData.streak }}
-            </text>
-            <text class="ml-2 text-xl">
-              天
-            </text>
-          </view>
-          <text class="mt-2 block text-sm">
-            坚持打卡，保持学习动力！
-          </text>
-        </view>
-        <!-- 背景装饰 -->
-        <view class="absolute bottom-0 right-0 opacity-20">
-          <view class="i-carbon:calendar-heat-map text-6xl" />
-        </view>
-      </view>
-
       <!-- 学习目标 -->
       <view class="rounded-xl bg-white/70 p-5 shadow-sm backdrop-blur-sm">
         <text class="mb-4 block text-lg text-gray-800 font-medium">
@@ -680,32 +648,33 @@ export default defineComponent({
         <view v-else class="space-y-3">
           <view
             v-for="friend in friends"
-            :key="friend.id"
+            :key="friend.friendId"
             class="flex items-center justify-between rounded-lg bg-gray-50 p-3"
           >
             <view class="flex items-center">
               <!-- 头像 -->
               <view class="h-12 w-12 overflow-hidden rounded-full bg-gray-300">
                 <image
+                  v-if="friend.avatar"
                   :src="friend.avatar"
                   mode="aspectFill"
                   class="h-full w-full object-cover"
                 />
+                <text v-else class="text-xl text-white font-bold">
+                  {{ friend.username.charAt(0).toUpperCase() }}
+                </text>
               </view>
-              <!-- 名字和天数 -->
+              <!-- 名字 -->
               <view class="ml-3">
                 <text class="block text-gray-800 font-medium">
-                  {{ friend.name }}
-                </text>
-                <text class="text-sm text-gray-500">
-                  已坚持 {{ friend.streak }} 天
+                  {{ friend.nickname || friend.username }}
                 </text>
               </view>
             </view>
             <!-- 发起挑战按钮 -->
             <view
               class="cursor-pointer rounded-lg bg-yellow px-3 py-2 text-white font-medium shadow-sm transition-all active:scale-98"
-              @click="initiateChallenge(friend.id, friend.name)"
+              @click="initiateChallenge(friend.friendId, friend.nickname || friend.username)"
             >
               发起挑战
             </view>
@@ -717,11 +686,11 @@ export default defineComponent({
       <view class="mt-4 border border-yellow/30 rounded-xl bg-yellow/10 p-4">
         <view class="flex">
           <view class="i-carbon:idea text-xl text-yellow" />
-          <text class="ml-2 text-sm text-gray-700">
+          <text class="ml-2 text-sm">
             <text class="font-medium">
               组队学习小贴士:
             </text>
-            和好友一起打卡学习，互相监督，共同进步！组队挑战成功后双方都将获得额外积分奖励。
+            和好友一起打卡学习，互相监督，共同进步！
           </text>
         </view>
       </view>

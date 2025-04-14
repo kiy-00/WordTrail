@@ -20,8 +20,6 @@ export default defineComponent({
     const password = ref<string>('')
     const confirmPassword = ref<string>('')
     const email = ref<string>('')
-    const verificationCode = ref<string>('')
-    const sendingCode = ref<boolean>(false)
     const agreePrivacy = ref<boolean>(false)
     const showPrivacyModal = ref<boolean>(false)
 
@@ -36,25 +34,25 @@ export default defineComponent({
         return
       }
 
-      // 检查必填字段
-      if (!account.value) {
-        uni.showToast({
-          title: '请输入账号',
-          icon: 'none',
-          mask: true,
-        })
-        return
-      }
-      if (!password.value) {
-        uni.showToast({
-          title: '请输入密码',
-          icon: 'none',
-          mask: true,
-        })
-        return
-      }
-
       if (currentTab.value === 'login') {
+        // 检查必填字段
+        if (!account.value) {
+          uni.showToast({
+            title: '请输入账号',
+            icon: 'none',
+            mask: true,
+          })
+          return
+        }
+        if (!password.value) {
+          uni.showToast({
+            title: '请输入密码',
+            icon: 'none',
+            mask: true,
+          })
+          return
+        }
+
         try {
           const response = await uni.request({
             url: `${API_BASE_URL}/api/v1/auth/login`,
@@ -121,12 +119,114 @@ export default defineComponent({
         }
       }
       else if (currentTab.value === 'register') {
-        // 保留注册UI，但不实现功能
-        uni.showToast({
-          title: '注册功能暂未开放',
-          icon: 'none',
-          mask: true,
-        })
+        // 注册逻辑 - 检查所有必填字段
+        if (!account.value) {
+          uni.showToast({
+            title: '请输入用户名',
+            icon: 'none',
+            mask: true,
+          })
+          return
+        }
+
+        if (!email.value) {
+          uni.showToast({
+            title: '请输入邮箱',
+            icon: 'none',
+            mask: true,
+          })
+          return
+        }
+
+        // 验证邮箱格式
+        const emailRegex = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
+        if (!emailRegex.test(email.value)) {
+          uni.showToast({
+            title: '请输入有效的邮箱地址',
+            icon: 'none',
+            mask: true,
+          })
+          return
+        }
+
+        if (!password.value) {
+          uni.showToast({
+            title: '请输入密码',
+            icon: 'none',
+            mask: true,
+          })
+          return
+        }
+
+        if (!confirmPassword.value) {
+          uni.showToast({
+            title: '请确认密码',
+            icon: 'none',
+            mask: true,
+          })
+          return
+        }
+
+        // 检查两次密码是否一致
+        if (password.value !== confirmPassword.value) {
+          uni.showToast({
+            title: '两次密码输入不一致',
+            icon: 'none',
+            mask: true,
+          })
+          return
+        }
+
+        try {
+          const response = await uni.request({
+            url: `${API_BASE_URL}/api/v1/auth/register`,
+            method: 'POST',
+            header: {
+              'Content-Type': 'application/json',
+            },
+            data: {
+              username: account.value,
+              password: password.value,
+              email: email.value,
+            },
+          })
+
+          // 处理注册响应
+          if (response.statusCode === 200 || response.statusCode === 201) {
+            uni.showToast({
+              title: '注册成功，请登录',
+              icon: 'success',
+              mask: true,
+            })
+
+            // 注册成功后切换到登录页
+            currentTab.value = 'login'
+            // 清空密码和确认密码，保留用户名便于登录
+            password.value = ''
+            confirmPassword.value = ''
+          }
+          else {
+            // 处理错误响应
+            let errorMsg = '注册失败'
+            if (response.data && typeof response.data === 'object' && 'message' in response.data) {
+              errorMsg = (response.data as any).message || errorMsg
+            }
+
+            uni.showToast({
+              title: errorMsg,
+              icon: 'none',
+              mask: true,
+            })
+          }
+        }
+        catch (error) {
+          console.error('注册发生错误:', error)
+          uni.showToast({
+            title: '网络请求错误',
+            icon: 'none',
+            mask: true,
+          })
+        }
       }
     }
 
@@ -144,29 +244,6 @@ export default defineComponent({
       console.log('隐私协议状态:', agreePrivacy.value)
     }
 
-    // 发送验证码的函数（仅保留UI交互，不实际调用API）
-    const sendVerificationCode = async () => {
-      if (!email.value) {
-        uni.showToast({
-          title: '请输入邮箱',
-          icon: 'none',
-          mask: true,
-        })
-        return
-      }
-
-      // 模拟发送验证码
-      sendingCode.value = true
-      setTimeout(() => {
-        sendingCode.value = false
-        uni.showToast({
-          title: '验证码功能暂未开放',
-          icon: 'none',
-          mask: true,
-        })
-      }, 1000)
-    }
-
     return {
       currentTab,
       loginMethod,
@@ -181,9 +258,6 @@ export default defineComponent({
       handleAction,
       handlePrivacyChange,
       email,
-      verificationCode,
-      sendingCode,
-      sendVerificationCode,
     }
   },
 })
@@ -200,7 +274,6 @@ export default defineComponent({
     <!-- 登录/注册表单容器 -->
     <view class="max-w-md w-full rounded-lg">
       <view class="px-8 py-5">
-        <!-- 修改 padding 确保内容对齐 -->
         <!-- 标签栏 - 仿照 CommunityHeader 样式 -->
         <view class="mb-4 flex justify-center border-b border-gray-200">
           <view
@@ -229,13 +302,14 @@ export default defineComponent({
 
         <!-- 输入框容器使用统一的宽度和对齐方式 -->
         <view class="w-full space-y-3">
+          <!-- 用户名输入框 -->
           <input
             v-model="account"
-            :placeholder="loginMethod === 'email' ? '请输入用户名' : loginMethod === 'phone' ? '请输入电话号码' : '请输入ID'"
+            :placeholder="currentTab === 'login' ? '请输入用户名' : '请设置用户名'"
             class="mb-5 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
           >
 
-          <!-- 新增邮箱输入框 -->
+          <!-- 邮箱输入框 - 只在注册时显示 -->
           <input
             v-if="currentTab === 'register'"
             v-model="email"
@@ -243,22 +317,7 @@ export default defineComponent({
             class="mb-5 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
           >
 
-          <!-- 新增验证码输入框和发送按钮 -->
-          <view v-if="currentTab === 'register'" class="flex items-center space-x-2">
-            <input
-              v-model="verificationCode"
-              placeholder="请输入验证码"
-              class="flex-1 border-2 border-yellow rounded border-dashed bg-transparent p-4 text-gray-600"
-            >
-            <button
-              :disabled="sendingCode"
-              class="rounded bg-yellow px-4 py-2 text-white transition-colors disabled:bg-gray-400 hover:bg-yellow-600"
-              @click="sendVerificationCode"
-            >
-              {{ sendingCode ? '发送中...' : '发送验证码' }}
-            </button>
-          </view>
-
+          <!-- 密码输入框 -->
           <input
             v-model="password"
             placeholder="请输入密码"

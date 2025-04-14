@@ -17,6 +17,7 @@ interface NavigateToOptions {
        "/pages/user/myclockin" |
        "/pages/user/mycontent" |
        "/pages/user/mydata" |
+       "/pages/user/myinfo" |
        "/pages/user/mylexicon" |
        "/pages/user/myuserlexicon" |
        "/pages/user/selectlexicon" |

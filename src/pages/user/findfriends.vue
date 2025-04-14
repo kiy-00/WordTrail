@@ -32,6 +32,13 @@ export default defineComponent({
     const showMessageModal = ref(false) // 显示留言输入框
     const selectedUserId = ref('') // 当前选中的用户ID
 
+    // 跳转到好友申请页面
+    const navigateToFriendRequests = () => {
+      uni.navigateTo({
+        url: '/pages/user/myinfo',
+      })
+    }
+
     // 处理搜索
     const handleSearch = async () => {
       if (!searchQuery.value.trim()) {
@@ -345,6 +352,7 @@ export default defineComponent({
       submitFriendRequest,
       switchTab,
       toggleSearchBar,
+      navigateToFriendRequests,
     }
   },
 })
@@ -353,6 +361,14 @@ export default defineComponent({
 <template>
   <view class="find-friends px-4 py-4">
     <BackButton @back="handleBack" />
+
+    <!-- 铃铛图标 - 添加在右上角，固定位置 -->
+    <view
+      class="fixed right-4 top-4 z-50 h-12 w-12 flex items-center justify-center rounded-full shadow-sm frosted-glass"
+      @click="navigateToFriendRequests"
+    >
+      <view class="i-carbon:notification text-xl" />
+    </view>
 
     <!-- 标题 -->
     <view class="mb-6 mt-10">
