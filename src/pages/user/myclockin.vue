@@ -43,6 +43,14 @@ interface LearningGoalResponse {
   updatedAt: string
 }
 
+// 定义周打卡响应接口
+interface WeeklyClockInResponse {
+  date: string
+  newWordsCompleted: number
+  reviewWordsCompleted: number
+  status: boolean
+}
+
 export default defineComponent({
   name: 'MyClockInPage',
   components: {
@@ -121,6 +129,100 @@ export default defineComponent({
       }
     }
 
+    // 获取星期几 - 修正版
+    const getDayOfWeek = (dateString: string) => {
+      const days = ['日', '一', '二', '三', '四', '五', '六']
+
+      try {
+        // 确保日期字符串格式正确
+        const parts = dateString.split('-')
+        if (parts.length !== 3) {
+          console.error('日期格式不正确:', dateString)
+          return '未知'
+        }
+
+        // 创建日期对象（使用YYYY-MM-DD格式避免时区问题）
+        const year = Number.parseInt(parts[0])
+        const month = Number.parseInt(parts[1]) - 1 // 月份从0开始
+        const day = Number.parseInt(parts[2])
+
+        const date = new Date(year, month, day)
+
+        // 检查日期是否有效
+        if (Number.isNaN(date.getTime())) {
+          console.error('无效日期:', dateString)
+          return '未知'
+        }
+
+        return `周${days[date.getDay()]}`
+      }
+      catch (e) {
+        console.error('计算星期几出错:', e, dateString)
+        return '未知'
+      }
+    }
+
+    // 获取过去一周的打卡记录
+    const fetchWeeklyClockIn = async () => {
+      try {
+        const token = uni.getStorageSync('token')
+        if (!token) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        const url = `${API_BASE_URL}/api/v1/clock-in/weekly`
+
+        // eslint-disable-next-line no-console
+        console.log('获取周打卡记录:', url)
+
+        const response = await uni.request({
+          url,
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.statusCode === 200 && Array.isArray(response.data)) {
+          // 将API返回的数据转换为组件需要的格式
+          clockInData.value.weeklyData = response.data.map((item: WeeklyClockInResponse) => ({
+            date: item.date,
+            completed: item.status,
+            newWordsLearned: item.newWordsCompleted,
+            wordsReviewed: item.reviewWordsCompleted,
+          }))
+
+          // 确保数据按日期排序（从旧到新）
+          clockInData.value.weeklyData.sort((a, b) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime(),
+          )
+
+          // 调试输出
+          // eslint-disable-next-line no-console
+          console.log('排序后的周打卡记录:', clockInData.value.weeklyData.map(day =>
+            `${day.date} - ${getDayOfWeek(day.date)}`,
+          ))
+
+          // 根据周打卡数据判断今日是否已完成打卡
+          const today = new Date().toISOString().split('T')[0] // 格式化为 YYYY-MM-DD
+          const todayRecord = clockInData.value.weeklyData.find(day => day.date === today)
+          if (todayRecord) {
+            clockInData.value.todayCompleted = todayRecord.completed
+          }
+        }
+        else {
+          console.error('获取周打卡记录失败:', response)
+        }
+      }
+      catch (error) {
+        console.error('获取周打卡记录错误:', error)
+      }
+    }
+
     // 获取打卡数据
     const fetchClockInData = async () => {
       try {
@@ -133,65 +235,22 @@ export default defineComponent({
           return
         }
 
-        // 模拟获取数据，实际项目中应该替换为真实API
-        // const url = `${API_BASE_URL}/api/v1/clock-in/${userId.value}`
-
-        // 模拟数据
+        // 初始化基本数据结构
         clockInData.value = {
-          streak: 15,
-          todayCompleted: true,
+          streak: 0, // 会从API获取实际数据
+          todayCompleted: false, // 会从周打卡记录中更新
           learningGoal: {
-            dailyNewWords: 20, // 这个值会被API返回的实际数据覆盖
-            dailyReviewWords: 50, // 这个值会被API返回的实际数据覆盖
+            dailyNewWords: 0, // 会从API获取实际数据
+            dailyReviewWords: 0, // 会从API获取实际数据
           },
-          weeklyData: [
-            {
-              date: '2023-05-20',
-              completed: true,
-              newWordsLearned: 22,
-              wordsReviewed: 55,
-            },
-            {
-              date: '2023-05-21',
-              completed: true,
-              newWordsLearned: 20,
-              wordsReviewed: 50,
-            },
-            {
-              date: '2023-05-22',
-              completed: false,
-              newWordsLearned: 0,
-              wordsReviewed: 0,
-            },
-            {
-              date: '2023-05-23',
-              completed: true,
-              newWordsLearned: 25,
-              wordsReviewed: 48,
-            },
-            {
-              date: '2023-05-24',
-              completed: true,
-              newWordsLearned: 20,
-              wordsReviewed: 60,
-            },
-            {
-              date: '2023-05-25',
-              completed: true,
-              newWordsLearned: 18,
-              wordsReviewed: 45,
-            },
-            {
-              date: '2023-05-26',
-              completed: true,
-              newWordsLearned: 22,
-              wordsReviewed: 53,
-            },
-          ],
+          weeklyData: [], // 会从API获取实际数据
         }
 
-        // 获取实际的学习目标数据
-        await fetchLearningGoal()
+        // 并行获取学习目标和周打卡记录
+        await Promise.all([
+          fetchLearningGoal(),
+          fetchWeeklyClockIn(),
+        ])
       }
       catch (error) {
         errorMessage.value = '获取打卡数据失败'
@@ -282,13 +341,6 @@ export default defineComponent({
           icon: 'success',
         })
       }, 1500)
-    }
-
-    // 获取星期几
-    const getDayOfWeek = (dateString: string) => {
-      const days = ['日', '一', '二', '三', '四', '五', '六']
-      const date = new Date(dateString)
-      return `周${days[date.getDay()]}`
     }
 
     onMounted(() => {
