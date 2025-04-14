@@ -2,27 +2,6 @@
 import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
-interface checkinResponse {
-  msg: string
-  code: number
-  checkinDays: number
-}
-
-interface checkinDaysResponse {
-  msg: string
-  code: number
-  checkinDays: number
-}
-
-interface checkinDatesResponse {
-  message: string
-  checkinDates: string[] // 签到日期
-}
-
-interface failedCheckinResponse {
-  error: string
-}
-
 export default defineComponent({
   name: 'Calendar',
   emits: ['update:signInDays'],
@@ -74,18 +53,96 @@ export default defineComponent({
       )
     }
 
+    // 获取本月签到天数
+    const fetchCheckinDays = async () => {
+      try {
+        const token = uni.getStorageSync('token')
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || ''
+
+        if (!token || !userId) {
+          console.error('未登录或缺少用户ID')
+          return
+        }
+
+        const response = await uni.request({
+          url: `${API_BASE_URL}/api/checkin/count?userId=${userId}`,
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        // eslint-disable-next-line no-console
+        console.log('获取签到天数响应:', response.data)
+
+        if (response.statusCode === 200 && typeof response.data === 'number') {
+          signInDays.value = response.data
+          emit('update:signInDays', signInDays.value)
+        }
+      }
+      catch (error) {
+        console.error('获取签到天数失败:', error)
+      }
+    }
+
+    // 获取当前月的签到日期
+    const fetchCheckinDates = async () => {
+      try {
+        const token = uni.getStorageSync('token')
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || ''
+
+        if (!token || !userId) {
+          console.error('未登录或缺少用户ID')
+          return
+        }
+
+        const response = await uni.request({
+          url: `${API_BASE_URL}/api/checkin/days?userId=${userId}`,
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        // eslint-disable-next-line no-console
+        console.log('获取签到日期响应:', response.data)
+
+        if (response.statusCode === 200 && Array.isArray(response.data)) {
+          // 后端直接返回日期数字数组，如 [3, 4, 5]
+          signInDates.value = response.data
+        }
+      }
+      catch (error) {
+        console.error('获取签到日期失败:', error)
+      }
+    }
+
     // 签到函数
     const handleSignIn = async () => {
       try {
         // eslint-disable-next-line no-console
         console.log('发送签到请求到后端') // 日志记录：发送请求
 
-        // 发送签到请求到后端
+        const token = uni.getStorageSync('token')
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || ''
+
+        if (!token || !userId) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 使用新的后端API接口
         const response = await uni.request({
-          url: `/word/user/checkin`, // 替换为实际后端接口地址
+          url: `${API_BASE_URL}/api/checkin/userCheckin?userId=${userId}`,
           method: 'POST',
           header: {
-            Authorization: uni.getStorageSync('token'), // 添加 token，确保用户已登录
+            Authorization: `Bearer ${token}`,
           },
         })
 
@@ -94,18 +151,22 @@ export default defineComponent({
 
         if (response.statusCode === 200) {
           // 成功签到
-          const data = response.data as checkinResponse
-          signInDays.value = data.checkinDays // 更新签到天数
-          emit('update:signInDays', signInDays.value)
+          const message = response.data as string
 
-          // 添加当天日期到签到日期列表
+          // 更新签到天数
+          await fetchCheckinDays()
+
+          // 更新签到日期列表
+          await fetchCheckinDates()
+
+          // 添加当天日期到签到日期列表（如果后端没有立即更新）
           const today = currentDate.value.getDate()
           if (!signInDates.value.includes(today)) {
             signInDates.value.push(today)
           }
 
           uni.showToast({
-            title: data.msg,
+            title: message || '签到成功',
             icon: 'success',
           })
 
@@ -116,10 +177,9 @@ export default defineComponent({
           }, 500) // 动画持续时间 0.5 秒
         }
         else {
-          // 失败响应（例如，今天已签到）
-          const errorData = response.data as failedCheckinResponse
+          // 失败响应
           uni.showToast({
-            title: errorData.error || '签到失败',
+            title: `签到失败：${response.data || '未知错误'}`,
             icon: 'none',
           })
         }
@@ -141,52 +201,6 @@ export default defineComponent({
         title: `选中了日期：${date}`,
         icon: 'none',
       })
-    }
-
-    // 获取连续签到天数
-    const fetchCheckinDays = async () => {
-      try {
-        const response = await uni.request({
-          url: `word/user/checkin-days`, // 替换为实际后端接口地址
-          method: 'GET',
-          header: {
-            Authorization: uni.getStorageSync('token'), // 添加 token，确保用户已登录
-          },
-        })
-
-        // eslint-disable-next-line no-console
-        console.log('获取连续签到天数响应数据:', response.data) // 日志记录：完整响应
-
-        const data = response.data as checkinDaysResponse
-        signInDays.value = data.checkinDays
-      }
-      catch (error) {
-        console.error(error)
-      }
-    }
-
-    // 获取当前月的签到日期
-    const fetchCheckinDates = async () => {
-      try {
-        const year = currentDate.value.getFullYear()
-        const month = currentDate.value.getMonth() + 1 // JavaScript 的月份从 0 开始
-
-        const response = await uni.request({
-          url: `${API_BASE_URL}/user/checkin-dates?year=${year}&month=${month}`, // 替换为实际后端接口地址
-          method: 'GET',
-          header: {
-            Authorization: `Bearer ${uni.getStorageSync('token')}`, // 添加 token，确保用户已登录
-          },
-        })
-
-        const data = response.data as checkinDatesResponse
-
-        // 将签到日期字符串转换为日期数字
-        signInDates.value = data.checkinDates.map(date => new Date(date).getDate())
-      }
-      catch (error) {
-        console.error(error)
-      }
     }
 
     onMounted(() => {
