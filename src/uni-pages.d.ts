@@ -14,6 +14,7 @@ interface NavigateToOptions {
        "/pages/lexicon/lexicondetail" |
        "/pages/lexicon/userlexicondetail" |
        "/pages/user/findfriends" |
+       "/pages/user/mychallengeinfo" |
        "/pages/user/myclockin" |
        "/pages/user/mycontent" |
        "/pages/user/mydata" |

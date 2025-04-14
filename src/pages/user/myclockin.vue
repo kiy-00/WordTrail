@@ -63,6 +63,36 @@ interface ClockInResponse {
   newWordsTarget: number
 }
 
+// 用户挑战接口定义
+interface UserChallenge {
+  challengeId: number
+  name: string
+  description: string
+  dailyWordsTarget: number
+  wordsCompleted: number
+  startDate: string
+  endDate: string
+  status: string // 'active', 'rejected', etc.
+  streakDays: number
+  partnerId: string
+  partnerUsername: string
+  partnerAvatar: string | null
+  partnerTodayClockInStatus: boolean
+  todayClockInStatus: boolean
+  isCreator: boolean
+}
+
+// 挑战打卡响应接口
+interface ChallengeClockInResponse {
+  streakDays: number
+  dailyWordsTarget: number
+  success: boolean
+  partnerAchieved: boolean
+  bothAchieved: boolean
+  wordsCompleted: number
+  achieved: boolean
+}
+
 export default defineComponent({
   name: 'MyClockInPage',
   components: {
@@ -90,8 +120,25 @@ export default defineComponent({
     // 好友列表
     const friends = ref<Friend[]>([])
 
+    // 活动挑战列表
+    const activeChallenges = ref<UserChallenge[]>([])
+
     // 打卡按钮状态
     const isClockingIn = ref(false)
+
+    // 添加挑战打卡状态
+    const isChallengeClockingIn = ref<Record<number, boolean>>({})
+
+    // 创建挑战相关状态
+    const showChallengeModal = ref(false)
+    const selectedFriend = ref<Friend | null>(null)
+    const challengeForm = ref({
+      name: '',
+      description: '',
+      dailyWordsTarget: 20,
+      durationDays: 7,
+    })
+    const isCreatingChallenge = ref(false)
 
     // 切换标签页
     const switchTab = (tab: string) => {
@@ -314,6 +361,50 @@ export default defineComponent({
       }
     }
 
+    // 获取用户参与的挑战
+    const fetchUserChallenges = async () => {
+      try {
+        const token = uni.getStorageSync('token')
+        if (!token) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 调用API获取用户的所有挑战
+        const url = `${API_BASE_URL}/api/v1/team-challenges/user`
+
+        // eslint-disable-next-line no-console
+        console.log('获取用户挑战:', url)
+
+        const response = await uni.request({
+          url,
+          method: 'GET',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.statusCode === 200 && Array.isArray(response.data)) {
+          // 过滤出状态为active的挑战
+          activeChallenges.value = (response.data as UserChallenge[]).filter(
+            challenge => challenge.status === 'active',
+          )
+
+          // eslint-disable-next-line no-console
+          console.log('获取到的活动挑战:', activeChallenges.value)
+        }
+        else {
+          console.error('获取用户挑战失败:', response)
+        }
+      }
+      catch (error) {
+        console.error('获取用户挑战错误:', error)
+      }
+    }
+
     // 执行打卡操作
     const handleClockIn = async () => {
       if (isClockingIn.value)
@@ -405,13 +496,252 @@ export default defineComponent({
       }
     }
 
+    // 挑战打卡函数 - 修正打卡逻辑
+    const handleChallengeClockIn = async (challengeId: number) => {
+      // 防止重复点击
+      if (isChallengeClockingIn.value[challengeId])
+        return
+
+      // 设置打卡中状态
+      isChallengeClockingIn.value[challengeId] = true
+
+      try {
+        const token = uni.getStorageSync('token')
+        if (!token) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        const url = `${API_BASE_URL}/api/v1/team-challenges/${challengeId}/clock-in`
+
+        // eslint-disable-next-line no-console
+        console.log('挑战打卡请求:', url)
+
+        const response = await uni.request({
+          url,
+          method: 'POST',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.statusCode === 200) {
+          const data = response.data as ChallengeClockInResponse
+
+          // 调试输出
+          // eslint-disable-next-line no-console
+          console.log('挑战打卡响应:', data)
+
+          // 修改逻辑：检查achieved字段而不是success字段
+          if (data.achieved) {
+            // 真正完成了打卡任务
+            // 更新本地挑战状态
+            const challenge = activeChallenges.value.find(c => c.challengeId === challengeId)
+            if (challenge) {
+              challenge.todayClockInStatus = true
+              challenge.wordsCompleted = data.wordsCompleted
+              challenge.streakDays = data.streakDays
+            }
+
+            // 显示打卡结果
+            let message = '挑战打卡成功！'
+            if (data.bothAchieved) {
+              message = '双方都已完成打卡，获得额外奖励！'
+            }
+            else if (data.partnerAchieved) {
+              message = '打卡成功！你的伙伴也已打卡'
+            }
+
+            uni.showToast({
+              title: message,
+              icon: 'success',
+              duration: 2000,
+            })
+          }
+          else {
+            // 未完成打卡任务
+            uni.showToast({
+              title: '打卡失败：未完成挑战目标',
+              icon: 'none',
+              duration: 2000,
+            })
+          }
+        }
+        else {
+          uni.showToast({
+            title: '打卡失败，请稍后重试',
+            icon: 'none',
+          })
+          console.error('挑战打卡失败:', response)
+        }
+      }
+      catch (error) {
+        console.error('挑战打卡请求错误:', error)
+        uni.showToast({
+          title: '网络错误，请稍后重试',
+          icon: 'none',
+        })
+      }
+      finally {
+        // 重置打卡中状态
+        isChallengeClockingIn.value[challengeId] = false
+      }
+    }
+
+    // 发起组队挑战 - 更新为显示挑战创建模态框
+    const initiateChallenge = (friendId: string, friendName: string) => {
+      // 查找选中的好友
+      const friend = friends.value.find(f => f.friendId === friendId)
+      if (friend) {
+        selectedFriend.value = friend
+
+        // 预填挑战名称
+        challengeForm.value.name = `与 ${friendName} 的单词挑战`
+
+        // 显示创建挑战模态框
+        showChallengeModal.value = true
+      }
+      else {
+        uni.showToast({
+          title: '好友信息获取失败',
+          icon: 'none',
+        })
+      }
+    }
+
+    // 关闭挑战模态框
+    const closeChallengeModal = () => {
+      showChallengeModal.value = false
+      selectedFriend.value = null
+      // 重置表单
+      challengeForm.value = {
+        name: '',
+        description: '',
+        dailyWordsTarget: 20,
+        durationDays: 7,
+      }
+    }
+
+    // 创建挑战
+    const createChallenge = async () => {
+      if (!selectedFriend.value)
+        return
+
+      // 基本表单验证
+      if (!challengeForm.value.name) {
+        uni.showToast({
+          title: '请输入挑战名称',
+          icon: 'none',
+        })
+        return
+      }
+
+      if (challengeForm.value.dailyWordsTarget < 1) {
+        uni.showToast({
+          title: '每日目标必须大于0',
+          icon: 'none',
+        })
+        return
+      }
+
+      if (challengeForm.value.durationDays < 1) {
+        uni.showToast({
+          title: '挑战天数必须大于0',
+          icon: 'none',
+        })
+        return
+      }
+
+      isCreatingChallenge.value = true
+
+      try {
+        const token = uni.getStorageSync('token')
+        if (!token) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 构建请求参数
+        const params = new URLSearchParams()
+        params.append('partnerId', selectedFriend.value.friendId)
+        params.append('name', challengeForm.value.name)
+        if (challengeForm.value.description) {
+          params.append('description', challengeForm.value.description)
+        }
+        params.append('dailyWordsTarget', challengeForm.value.dailyWordsTarget.toString())
+        params.append('durationDays', challengeForm.value.durationDays.toString())
+
+        // 调用创建挑战API
+        const url = `${API_BASE_URL}/api/v1/team-challenges/create?${params.toString()}`
+
+        const response = await uni.request({
+          url,
+          method: 'POST',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.statusCode === 200) {
+          uni.showToast({
+            title: '挑战创建成功！',
+            icon: 'success',
+          })
+
+          // 关闭模态框
+          closeChallengeModal()
+        }
+        else {
+          let errorMessage = '创建挑战失败'
+
+          if (response.data && typeof response.data === 'object' && 'message' in response.data) {
+            errorMessage = (response.data as any).message || errorMessage
+          }
+
+          uni.showToast({
+            title: errorMessage,
+            icon: 'none',
+          })
+
+          console.error('创建挑战失败:', response.data)
+        }
+      }
+      catch (error) {
+        console.error('创建挑战请求错误:', error)
+        uni.showToast({
+          title: '网络错误，请稍后重试',
+          icon: 'none',
+        })
+      }
+      finally {
+        isCreatingChallenge.value = false
+      }
+    }
+
+    // 跳转到挑战信息页面
+    const navigateToChallengeInfo = () => {
+      uni.navigateTo({
+        url: '/pages/user/mychallengeinfo',
+      })
+    }
+
     // 初始化数据
     const initData = async () => {
       isLoading.value = true
       errorMessage.value = ''
 
       try {
-        await Promise.all([fetchClockInData(), fetchFriends()])
+        await Promise.all([
+          fetchClockInData(),
+          fetchFriends(),
+          fetchUserChallenges(), // 添加获取挑战数据
+        ])
       }
       catch (error) {
         errorMessage.value = '获取数据失败，请重试'
@@ -422,24 +752,14 @@ export default defineComponent({
       }
     }
 
+    // 格式化日期范围显示
+    const formatDateRange = (startDate: string, endDate: string) => {
+      return `${startDate.split('T')[0]} 至 ${endDate.split('T')[0]}`
+    }
+
     // 返回上一页
     const handleBack = () => {
       uni.navigateBack()
-    }
-
-    // 发起组队挑战
-    const initiateChallenge = (friendId: string, friendName: string) => {
-      uni.showLoading({
-        title: '发送挑战中',
-      })
-
-      setTimeout(() => {
-        uni.hideLoading()
-        uni.showToast({
-          title: `已向${friendName}发送组队挑战`,
-          icon: 'success',
-        })
-      }, 1500)
     }
 
     // 跳转到查找好友页面
@@ -459,6 +779,7 @@ export default defineComponent({
       activeTab,
       clockInData,
       friends,
+      activeChallenges,
       switchTab,
       handleBack,
       initiateChallenge,
@@ -466,6 +787,16 @@ export default defineComponent({
       handleClockIn,
       isClockingIn,
       navigateToFindFriends,
+      showChallengeModal,
+      challengeForm,
+      selectedFriend,
+      isCreatingChallenge,
+      closeChallengeModal,
+      createChallenge,
+      navigateToChallengeInfo,
+      formatDateRange,
+      handleChallengeClockIn,
+      isChallengeClockingIn,
     }
   },
 })
@@ -474,6 +805,14 @@ export default defineComponent({
 <template>
   <view class="clock-in-page px-4 py-4">
     <BackButton @back="handleBack" />
+
+    <!-- 铃铛图标 - 添加在右上角，固定位置 -->
+    <view
+      class="fixed right-4 top-4 z-50 h-12 w-12 flex items-center justify-center rounded-full shadow-sm frosted-glass"
+      @click="navigateToChallengeInfo"
+    >
+      <view class="i-carbon:notification text-xl" />
+    </view>
 
     <!-- 标题 -->
     <view class="mb-6 mt-10">
@@ -637,6 +976,7 @@ export default defineComponent({
 
     <!-- 组队打卡 -->
     <view v-else class="space-y-4">
+      <!-- 好友列表 - 修改为固定高度和滚动条 -->
       <view class="rounded-xl bg-white/70 p-5 shadow-sm backdrop-blur-sm">
         <text class="mb-4 block text-lg text-gray-800 font-medium">
           好友列表
@@ -645,11 +985,11 @@ export default defineComponent({
         <view v-if="friends.length === 0" class="py-8 text-center text-gray-500">
           暂无好友，快去添加好友一起学习吧！
         </view>
-        <view v-else class="space-y-3">
+        <view v-else class="h-56 overflow-y-auto pr-2">
           <view
             v-for="friend in friends"
             :key="friend.friendId"
-            class="flex items-center justify-between rounded-lg bg-gray-50 p-3"
+            class="mb-3 flex items-center justify-between rounded-lg bg-gray-50 p-3"
           >
             <view class="flex items-center">
               <!-- 头像 -->
@@ -682,6 +1022,107 @@ export default defineComponent({
         </view>
       </view>
 
+      <!-- 活动挑战列表 -->
+      <view class="rounded-xl bg-white/70 p-5 shadow-sm backdrop-blur-sm">
+        <text class="mb-4 block text-lg text-gray-800 font-medium">
+          进行中的挑战
+        </text>
+
+        <view v-if="activeChallenges.length === 0" class="py-8 text-center text-gray-500">
+          暂无进行中的挑战
+        </view>
+        <view v-else class="text-yellow space-y-3">
+          <view
+            v-for="challenge in activeChallenges"
+            :key="challenge.challengeId"
+            class="rounded-lg bg-gray-50 p-4"
+          >
+            <view class="mb-2">
+              <text class="text-lg font-medium">
+                {{ challenge.name }}
+              </text>
+            </view>
+
+            <view v-if="challenge.description" class="mb-2 rounded-lg bg-gray-100 p-2">
+              <text class="text-sm text-gray-700">
+                {{ challenge.description }}
+              </text>
+            </view>
+
+            <view class="grid grid-cols-2 gap-2">
+              <view class="text-sm">
+                <text class="text-gray-500">
+                  挑战对象:
+                </text>
+                <text>{{ challenge.partnerUsername }}</text>
+              </view>
+              <view class="text-sm">
+                <text class="text-gray-500">
+                  每日目标:
+                </text>
+                <text>{{ challenge.dailyWordsTarget }}词</text>
+              </view>
+              <view class="text-sm">
+                <text class="text-gray-500">
+                  连续天数:
+                </text>
+                <text>{{ challenge.streakDays }}天</text>
+              </view>
+              <view class="text-sm">
+                <text class="text-gray-500">
+                  已完成:
+                </text>
+                <text>{{ challenge.wordsCompleted }}词</text>
+              </view>
+              <view class="col-span-2 text-sm">
+                <text class="text-gray-500">
+                  挑战期间:
+                </text>
+                <text>{{ formatDateRange(challenge.startDate, challenge.endDate) }}</text>
+              </view>
+            </view>
+
+            <view class="mt-3 flex items-center justify-between">
+              <view class="flex items-center">
+                <view
+                  class="h-4 w-4 rounded-full"
+                  :class="challenge.todayClockInStatus ? 'bg-green-500' : 'bg-gray-300'"
+                />
+                <text class="ml-1 text-xs">
+                  {{ challenge.todayClockInStatus ? '今日已打卡' : '今日未打卡' }}
+                </text>
+              </view>
+              <view class="flex items-center">
+                <view
+                  class="h-4 w-4 rounded-full"
+                  :class="challenge.partnerTodayClockInStatus ? 'bg-green-500' : 'bg-gray-300'"
+                />
+                <text class="ml-1 text-xs">
+                  {{ challenge.partnerTodayClockInStatus ? '对方已打卡' : '对方未打卡' }}
+                </text>
+              </view>
+            </view>
+
+            <!-- 添加挑战打卡按钮 -->
+            <view class="mt-4 flex justify-center">
+              <button
+                class="flex items-center justify-center rounded-lg px-6 py-1 transition-all active:scale-98"
+                :class="[
+                  challenge.todayClockInStatus
+                    ? 'bg-purple text-white cursor-not-allowed'
+                    : 'bg-yellow text-white font-medium shadow-sm',
+                ]"
+                :disabled="challenge.todayClockInStatus || !!isChallengeClockingIn[challenge.challengeId]"
+                @click="handleChallengeClockIn(challenge.challengeId)"
+              >
+                <view v-if="isChallengeClockingIn[challenge.challengeId]" class="i-carbon:progress-bar mr-2 animate-spin text-xl" />
+                <text>{{ isChallengeClockingIn[challenge.challengeId] ? '打卡中...' : (challenge.todayClockInStatus ? '已打卡' : '挑战打卡') }}</text>
+              </button>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <!-- 组队介绍 -->
       <view class="mt-4 border border-yellow/30 rounded-xl bg-yellow/10 p-4">
         <view class="flex">
@@ -701,6 +1142,120 @@ export default defineComponent({
         @click="navigateToFindFriends"
       >
         <view class="i-carbon:user-follow text-2xl text-white" />
+      </view>
+    </view>
+
+    <!-- 挑战创建模态框 -->
+    <view v-if="showChallengeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <view class="max-w-sm w-4/5 rounded-lg p-6 frosted-glass">
+        <text class="mb-4 block text-center text-xl font-bold">
+          创建组队挑战
+        </text>
+
+        <view v-if="selectedFriend" class="mb-4 flex items-center rounded-lg bg-gray-50 p-2">
+          <!-- 对方头像 -->
+          <view class="h-12 w-12 overflow-hidden rounded-full bg-gray-300">
+            <image
+              v-if="selectedFriend.avatar"
+              :src="selectedFriend.avatar"
+              mode="aspectFill"
+              class="h-full w-full object-cover"
+            />
+            <text v-else class="text-xl text-white font-bold">
+              {{ selectedFriend.username.charAt(0).toUpperCase() }}
+            </text>
+          </view>
+          <!-- 用户名 -->
+          <view class="ml-3">
+            <text class="block text-gray-800 font-medium">
+              {{ selectedFriend.nickname || selectedFriend.username }}
+            </text>
+            <text class="text-xs text-gray-500">
+              {{ selectedFriend.email }}
+            </text>
+          </view>
+        </view>
+
+        <!-- 挑战表单 -->
+        <view class="space-y-4">
+          <!-- 挑战名称 -->
+          <view>
+            <text class="mb-1 block text-sm font-medium">
+              挑战名称 <text class="text-red-500">
+                *
+              </text>
+            </text>
+            <input
+              v-model="challengeForm.name"
+              placeholder="输入挑战名称"
+              class="w-full border border-gray-300 rounded p-2"
+            >
+          </view>
+
+          <!-- 挑战描述 -->
+          <view>
+            <text class="mb-1 block text-sm font-medium">
+              挑战描述
+            </text>
+            <textarea
+              v-model="challengeForm.description"
+              placeholder="简要描述这个挑战（可选）"
+              class="w-full border border-gray-300 rounded p-2"
+              :maxlength="100"
+            />
+          </view>
+
+          <!-- 每日单词目标 -->
+          <view>
+            <text class="mb-1 block text-sm font-medium">
+              每日单词目标 <text class="text-red-500">
+                *
+              </text>
+            </text>
+            <input
+              v-model.number="challengeForm.dailyWordsTarget"
+              type="number"
+              placeholder="每日需要学习的单词数"
+              class="w-full border border-gray-300 rounded p-2"
+              min="1"
+            >
+          </view>
+
+          <!-- 挑战天数 -->
+          <view>
+            <text class="mb-1 block text-sm font-medium">
+              挑战天数 <text class="text-red-500">
+                *
+              </text>
+            </text>
+            <input
+              v-model.number="challengeForm.durationDays"
+              type="number"
+              placeholder="挑战持续天数"
+              class="w-full border border-gray-300 rounded p-2"
+              min="1"
+              max="30"
+            >
+          </view>
+        </view>
+
+        <!-- 操作按钮 - 修改布局使按钮居中均匀分布 -->
+        <view class="mt-6 flex justify-center space-x-4">
+          <button
+            class="w-1/2 rounded-lg bg-gray-200 py-2 text-center text-gray-700"
+            @click="closeChallengeModal"
+          >
+            取消
+          </button>
+          <button
+            class="w-1/2 flex items-center justify-center rounded-lg bg-yellow py-2 text-white"
+            :disabled="isCreatingChallenge"
+            @click="createChallenge"
+          >
+            <view v-if="isCreatingChallenge" class="i-carbon:progress-bar mr-2 animate-spin" />
+            <text>{{ isCreatingChallenge ? '创建中...' : '创建挑战' }}</text>
+          </button>
+        </view>
       </view>
     </view>
   </view>

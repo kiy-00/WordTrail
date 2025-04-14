@@ -61,6 +61,12 @@
       "style": {}
     },
     {
+      "path": "pages/user/mychallengeinfo",
+      "type": "page",
+      "layout": "default",
+      "style": {}
+    },
+    {
       "path": "pages/user/myclockin",
       "type": "page",
       "layout": "default",
