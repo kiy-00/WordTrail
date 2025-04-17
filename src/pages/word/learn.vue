@@ -27,7 +27,7 @@ export default defineComponent({
     const learnSettings = ref(LearnSettingsStorage.getSettings())
     const wordsPerGroup = computed(() => learnSettings.value.wordsPerGroup)
 
-    const userId = ref(uni.getStorageSync('userInfo')?.userId || 'ed62add4-bf40-4246-b7ab-2555015b383b')
+    const userId = ref(uni.getStorageSync('userInfo')?.userId || '')
 
     const currentWord = computed(() => {
       return words.value[currentIndex.value]

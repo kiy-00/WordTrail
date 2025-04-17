@@ -309,7 +309,7 @@ export default defineComponent({
           <view class="flex items-center">
             <view class="i-carbon:review text-xl text-green-500" />
             <text class="ml-2 text-sm text-gray-600">
-              已复习单词
+              总复习次数
             </text>
           </view>
           <text class="mt-1 block text-2xl text-gray-800 font-bold">
