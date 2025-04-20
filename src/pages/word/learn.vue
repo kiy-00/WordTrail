@@ -267,12 +267,10 @@ export default defineComponent({
         } as DetailedWord
       }
 
-      // eslint-disable-next-line no-console
-      console.log('Adapting word data:', word)
-      // eslint-disable-next-line no-console
-      console.log('Raw partOfSpeechList:', word.partOfSpeechList)
+      // 确保 partOfSpeechList 存在且为数组
+      const partOfSpeechList = Array.isArray(word.partOfSpeechList) ? word.partOfSpeechList : []
 
-      const adaptedPartOfSpeech: DetailedPartOfSpeech[] = word.partOfSpeechList.map((pos) => {
+      const adaptedPartOfSpeech: DetailedPartOfSpeech[] = partOfSpeechList.map((pos) => {
         const definitions: string[] = Array.isArray(pos.definitions)
           ? pos.definitions.filter((def): def is string => typeof def === 'string')
           : (typeof pos.definitions === 'string' ? [pos.definitions] : [])
