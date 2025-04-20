@@ -1,3 +1,4 @@
+<!-- eslint-disable no-console -->
 <script lang="ts">
 import type { DetailedPartOfSpeech, DetailedWord, Example } from '@/types/DetailedWord'
 import type { Word } from '@/types/Word'
@@ -409,17 +410,44 @@ export default defineComponent({
         await this.fetchWordDetails()
       }
       else {
-        // 已复习完设置的批次，提交复习结果并返回主页
-        await this.submitBatchReviewResults()
-        uni.showToast({
-          title: '本轮复习完成！',
-          icon: 'success',
-          duration: 2000,
-        })
-        setTimeout(() => {
-          uni.navigateBack()
-        }, 2000)
+        // 已复习完设置的批次，提示是否生成 AI 总结
+        this.finishReview()
       }
+    },
+
+    async finishReview() {
+      // 提交复习结果
+      await this.submitBatchReviewResults()
+
+      // 提示是否生成 AI 总结
+      uni.showModal({
+        title: '复习完成',
+        content: '是否生成 AI 总结？',
+        success: (res) => {
+          if (res.confirm) {
+            // 用户选择生成 AI 总结
+            const wordsList = this.words.map(word => word.word) // 提取单词数组
+            const language = this.words[0]?.language || 'English' // 获取语言，默认为 English
+
+            // 跳转到 summary 页面并传递参数
+            uni.navigateTo({
+              url: `/pages/word/summary?language=${encodeURIComponent(language)}&words=${encodeURIComponent(JSON.stringify(wordsList))}`,
+            })
+          }
+          else {
+            // 用户选择不生成 AI 总结，正常退出
+            uni.showToast({
+              title: '本轮复习完成！',
+              icon: 'none',
+              duration: 2000,
+            })
+
+            setTimeout(() => {
+              uni.navigateBack()
+            }, 2000)
+          }
+        },
+      })
     },
 
     // 新增：提交批量复习结果
@@ -433,7 +461,7 @@ export default defineComponent({
 
         // 构建请求体
         const requestBody = {
-          type: 'review', // 因为是复习，所以类型是review
+          type: 'review', // 因为是复习，所以类型是 review
           words: this.reviewResults,
         }
 
@@ -449,7 +477,6 @@ export default defineComponent({
         })
 
         if (response.statusCode === 200) {
-          // eslint-disable-next-line no-console
           console.log('批量复习记录提交成功:', response.data)
         }
         else {

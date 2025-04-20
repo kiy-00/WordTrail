@@ -130,6 +130,13 @@
       "type": "page",
       "layout": "default",
       "style": {}
+    },
+    {
+      "path": "pages/word/summary",
+      "type": "page",
+      "navigationBarTitleText": "AI 总结",
+      "navigationStyle": "default",
+      "style": {}
     }
   ],
   "globalStyle": {

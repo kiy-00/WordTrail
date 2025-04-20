@@ -25,7 +25,8 @@ interface NavigateToOptions {
        "/pages/user/settings" |
        "/pages/user/totallearned" |
        "/pages/word/learn" |
-       "/pages/word/review";
+       "/pages/word/review" |
+       "/pages/word/summary";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 

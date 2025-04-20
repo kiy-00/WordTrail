@@ -94,17 +94,36 @@ export default defineComponent({
     })
 
     const finishLearning = () => {
-      uni.showToast({
-        title: '本轮学习完成！',
-        icon: 'none',
-        duration: 2000,
-      })
+      uni.showModal({
+        title: '学习完成',
+        content: '是否生成 AI 总结？',
+        success: async (res) => {
+          if (res.confirm) {
+            // 用户选择生成 AI 总结
+            const wordsList = words.value.map(word => word.word) // 提取单词数组
+            const language = words.value[0]?.language || 'English' // 获取语言，默认为 English
 
-      setTimeout(() => {
-        uni.navigateBack({
-          delta: 1,
-        })
-      }, 2000)
+            // 跳转到新页面并传递参数
+            uni.navigateTo({
+              url: `/pages/word/summary?language=${encodeURIComponent(language)}&words=${encodeURIComponent(JSON.stringify(wordsList))}`,
+            })
+          }
+          else {
+            // 用户选择不生成 AI 总结，正常退出
+            uni.showToast({
+              title: '本轮学习完成！',
+              icon: 'none',
+              duration: 2000,
+            })
+
+            setTimeout(() => {
+              uni.navigateBack({
+                delta: 1,
+              })
+            }, 2000)
+          }
+        },
+      })
     }
 
     const nextWord = async () => {
