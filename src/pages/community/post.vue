@@ -9,14 +9,17 @@ export default defineComponent({
 
   setup() {
     const route = useRoute()
-    console.error('Route object:', route) // 调试路由对象
+    // eslint-disable-next-line no-console
+    console.log('Route object:', route) // 调试路由对象
 
     // 修改获取 postId 的方式
     const postId = Number(route.query.id) // 使用 query 替代 params
-    console.error('PostId from query:', postId) // 调试 postId
+    // eslint-disable-next-line no-console
+    console.log('PostId from query:', postId) // 调试 postId
 
     const token = uni.getStorageSync('token')
-    console.error('Token:', token) // 检查 token 是否存在
+    // eslint-disable-next-line no-console
+    console.log('Token:', token) // 检查 token 是否存在
 
     // 使用 postId 来设置帖子数据
     const post = ref<Post | null>(null)
@@ -220,11 +223,11 @@ export default defineComponent({
                   username: postData.username || '',
                   userAvatar: postData.userAvatarUrl || '', // 修改字段名
                   images: postData.urls || [], // 修改字段名
-                  tags: [], // API 中没有 tags 字段，设为空数组
+
                   likes: postData.voteCount || 0, // 修改字段名
                   commentCount: 0, // API 中没有此字段
                   collects: 0, // API 中没有此字段
-                  status: postData.status,
+                  state: postData.state,
                 }
                 console.error('Post data after mapping:', post.value) // 检查映射后的数据
 
@@ -361,18 +364,6 @@ export default defineComponent({
       <text class="mt-4 w-full text-left text-sm">
         {{ post.publishTime }}
       </text>
-      <!-- 标签模块 -->
-      <view class="mt-2 flex flex-wrap">
-        <view
-          v-for="(tag, index) in post.tags"
-          :key="index"
-          class="mr-2"
-        >
-          <text class="rounded-md bg-yellow px-2 py-1 text-sm">
-            {{ tag }}
-          </text>
-        </view>
-      </view>
     </view>
 
     <!-- Comment Input -->

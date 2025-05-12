@@ -23,7 +23,7 @@ export async function getUserInfo(): Promise<UserInfo> {
   if (cachedUserInfo && isUserInfo(cachedUserInfo)) {
     // 处理字段名差异
     return {
-      id: cachedUserInfo.id || cachedUserInfo.userId,
+      id: cachedUserInfo.id,
       username: cachedUserInfo.username,
       email: cachedUserInfo.email,
     }
