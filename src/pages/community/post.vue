@@ -1,7 +1,8 @@
 <!-- Post.vue -->
 <script lang="ts">
 import type { Comment, Post } from '@/types/Post'
-import { defineComponent, onMounted, ref } from 'vue'
+import { API_BASE_URL } from '@/config/api' // 添加导入API_BASE_URL
+import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 export default defineComponent({
@@ -12,8 +13,8 @@ export default defineComponent({
     // eslint-disable-next-line no-console
     console.log('Route object:', route) // 调试路由对象
 
-    // 修改获取 postId 的方式
-    const postId = Number(route.query.id) // 使用 query 替代 params
+    // 修改获取 postId 的方式 - 不再转换为数字，保持原始字符串格式
+    const postId = route.query.id as string
     // eslint-disable-next-line no-console
     console.log('PostId from query:', postId) // 调试 postId
 
@@ -80,7 +81,7 @@ export default defineComponent({
         return
 
       uni.request({
-        url: `/forum/comment/list?postId=${postId}`,
+        url: `${API_BASE_URL}/forum/comment/list?postId=${postId}`, // 添加API_BASE_URL
         method: 'GET',
         header: {
           'Authorization': token,
@@ -194,62 +195,102 @@ export default defineComponent({
       isExpanded.value = !isExpanded.value
     }
 
+    // 添加格式化日期的计算属性
+    const formattedDate = computed(() => {
+      if (!post.value || !post.value.publishTime)
+        return ''
+
+      try {
+        // 将发布时间转换为日期对象
+        const date = new Date(post.value.publishTime)
+
+        // 检查日期是否有效
+        if (Number.isNaN(date.getTime())) {
+          return post.value.publishTime
+        }
+
+        // 格式化为年-月-日
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      }
+      catch (e) {
+        console.error('日期格式化错误:', e)
+        return post.value.publishTime
+      }
+    })
+
     onMounted(() => {
-      console.error('onMounted triggered') // 检查 onMounted 是否执行
-      if (!Number.isNaN(postId)) { // 改进判断条件
-        console.error('Attempting to fetch post with id:', postId) // 检查请求是否发起
+      // eslint-disable-next-line no-console
+      console.log('onMounted triggered') // 检查 onMounted 是否执行
+      if (postId) { // 只检查postId是否存在，不转换类型
+        // eslint-disable-next-line no-console
+        console.log('Attempting to fetch post with id:', postId) // 检查请求是否发起
+
+        // 添加详细的日志输出
+        // eslint-disable-next-line no-console
+        console.log(`完整请求URL: ${API_BASE_URL}/forum/post/get?id=${postId}`)
+
         uni.request({
-          url: `/forum/post/get?id=${postId}`,
+          url: `${API_BASE_URL}/forum/post/get?id=${postId}`, // 添加API_BASE_URL
           method: 'GET',
           header: {
             'Authorization': token,
             'Content-Type': 'application/json',
           },
           success: (res: any) => {
-            console.error('API Response:', res) // 检查完整响应
+            // eslint-disable-next-line no-console
+            console.log('API Response:', res) // 检查完整响应
             const { data, statusCode } = res
-            console.error('Status code:', statusCode) // 检查状态码
-            console.error('Response data:', data) // 检查响应数据
+            // eslint-disable-next-line no-console
+            console.log('Status code:', statusCode) // 检查状态码
+            // eslint-disable-next-line no-console
+            console.log('Response data:', data) // 检查响应数据
 
-            if (statusCode === 200 && data.code === 200) {
-              const postData = data.data
+            if (statusCode === 200) {
+              // 修改：直接使用响应数据，因为接口返回的就是帖子数据本身
+              const postData = data
               if (postData) {
-                console.error('Post data before mapping:', postData) // 检查原始数据
+                // eslint-disable-next-line no-console
+                console.log('Post data before mapping:', postData) // 检查原始数据
                 post.value = {
                   id: postData.id,
                   title: postData.title || '',
                   content: postData.content || '',
-                  publishTime: postData.createdTime || '', // 修改字段名
-                  username: postData.username || '',
-                  userAvatar: postData.userAvatarUrl || '', // 修改字段名
-                  images: postData.urls || [], // 修改字段名
-
-                  likes: postData.voteCount || 0, // 修改字段名
-                  commentCount: 0, // API 中没有此字段
+                  publishTime: postData.createdAt || '',
+                  username: postData.author || '',
+                  userAvatar: postData.userAvatar || '',
+                  images: postData.filePaths || [],
+                  likes: postData.voteCount || 0,
+                  commentCount: postData.commentCount || 0,
                   collects: 0, // API 中没有此字段
                   state: postData.state,
                 }
-                console.error('Post data after mapping:', post.value) // 检查映射后的数据
+                // eslint-disable-next-line no-console
+                console.log('Post data after mapping:', post.value) // 检查映射后的数据
 
                 // 更新状态
                 likeCount.value = postData.voteCount || 0
                 collectCount.value = 0
-                console.error('帖子数据加载成功:', post.value) // 添加调试日志
+                // eslint-disable-next-line no-console
+                console.log('帖子数据加载成功:', post.value) // 添加调试日志
               }
               else {
                 console.error('Post data is null') // 检查数据是否为空
+                uni.showToast({
+                  title: '获取帖子详情失败',
+                  icon: 'none',
+                })
               }
             }
             else {
-              console.error('API error:', data.msg) // 检查错误信息
+              console.error('API error: Status code', statusCode) // 检查错误信息
               uni.showToast({
-                title: data.msg || '获取帖子详情失败',
+                title: '获取帖子详情失败',
                 icon: 'none',
               })
             }
           },
           fail: (err) => {
-            console.error('请求失败:', err)
+            console.error('请求失败详情:', JSON.stringify(err)) // 增加详细错误日志
             uni.showToast({
               title: '网络请求失败，请稍后重试',
               icon: 'none',
@@ -257,7 +298,7 @@ export default defineComponent({
           },
         })
 
-        // 获取评论列表
+        // 获取评论列表时也直接使用字符串ID
         fetchComments()
       }
       else {
@@ -292,6 +333,7 @@ export default defineComponent({
       isExpanded,
       toggleExpand,
       fetchComments,
+      formattedDate, // 添加到返回值中
     }
   },
 })
@@ -362,7 +404,7 @@ export default defineComponent({
         </view>
       </view>
       <text class="mt-4 w-full text-left text-sm">
-        {{ post.publishTime }}
+        {{ formattedDate }}
       </text>
     </view>
 
