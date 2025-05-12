@@ -1,7 +1,7 @@
 <!-- PostEditor.vue -->
 <script lang="ts">
-import type { Post } from '@/types/Post'
-import { computed, defineComponent, ref } from 'vue'
+import { API_BASE_URL } from '@/config/api'
+import { computed, defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
   name: 'PostEditor',
@@ -9,8 +9,13 @@ export default defineComponent({
     const images = ref<string[]>([])
     const title = ref('')
     const content = ref('')
-    const availableTags = ref(['技术', '生活', '娱乐', '其他'])
-    const selectedTags = ref<string[]>([])
+    const username = ref('')
+    const userAvatar = ref('')
+
+    onMounted(() => {
+      username.value = uni.getStorageSync('username') || '匿名用户'
+      userAvatar.value = uni.getStorageSync('userAvatar') || ''
+    })
 
     /**
      * 选择并上传图片
@@ -46,16 +51,6 @@ export default defineComponent({
       uni.navigateBack()
     }
 
-    const updateSelectedTags = (event: Event) => {
-      const target = event.target as HTMLInputElement
-      if (target.checked) {
-        selectedTags.value.push(target.value)
-      }
-      else {
-        selectedTags.value = selectedTags.value.filter(tag => tag !== target.value)
-      }
-    }
-
     /**
      * 发布帖子
      */
@@ -78,90 +73,90 @@ export default defineComponent({
         return
       }
 
-      const newPost: Post = {
-        id: Date.now(),
-        title: title.value.trim(),
-        content: content.value.trim(),
-        publishTime: new Date().toISOString(),
-        username: '当前用户名', // 替换为实际用户名
-        userAvatar: 'https://via.placeholder.com/40', // 替换为实际头像
-        images: images.value,
-        tags: selectedTags.value,
-        likes: 0,
-        collects: 0,
-      }
-
-      // 防报错语句
-      newPost.collects = 0 // 初始化收藏数为 0
-
       try {
-        if (images.value.length > 0) {
-          for (const filePath of images.value) {
-            const uploadRes = await new Promise<UniApp.UploadFileSuccessCallbackResult>((resolve, reject) => {
-              uni.uploadFile({
-                url: '/forum/post/new',
-                filePath,
-                name: 'files',
-                header: {
-                  Authorization: uni.getStorageSync('token'),
+        uni.showLoading({
+          title: '发布中...',
+          mask: true,
+        })
+
+        const formData = {
+          username: username.value,
+          title: title.value.trim(),
+          content: content.value.trim(),
+        }
+        const getDefaultAvatarPath = async () => {
+          return new Promise<string>((resolve) => {
+            const ctx = uni.createCanvasContext('avatarCanvas')
+            ctx.fillStyle = '#007bff'
+            ctx.fillRect(0, 0, 100, 100)
+            ctx.fillStyle = '#ffffff'
+            ctx.font = 'bold 50px sans-serif'
+            ctx.setTextAlign('center') // 修正：使用方法调用，而非赋值
+            ctx.setTextBaseline('middle') // 修正：使用方法调用，而非赋值
+            ctx.fillText(username.value.charAt(0).toUpperCase(), 50, 50)
+            ctx.draw(false, () => {
+              uni.canvasToTempFilePath({
+                canvasId: 'avatarCanvas',
+                success: (res) => {
+                  resolve(res.tempFilePath)
                 },
-                formData: {
-                  title: title.value.trim(),
-                  content: content.value.trim(),
+                fail: () => {
+                  resolve(`https://placehold.co/100x100/007bff/ffffff?text=${username.value.charAt(0).toUpperCase()}`)
                 },
-                success: res => resolve(res),
-                fail: err => reject(err),
               })
             })
-            // 简单使用 uploadRes，避免未使用变量的警告
-            if (uploadRes.statusCode !== 200) {
-              throw new Error('上传失败')
-            }
-          }
-          uni.showToast({ title: '已发布', icon: 'success' })
-          // 重置表单
-          images.value = []
-          title.value = ''
-          content.value = ''
-          selectedTags.value = []
+          })
         }
-        else {
-          // 无图片时保持原先 JSON 请求
-          const [reqErr, reqRes] = await uni.request({
-            url: '/forum/post/new',
-            method: 'POST',
-            header: {
-              Authorization: uni.getStorageSync('token'),
-            },
-            data: {
-              title: title.value.trim(),
-              content: content.value.trim(),
-            },
-          }) as unknown as [any, { data: any }]
 
-          if (reqErr) {
-            throw reqErr
-          }
-          if (reqRes.data.code === 200) {
-            uni.showToast({ title: '已发布', icon: 'success' })
-            // 重置表单
-            images.value = []
-            title.value = ''
-            content.value = ''
-            selectedTags.value = []
-          }
-          else {
-            uni.showToast({ title: reqRes.data.msg || '发布失败', icon: 'none' })
-          }
-        }
+        const avatarPath = userAvatar.value || await getDefaultAvatarPath()
+
+        await uni.uploadFile({
+          url: `${API_BASE_URL}/forum/post/new`,
+          filePath: avatarPath,
+          name: 'userAvatar',
+          formData,
+          header: {
+            Authorization: uni.getStorageSync('token'),
+          },
+          files: images.value.map(path => ({
+            name: 'files',
+            uri: path,
+          })),
+          success: (uploadRes) => {
+            if (uploadRes.statusCode === 200) {
+              uni.hideLoading()
+              uni.showToast({
+                title: '发布成功',
+                icon: 'success',
+                success: () => {
+                  images.value = []
+                  title.value = ''
+                  content.value = ''
+
+                  setTimeout(() => {
+                    uni.navigateBack()
+                  }, 1500)
+                },
+              })
+            }
+            else {
+              throw new Error('发布失败')
+            }
+          },
+          fail: (error) => {
+            uni.hideLoading()
+            uni.showToast({ title: '发布失败', icon: 'none' })
+            console.error('上传失败:', error)
+          },
+        })
       }
       catch (error) {
+        uni.hideLoading()
         uni.showToast({ title: '发布失败', icon: 'none' })
         console.error('发布失败:', error)
       }
     }
 
-    // 计算 justify-content 的类
     const justifyClass = computed(() => {
       return images.value.length >= 3 ? 'justify-between' : 'justify-start'
     })
@@ -170,14 +165,13 @@ export default defineComponent({
       images,
       title,
       content,
-      availableTags,
-      selectedTags,
       chooseImages,
       removeImage,
       publishPost,
       handleBack,
-      updateSelectedTags,
-      justifyClass, // 返回计算属性
+      justifyClass,
+      username,
+      userAvatar,
     }
   },
 })
@@ -187,7 +181,7 @@ export default defineComponent({
   <!-- Back Button -->
   <BackButton @back="handleBack" />
   <view class="flex flex-col frosted-glass">
-    <!-- Editor Content -->
+    <canvas canvas-id="avatarCanvas" style="width: 100px; height: 100px; position: absolute; left: -1000px;" />
     <view class="flex-1 p-4 space-y-4">
       <!-- Image Upload Section -->
       <view class="flex flex-col">
@@ -239,26 +233,6 @@ export default defineComponent({
         />
       </view>
 
-      <!-- Tag Selection -->
-      <view class="flex flex-col">
-        <view class="flex flex-wrap gap-2">
-          <checkbox-group>
-            <label
-              v-for="(tag, index) in availableTags"
-              :key="index"
-              class="flex items-center space-x-2"
-            >
-              <checkbox
-                :value="tag"
-                :checked="selectedTags.includes(tag)"
-                class="text-yellow"
-                @change="updateSelectedTags"
-              />
-              <text>{{ tag }}</text>
-            </label>
-          </checkbox-group>
-        </view>
-      </view>
       <!-- Publish Button -->
       <button
         class="w-full rounded-lg bg-yellow px-4 py-2 text-lg font-bold font-semibold"

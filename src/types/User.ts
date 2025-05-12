@@ -1,58 +1,71 @@
-import { API_BASE_URL } from '@/config/api'
-
 export interface UserInfo {
-  id: string
+  id: string // 接口保持一致性
   username: string
-  email: string
+  email?: string // 可选字段，因为可能没有
 }
 
-// 添加类型检查函数
+// 添加类型检查函数 - 调整以匹配实际存储数据结构
 function isUserInfo(data: any): data is UserInfo {
   return (
     typeof data === 'object'
     && data !== null
-    && typeof data.id === 'string'
+    && (typeof data.id === 'string' || typeof data.userId === 'string') // 支持id或userId
     && typeof data.username === 'string'
-    && typeof data.email === 'string'
   )
 }
 
 export async function getUserInfo(): Promise<UserInfo> {
-  const cachedUserInfo = uni.getStorageSync('userInfo')
+  const cachedUserInfo = uni.getStorageSync('userInfo') || uni.getStorageSync('user')
   // eslint-disable-next-line no-console
   console.log('从storage获取的用户信息:', cachedUserInfo)
 
+  // 如果本地已存储用户信息，直接返回
   if (cachedUserInfo && isUserInfo(cachedUserInfo)) {
-    return cachedUserInfo
+    // 处理字段名差异
+    return {
+      id: cachedUserInfo.id || cachedUserInfo.userId,
+      username: cachedUserInfo.username,
+      email: cachedUserInfo.email,
+    }
   }
 
-  // 如果本地没有，则从服务器获取
+  // 如果没有缓存用户信息，但有userId和username
+  const userId = uni.getStorageSync('userId')
+  const username = uni.getStorageSync('username')
+
+  if (userId && username) {
+    const userInfo = { id: userId, username }
+    uni.setStorageSync('userInfo', userInfo)
+    return userInfo
+  }
+
+  // 如果连userId和username都没有，则检查token中是否包含信息
   try {
     const token = uni.getStorageSync('token')
     // eslint-disable-next-line no-console
     console.log('从storage获取的token:', token)
 
-    const response = await uni.request({
-      url: `${API_BASE_URL}/user/info`,
-      method: 'GET',
-      header: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    if (token) {
+      // 尝试从token中提取用户信息（如果是JWT）
+      try {
+        const base64Url = token.split('.')[1]
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+        const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
 
-    // eslint-disable-next-line no-console
-    console.log('服务器返回的用户信息:', response)
-
-    if (response.statusCode === 200 && response.data) {
-      const userData = response.data
-      if (!isUserInfo(userData)) {
-        throw new Error('Invalid user data format')
+        if (payload.userId || payload.sub) {
+          const userInfo = {
+            id: payload.userId || payload.sub,
+            username: payload.sub || 'user',
+          }
+          uni.setStorageSync('userInfo', userInfo)
+          return userInfo
+        }
       }
-      uni.setStorageSync('userInfo', userData)
-      return userData
+      catch (e) {
+        console.error('解析token失败:', e)
+      }
     }
 
-    console.error('获取用户信息失败, 状态码:', response.statusCode)
     throw new Error('未登录')
   }
   catch (error) {

@@ -1,5 +1,7 @@
 <script lang="ts">
 import type { Post } from '@/types/Post'
+import { API_BASE_URL } from '@/config/api'
+import { getUserInfo } from '@/types/User'
 import { defineComponent, ref } from 'vue'
 
 // 定义API响应的接口
@@ -32,10 +34,11 @@ export default defineComponent({
     const postsPerLoad = 50
     const currentLoad = ref(1)
 
-    const fetchRecommendedPosts = async () => {
+    // 新增：备选的获取推荐帖子的方法
+    const fetchRecommendedPostsFallback = async () => {
       try {
         const response: UniApp.RequestSuccessCallbackResult = await uni.request({
-          url: `/forum/post/list?page=${String(currentLoad.value)}`,
+          url: `${API_BASE_URL}/forum/post/list?page=${String(currentLoad.value)}`,
           method: 'GET',
           header: {
             'Authorization': uni.getStorageSync('token'),
@@ -43,65 +46,250 @@ export default defineComponent({
           },
         })
 
-        console.error('Response:', response) // 调试日志
+        console.error('Fallback response:', response) // 调试日志
 
-        // H5环境下直接使用response，非H5环境下使用response[1]
-        const result = response.data as ApiResponse
-        console.error('Result:', result) // 调试日志
+        if (response.statusCode === 200 && response.data) {
+          const result = response.data as ApiResponse
 
-        if (!result) {
-          throw new Error('未获取到响应数据')
-        }
+          if (result.code === 200 && Array.isArray(result.data)) {
+            const formattedPosts: Post[] = result.data.map(post => ({
+              id: Number(post.id), // 确保强制转换为 number 类型
+              title: post.title || '无标题',
+              content: '',
+              publishTime: post.createdTime,
+              username: post.username || '匿名用户',
+              userAvatar: post.userAvatarUrl || `https://via.placeholder.com/40?text=U${post.id}`,
+              images: [], // 保持为空数组，以便与PostCard兼容
+              tags: [],
+              likes: post.voteCount || 0,
+              commentCount: post.commentCount || 0,
+            }))
+            allRecommendedPosts.value = formattedPosts
 
-        if (result.code === 200) {
-          console.error('Posts data:', result.data) // 调试日志
-          const formattedPosts: Post[] = result.data.map(post => ({
-            id: Number(post.id), // 确保强制转换为 number 类型
-            title: post.title,
-            content: '',
-            publishTime: post.createdTime,
-            username: post.username || '匿名用户',
-            userAvatar: post.userAvatarUrl || `https://via.placeholder.com/40?text=U${post.id}`,
-            images: [],
-            tags: [],
-            likes: post.voteCount,
-            commentCount: post.commentCount,
-          }))
-          allRecommendedPosts.value.push(...formattedPosts)
-        }
-        else {
-          throw new Error(result.msg || '获取帖子失败')
+            // 如果当前是"推荐"标签页，更新显示的帖子
+            if (activeTab.value === 'recommend') {
+              displayedPosts.value = formattedPosts
+            }
+
+            console.error('Formatted fallback posts:', formattedPosts)
+          }
         }
       }
       catch (error) {
-        console.error('Error details:', error)
-        uni.showToast({
-          title: '获取帖子失败',
-          icon: 'none',
+        console.error('获取备选推荐帖子失败:', error)
+        throw error // 继续抛出错误，让上层处理
+      }
+    }
+
+    // 修改：获取随机帖子的函数
+    const fetchRandomPosts = async () => {
+      try {
+        const token = uni.getStorageSync('token')
+
+        // 修改：确保使用完整的API URL（添加API_BASE_URL前缀）
+        const url = `${API_BASE_URL}/forum/post/random`
+
+        // eslint-disable-next-line no-console
+        console.log('获取随机帖子请求URL:', url) // 调试日志
+
+        const response: UniApp.RequestSuccessCallbackResult = await uni.request({
+          url,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`,
+            'content-type': 'application/json',
+            'Accept': 'application/json', // 明确指定接受JSON响应
+          },
         })
+
+        // eslint-disable-next-line no-console
+        console.log('Random posts response:', response) // 调试日志
+
+        // 检查响应状态码
+        if (response.statusCode !== 200) {
+          throw new Error(`API 响应错误，状态码: ${response.statusCode}`)
+        }
+
+        // 获取响应数据并进行类型检查
+        const result = response.data
+
+        // 检查返回的是否是有效数据
+        if (!result) {
+          throw new Error('API 返回了空数据')
+        }
+
+        // 检查返回的是否是数组（因为我们期望的是一个帖子数组）
+        if (Array.isArray(result)) {
+          // eslint-disable-next-line no-console
+          console.log('Random posts data:', result) // 调试日志
+
+          // 将响应数据转换为Post类型格式
+          const formattedPosts: Post[] = result.map((post) => {
+            // 确保正确处理图片数据
+            let images: string[] = []
+
+            // 检查是否有 filePaths 字段并且是数组
+            if (post.filePaths && Array.isArray(post.filePaths) && post.filePaths.length > 0) {
+              images = post.filePaths
+            }
+            // 如果没有 filePaths，尝试从 content 中提取图片
+            else if (post.content && typeof post.content === 'string') {
+              const contentImages = post.content.match(/https?:\/\/\S+\.(jpg|jpeg|png|gif)/gi) || []
+              if (contentImages.length > 0) {
+                images = contentImages
+              }
+            }
+
+            // 如果还是没有图片，使用占位图片
+            if (images.length === 0) {
+              images = ['https://placehold.co/600x400?text=暂无图片']
+            }
+
+            return {
+              id: post.id || Math.random(), // 保留原始ID，不强制转换为数字
+              title: post.title || '无标题',
+              content: post.content || '',
+              publishTime: post.createdTime,
+              username: post.author || '匿名用户',
+              userAvatar: post.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(post.author || '匿名').charAt(0)}`,
+              images, // 使用处理后的图片数组
+              likes: post.voteCount || 0,
+              commentCount: post.commentCount || 0,
+              state: post.state || 'normal',
+            }
+          })
+
+          // 更新推荐帖子列表
+          allRecommendedPosts.value = formattedPosts
+
+          // 如果当前是"推荐"标签页，更新显示的帖子
+          if (activeTab.value === 'recommend') {
+            displayedPosts.value = formattedPosts
+          }
+          // eslint-disable-next-line no-console
+          console.log('Formatted random posts:', formattedPosts)
+        }
+        // 如果API返回的是HTML或其他错误响应，可能是字符串类型
+        else if (typeof result === 'string' && result.includes('<!DOCTYPE html>')) {
+          throw new Error('API 返回了 HTML 页面而不是 JSON 数据，请检查 API 端点或服务器状态')
+        }
+        // 如果是对象而非数组，检查是否有data字段（可能是包装过的响应）
+        else if (typeof result === 'object' && result !== null && 'data' in result && Array.isArray(result.data)) {
+          const postsData = result.data
+          // eslint-disable-next-line no-console
+          console.log('Random posts data from nested object:', postsData) // 调试日志
+
+          // 将响应数据转换为Post类型格式
+          const formattedPosts: Post[] = postsData.map((post) => {
+            // 确保正确处理图片数据
+            let images: string[] = []
+
+            // 检查是否有 filePaths 字段并且是数组
+            if (post.filePaths && Array.isArray(post.filePaths) && post.filePaths.length > 0) {
+              images = post.filePaths
+            }
+            else {
+              images = ['https://placehold.co/600x400?text=暂无图片']
+            }
+
+            return {
+              id: post.id || Math.random(),
+              title: post.title || '无标题',
+              content: post.content || '',
+              publishTime: post.createdTime,
+              username: post.author || '匿名用户',
+              userAvatar: post.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(post.author || '匿名').charAt(0)}`,
+              images,
+              likes: post.voteCount || 0,
+              commentCount: post.commentCount || 0,
+              state: post.state || 'normal',
+            }
+          })
+
+          // 更新推荐帖子列表
+          allRecommendedPosts.value = formattedPosts
+
+          // 如果当前是"推荐"标签页，更新显示的帖子
+          if (activeTab.value === 'recommend') {
+            displayedPosts.value = formattedPosts
+          }
+          // eslint-disable-next-line no-console
+          console.log('Formatted random posts from nested object:', formattedPosts)
+        }
+        else {
+          throw new TypeError('获取随机帖子失败: 响应格式不符合预期')
+        }
+      }
+      catch (error) {
+        console.error('获取随机帖子失败:', error)
+        // 在获取随机帖子失败时，可以回退到使用原来的推荐帖子API
+        try {
+          // 尝试使用原来的列表API作为备选方案
+          await fetchRecommendedPostsFallback()
+        }
+        catch (fallbackError) {
+          console.error('获取推荐帖子失败:', fallbackError)
+          uni.showToast({
+            title: '获取帖子失败',
+            icon: 'none',
+          })
+        }
       }
     }
 
     // 修改获取用户自己的帖子的函数
     const fetchMyPosts = async () => {
       try {
-        const [error, response] = await uni.request({
-          url: `/forum/post/user?uid=3&page=${String(currentLoad.value)}`,
+        // 直接从用户信息获取ID，参照home.vue的方式
+        const userInfo = uni.getStorageSync('userInfo')
+        let uid = userInfo?.userId || userInfo?.id
+
+        // 如果没有，则尝试刷新获取
+        if (!uid) {
+          try {
+            const refreshedInfo = await getUserInfo()
+            uid = refreshedInfo?.id
+          }
+          catch (e) {
+            console.error('获取用户信息失败:', e)
+          }
+        }
+
+        // 如果还是获取不到用户ID，则提示用户
+        if (!uid) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 使用正确的uid调用API
+        const apiUrl: string = `${API_BASE_URL}/forum/post/user?uid=${uid}&page=${String(currentLoad.value)}`
+
+        const response = await uni.request({
+          url: apiUrl,
           method: 'GET',
           header: {
             'Authorization': uni.getStorageSync('token'),
             'content-type': 'application/json',
           },
-        }) as unknown as [any, { data: ApiResponse }]
+        }) as unknown as {
+          [0]: any
+          [1]: { data: ApiResponse, statusCode: number }
+        }
+
+        const error = response[0]
+        const responseData = response[1]
 
         if (error) {
           throw error
         }
 
         // 添加调试日志
-        console.error('My posts response:', response.data)
+        console.error('My posts response:', responseData.data)
 
-        const apiResponse = response.data
+        const apiResponse = responseData.data
         if (apiResponse.code === 200 && Array.isArray(apiResponse.data)) {
           // 转换数据格式
           const formattedPosts: Post[] = apiResponse.data.map(post => ({
@@ -141,39 +329,55 @@ export default defineComponent({
       }
     }
 
-    // 模拟获取收藏的帖子
+    // 修改收藏帖子的函数
     const fetchFavoritePosts = async () => {
       try {
-        const [error, response] = await uni.request({
-          url: '/forum/post/listFavorite',
+        const favoriteUrl: string = '/forum/post/listFavorite'
+
+        const response = await uni.request({
+          url: favoriteUrl,
           method: 'GET',
           header: {
             Authorization: uni.getStorageSync('token'),
           },
-        }) as unknown as [any, { data: any }]
+        }) as unknown as {
+          [0]: any
+          [1]: { data: any, statusCode: number }
+        }
+
+        const error = response[0]
+        const responseData = response[1]
 
         if (error) {
           throw error
         }
 
-        if (response.data.code === 200) {
-          const favoriteList = response.data.data || []
+        if (responseData.data.code === 200) {
+          const favoriteList = responseData.data.data || []
           allFavoritePosts.value = []
           for (const item of favoriteList) {
-            const [getError, postResponse] = await uni.request({
-              url: `/forum/post/get?id=${item.postId}`,
+            const postUrl: string = `/forum/post/get?id=${item.postId}`
+
+            const favoriteResponse = await uni.request({
+              url: postUrl,
               method: 'GET',
               header: {
                 Authorization: uni.getStorageSync('token'),
               },
-            }) as unknown as [any, { data: any }]
+            }) as unknown as {
+              [0]: any
+              [1]: { data: any, statusCode: number }
+            }
+
+            const getError = favoriteResponse[0]
+            const postResponseData = favoriteResponse[1]
 
             if (getError) {
               throw getError
             }
 
-            if (postResponse.data.code === 200) {
-              const postDetail = postResponse.data.data
+            if (postResponseData.data.code === 200) {
+              const postDetail = postResponseData.data.data
               const favoritePost: Post = {
                 id: Number(postDetail.id), // 确保强制转换为 number 类型
                 title: postDetail.title,
@@ -182,7 +386,6 @@ export default defineComponent({
                 username: postDetail.username || '匿名用户',
                 userAvatar: postDetail.userAvatarUrl || 'https://via.placeholder.com/40',
                 images: [],
-                tags: [],
                 likes: postDetail.voteCount,
               }
               allFavoritePosts.value.push(favoritePost)
@@ -201,7 +404,20 @@ export default defineComponent({
 
     // 初始化加载推荐帖子
     const initializePosts = async () => {
-      await fetchRecommendedPosts()
+      // 尝试获取用户ID
+      try {
+        // 参照home.vue的方式获取用户信息
+        const userInfo = uni.getStorageSync('userInfo')
+
+        // 打印日志便于调试
+        // eslint-disable-next-line no-console
+        console.log('初始化社区页面, 用户信息:', userInfo)
+      }
+      catch (e) {
+        console.warn('获取用户信息失败:', e)
+      }
+
+      await fetchRandomPosts()
       displayedPosts.value = allRecommendedPosts.value.slice(0, postsPerLoad)
       currentLoad.value = 1
     }
@@ -214,7 +430,7 @@ export default defineComponent({
 
       if (tab === 'recommend') {
         if (allRecommendedPosts.value.length === 0) {
-          await fetchRecommendedPosts()
+          await fetchRandomPosts() // 使用随机帖子API
         }
         displayedPosts.value = allRecommendedPosts.value.slice(0, postsPerLoad)
       }
@@ -233,7 +449,7 @@ export default defineComponent({
     const onRefresh = async () => {
       isRefreshing.value = true
       if (activeTab.value === 'recommend') {
-        await fetchRecommendedPosts()
+        await fetchRandomPosts() // 使用随机帖子API
         displayedPosts.value = allRecommendedPosts.value.slice(0, currentLoad.value * postsPerLoad)
       }
       else if (activeTab.value === 'my') {
