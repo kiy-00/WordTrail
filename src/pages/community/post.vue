@@ -245,9 +245,9 @@ export default defineComponent({
             // eslint-disable-next-line no-console
             console.log('Response data:', data) // 检查响应数据
 
-            if (statusCode === 200) {
-              // 修改：直接使用响应数据，因为接口返回的就是帖子数据本身
-              const postData = data
+            if (statusCode === 200 && data && data.code === 200) {
+              // 修改：正确获取嵌套在 data.data 中的帖子数据
+              const postData = data.data
               if (postData) {
                 // eslint-disable-next-line no-console
                 console.log('Post data before mapping:', postData) // 检查原始数据
@@ -255,10 +255,10 @@ export default defineComponent({
                   id: postData.id,
                   title: postData.title || '',
                   content: postData.content || '',
-                  publishTime: postData.createdAt || '',
-                  username: postData.author || '',
-                  userAvatar: postData.userAvatar || '',
-                  images: postData.filePaths || [],
+                  publishTime: postData.createdTime, // 修改：使用 createdTime 而不是 createdAt
+                  username: postData.username || '', // 修改：使用 username 而不是 author
+                  userAvatar: postData.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(postData.username || '匿名').charAt(0)}`,
+                  images: postData.filePaths || [], // 使用 filePaths
                   likes: postData.voteCount || 0,
                   commentCount: postData.commentCount || 0,
                   collects: 0, // API 中没有此字段
@@ -282,7 +282,7 @@ export default defineComponent({
               }
             }
             else {
-              console.error('API error: Status code', statusCode) // 检查错误信息
+              console.error('API error: Status code', statusCode, 'or invalid data format') // 检查错误信息
               uni.showToast({
                 title: '获取帖子详情失败',
                 icon: 'none',

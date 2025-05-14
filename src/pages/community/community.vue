@@ -110,7 +110,7 @@ export default defineComponent({
           throw new Error(`API 响应错误，状态码: ${response.statusCode}`)
         }
 
-        // 获取响应数据并进行类型检查
+        // 获取响应数据
         const result = response.data
 
         // 检查返回的是否是有效数据
@@ -118,41 +118,33 @@ export default defineComponent({
           throw new Error('API 返回了空数据')
         }
 
-        // 检查返回的是否是数组（因为我们期望的是一个帖子数组）
+        // 检查返回的是否是数组（新接口直接返回帖子数组）
         if (Array.isArray(result)) {
           // eslint-disable-next-line no-console
           console.log('Random posts data:', result) // 调试日志
 
           // 将响应数据转换为Post类型格式
           const formattedPosts: Post[] = result.map((post) => {
-            // 确保正确处理图片数据
+            // 处理图片数据
             let images: string[] = []
 
-            // 检查是否有 filePaths 字段并且是数组
+            // 使用 filePaths 字段（新接口中的图片字段）
             if (post.filePaths && Array.isArray(post.filePaths) && post.filePaths.length > 0) {
               images = post.filePaths
             }
-            // 如果没有 filePaths，尝试从 content 中提取图片
-            else if (post.content && typeof post.content === 'string') {
-              const contentImages = post.content.match(/https?:\/\/\S+\.(jpg|jpeg|png|gif)/gi) || []
-              if (contentImages.length > 0) {
-                images = contentImages
-              }
-            }
-
-            // 如果还是没有图片，使用占位图片
-            if (images.length === 0) {
+            // 如果没有图片，使用占位图片
+            else {
               images = ['https://placehold.co/600x400?text=暂无图片']
             }
 
             return {
-              id: post.id || Math.random(), // 保留原始ID，不强制转换为数字
+              id: post.id, // 保持原始ID（字符串格式），不转换为数字
               title: post.title || '无标题',
               content: post.content || '',
               publishTime: post.createdTime,
-              username: post.author || '匿名用户',
-              userAvatar: post.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(post.author || '匿名').charAt(0)}`,
-              images, // 使用处理后的图片数组
+              username: post.username || '匿名用户',
+              userAvatar: post.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(post.username || '匿名').charAt(0)}`,
+              images,
               likes: post.voteCount || 0,
               commentCount: post.commentCount || 0,
               state: post.state || 'normal',
@@ -169,52 +161,8 @@ export default defineComponent({
           // eslint-disable-next-line no-console
           console.log('Formatted random posts:', formattedPosts)
         }
-        // 如果API返回的是HTML或其他错误响应，可能是字符串类型
         else if (typeof result === 'string' && result.includes('<!DOCTYPE html>')) {
           throw new Error('API 返回了 HTML 页面而不是 JSON 数据，请检查 API 端点或服务器状态')
-        }
-        // 如果是对象而非数组，检查是否有data字段（可能是包装过的响应）
-        else if (typeof result === 'object' && result !== null && 'data' in result && Array.isArray(result.data)) {
-          const postsData = result.data
-          // eslint-disable-next-line no-console
-          console.log('Random posts data from nested object:', postsData) // 调试日志
-
-          // 将响应数据转换为Post类型格式
-          const formattedPosts: Post[] = postsData.map((post) => {
-            // 确保正确处理图片数据
-            let images: string[] = []
-
-            // 检查是否有 filePaths 字段并且是数组
-            if (post.filePaths && Array.isArray(post.filePaths) && post.filePaths.length > 0) {
-              images = post.filePaths
-            }
-            else {
-              images = ['https://placehold.co/600x400?text=暂无图片']
-            }
-
-            return {
-              id: post.id || Math.random(),
-              title: post.title || '无标题',
-              content: post.content || '',
-              publishTime: post.createdTime,
-              username: post.author || '匿名用户',
-              userAvatar: post.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(post.author || '匿名').charAt(0)}`,
-              images,
-              likes: post.voteCount || 0,
-              commentCount: post.commentCount || 0,
-              state: post.state || 'normal',
-            }
-          })
-
-          // 更新推荐帖子列表
-          allRecommendedPosts.value = formattedPosts
-
-          // 如果当前是"推荐"标签页，更新显示的帖子
-          if (activeTab.value === 'recommend') {
-            displayedPosts.value = formattedPosts
-          }
-          // eslint-disable-next-line no-console
-          console.log('Formatted random posts from nested object:', formattedPosts)
         }
         else {
           throw new TypeError('获取随机帖子失败: 响应格式不符合预期')
