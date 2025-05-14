@@ -20,6 +20,15 @@ interface ApiResponse {
   }>
 }
 
+// 添加收藏项类型定义
+interface FavoriteItem {
+  id: string
+  userId: string
+  postId: string
+  createTime?: string
+  updateTime?: string
+}
+
 export default defineComponent({
   name: 'Community',
 
@@ -48,7 +57,7 @@ export default defineComponent({
 
         console.error('Fallback response:', response) // 调试日志
 
-        if (response.statusCode === 200 && response.data) {
+        if (response.statusCode === 200 && typeof response.data === 'object' && response.data !== null) {
           const result = response.data as ApiResponse
 
           if (result.code === 200 && Array.isArray(result.data)) {
@@ -113,7 +122,7 @@ export default defineComponent({
         // 获取响应数据
         const result = response.data
 
-        // 检查返回的是否是有效数据
+        // 添加类型检查，确保 result 是有效数据
         if (!result) {
           throw new Error('API 返回了空数据')
         }
@@ -224,7 +233,7 @@ export default defineComponent({
           },
         }) as unknown as {
           [0]: any
-          [1]: { data: ApiResponse, statusCode: number }
+          [1]: { data: any, statusCode: number }
         }
 
         const error = response[0]
@@ -237,35 +246,42 @@ export default defineComponent({
         // 添加调试日志
         console.error('My posts response:', responseData.data)
 
-        const apiResponse = responseData.data
-        if (apiResponse.code === 200 && Array.isArray(apiResponse.data)) {
-          // 转换数据格式
-          const formattedPosts: Post[] = apiResponse.data.map(post => ({
-            id: Number(post.id), // 确保强制转换为 number 类型
-            title: post.title || '无标题',
-            content: '', // 可以根据需要添加内容
-            publishTime: post.createdTime,
-            username: post.username || '匿名用户',
-            userAvatar: post.userAvatarUrl || `https://via.placeholder.com/40?text=U${post.id}`,
-            images: [],
-            tags: [],
-            likes: post.voteCount || 0,
-            commentCount: post.commentCount || 0,
-          }))
+        // 添加类型检查和类型断言
+        if (responseData.statusCode === 200 && typeof responseData.data === 'object' && responseData.data !== null) {
+          const apiResponse = responseData.data as ApiResponse
 
-          // 更新状态
-          allMyPosts.value = formattedPosts
-          // 如果是"我的"标签页，更新显示的帖子
-          if (activeTab.value === 'my') {
-            displayedPosts.value = formattedPosts.slice(0, currentLoad.value * postsPerLoad)
+          if (apiResponse.code === 200 && Array.isArray(apiResponse.data)) {
+            // 转换数据格式
+            const formattedPosts: Post[] = apiResponse.data.map(post => ({
+              id: Number(post.id), // 确保强制转换为 number 类型
+              title: post.title || '无标题',
+              content: '', // 可以根据需要添加内容
+              publishTime: post.createdTime,
+              username: post.username || '匿名用户',
+              userAvatar: post.userAvatarUrl || `https://via.placeholder.com/40?text=U${post.id}`,
+              images: [],
+              tags: [],
+              likes: post.voteCount || 0,
+              commentCount: post.commentCount || 0,
+            }))
+
+            // 更新状态
+            allMyPosts.value = formattedPosts
+            // 如果是"我的"标签页，更新显示的帖子
+            if (activeTab.value === 'my') {
+              displayedPosts.value = formattedPosts.slice(0, currentLoad.value * postsPerLoad)
+            }
+
+            // 添加调试日志
+            console.error('Formatted posts:', formattedPosts)
+            console.error('Current displayed posts:', displayedPosts.value)
           }
-
-          // 添加调试日志
-          console.error('Formatted posts:', formattedPosts)
-          console.error('Current displayed posts:', displayedPosts.value)
+          else {
+            throw new Error('获取我的帖子失败: 无效的响应格式')
+          }
         }
         else {
-          throw new Error('获取我的帖子失败: 无效的响应格式')
+          throw new Error(`获取我的帖子失败: 响应状态码 ${responseData.statusCode}`)
         }
       }
       catch (error) {
@@ -280,66 +296,146 @@ export default defineComponent({
     // 修改收藏帖子的函数
     const fetchFavoritePosts = async () => {
       try {
-        const favoriteUrl: string = '/forum/post/listFavorite'
+        // 获取用户ID
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || userInfo?.id
 
-        const response = await uni.request({
-          url: favoriteUrl,
-          method: 'GET',
-          header: {
-            Authorization: uni.getStorageSync('token'),
-          },
-        }) as unknown as {
-          [0]: any
-          [1]: { data: any, statusCode: number }
+        if (!userId) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
         }
 
-        const error = response[0]
-        const responseData = response[1]
+        // 修正: 使用完整的API URL并添加用户ID参数
+        const favoriteUrl = `${API_BASE_URL}/forum/post/listFavorite?userId=${userId}`
 
-        if (error) {
-          throw error
-        }
+        // 使用Promise包装请求，避免解构错误
+        await new Promise((resolve, reject) => {
+          uni.request({
+            url: favoriteUrl,
+            method: 'POST', // 确保使用POST方法
+            header: {
+              'Authorization': uni.getStorageSync('token'),
+              'Content-Type': 'application/json',
+            },
+            success: (res: any) => { // 使用any绕过TypeScript检查
+              // 调试日志
+              // eslint-disable-next-line no-console
+              console.log('收藏列表完整响应:', res)
 
-        if (responseData.data.code === 200) {
-          const favoriteList = responseData.data.data || []
-          allFavoritePosts.value = []
-          for (const item of favoriteList) {
-            const postUrl: string = `/forum/post/get?id=${item.postId}`
+              if (res.statusCode === 200 && res.data && res.data.code === 200) {
+                const favoriteList = res.data.data || [] as FavoriteItem[]
+                allFavoritePosts.value = []
 
-            const favoriteResponse = await uni.request({
-              url: postUrl,
-              method: 'GET',
-              header: {
-                Authorization: uni.getStorageSync('token'),
-              },
-            }) as unknown as {
-              [0]: any
-              [1]: { data: any, statusCode: number }
-            }
+                // 如果没有收藏记录，直接返回
+                if (favoriteList.length === 0) {
+                  displayedPosts.value = []
+                  resolve(true) // 正常完成，没有数据
+                  return
+                }
 
-            const getError = favoriteResponse[0]
-            const postResponseData = favoriteResponse[1]
+                // 创建一个计数器，用于跟踪处理完成的请求数量
+                let processedCount = 0
+                const totalCount = favoriteList.length
 
-            if (getError) {
-              throw getError
-            }
+                // 处理每个收藏项
+                favoriteList.forEach((item: FavoriteItem) => {
+                  // 确保item.postId存在
+                  if (!item.postId) {
+                    console.error('收藏项缺少postId:', item)
+                    processedCount++
+                    if (processedCount === totalCount) {
+                      finishProcessing()
+                    }
+                    return
+                  }
 
-            if (postResponseData.data.code === 200) {
-              const postDetail = postResponseData.data.data
-              const favoritePost: Post = {
-                id: Number(postDetail.id), // 确保强制转换为 number 类型
-                title: postDetail.title,
-                content: postDetail.content || '',
-                publishTime: postDetail.createdTime,
-                username: postDetail.username || '匿名用户',
-                userAvatar: postDetail.userAvatarUrl || 'https://via.placeholder.com/40',
-                images: [],
-                likes: postDetail.voteCount,
+                  // 获取帖子详情
+                  const postUrl = `${API_BASE_URL}/forum/post/get?id=${item.postId}`
+
+                  uni.request({
+                    url: postUrl,
+                    method: 'GET',
+                    header: {
+                      'Authorization': uni.getStorageSync('token'),
+                      'Content-Type': 'application/json',
+                    },
+                    success: (postRes: any) => { // 使用any绕过类型检查
+                      processedCount++
+
+                      if (postRes.statusCode === 200
+                        && postRes.data
+                        && postRes.data.code === 200) {
+                        const postDetail = postRes.data.data
+                        if (postDetail) {
+                          // 处理图片数据
+                          let images: string[] = []
+
+                          // 使用filePaths字段，与随机帖子逻辑保持一致
+                          if (postDetail.filePaths && Array.isArray(postDetail.filePaths) && postDetail.filePaths.length > 0) {
+                            images = postDetail.filePaths
+                          }
+                          // 如果没有图片，添加占位图
+                          else {
+                            images = ['https://placehold.co/600x400?text=暂无图片']
+                          }
+
+                          // 创建帖子对象
+                          const favoritePost: Post = {
+                            id: postDetail.id,
+                            title: postDetail.title || '无标题',
+                            content: postDetail.content || '',
+                            publishTime: postDetail.createdTime,
+                            username: postDetail.username || '匿名用户',
+                            userAvatar: postDetail.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(postDetail.username || '匿名').charAt(0)}`,
+                            images, // 使用处理后的图片数组
+                            likes: postDetail.voteCount || 0,
+                            commentCount: postDetail.commentCount || 0,
+                            state: postDetail.state || 'normal',
+                          }
+                          allFavoritePosts.value.push(favoritePost)
+                        }
+                      }
+
+                      // 检查是否所有请求都已处理完成
+                      if (processedCount === totalCount) {
+                        finishProcessing()
+                      }
+                    },
+                    fail: (err) => {
+                      console.error('获取帖子详情失败:', err)
+                      processedCount++
+                      if (processedCount === totalCount) {
+                        finishProcessing()
+                      }
+                    },
+                  })
+                })
+
+                // 处理完成后更新UI
+                function finishProcessing() {
+                  // 更新显示的帖子
+                  if (activeTab.value === 'favorites') {
+                    displayedPosts.value = allFavoritePosts.value.slice(0, currentLoad.value * postsPerLoad)
+                    // eslint-disable-next-line no-console
+                    console.log('收藏帖子列表获取完成:', allFavoritePosts.value.length)
+                  }
+                  resolve(true)
+                }
               }
-              allFavoritePosts.value.push(favoritePost)
-            }
-          }
-        }
+              else {
+                console.error('收藏列表API返回错误:', res.data)
+                reject(new Error(`获取收藏列表失败: ${res.data?.msg || '未知错误'}`))
+              }
+            },
+            fail: (err) => {
+              console.error('收藏列表请求失败:', err)
+              reject(err)
+            },
+          })
+        })
       }
       catch (error) {
         uni.showToast({
@@ -347,6 +443,11 @@ export default defineComponent({
           icon: 'none',
         })
         console.error('获取收藏帖子失败:', error)
+
+        // 如果失败，清空显示的帖子
+        if (activeTab.value === 'favorites') {
+          displayedPosts.value = []
+        }
       }
     }
 
@@ -372,7 +473,8 @@ export default defineComponent({
 
     // 修改标签切换处理函数
     const handleTabChange = async (tab: 'recommend' | 'my' | 'favorites') => {
-      console.error('Tab changed to:', tab) // 添加调试日志
+      // eslint-disable-next-line no-console
+      console.log('Tab changed to:', tab) // 添加调试日志
       activeTab.value = tab
       currentLoad.value = 1 // 重置加载计数
 
@@ -390,7 +492,8 @@ export default defineComponent({
       }
 
       // 添加调试日志
-      console.error('Current displayed posts after tab change:', displayedPosts.value)
+      // eslint-disable-next-line no-console
+      console.log('Current displayed posts after tab change:', displayedPosts.value)
     }
 
     // 下拉刷新
