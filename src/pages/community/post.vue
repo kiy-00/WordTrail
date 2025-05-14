@@ -127,32 +127,33 @@ export default defineComponent({
         }
 
         // 调用API检查是否已收藏
-        const response = await uni.request({
+        uni.request({
           url: `${API_BASE_URL}/forum/post/isFavorite?postId=${postId}&userId=${userId}`,
-          method: 'GET',
+          method: 'POST',
           header: {
             'Authorization': token,
             'Content-Type': 'application/json',
           },
+          success: (res) => {
+            // eslint-disable-next-line no-console
+            console.log('收藏状态检查响应:', res)
+
+            // 添加类型检查以修复 TypeScript 错误
+            if (res.statusCode === 200 && typeof res.data === 'object' && res.data !== null) {
+              // 使用类型断言
+              const responseData = res.data as { code: number, msg: string | null, data: boolean }
+
+              if (responseData.code === 200) {
+                isCollected.value = Boolean(responseData.data)
+                // eslint-disable-next-line no-console
+                console.log('帖子收藏状态:', isCollected.value ? '已收藏' : '未收藏')
+              }
+            }
+          },
+          fail: (err) => {
+            console.error('检查收藏状态请求失败:', err)
+          },
         })
-
-        // eslint-disable-next-line no-console
-        console.log('收藏状态检查响应:', response)
-
-        // 处理响应
-        const [err, res] = response as unknown as [any, { data: any, statusCode: number }]
-
-        if (err) {
-          console.error('检查收藏状态请求失败:', err)
-          return
-        }
-
-        if (res.statusCode === 200 && res.data && res.data.code === 200) {
-          // 正确获取响应中的布尔值 (res.data.data)
-          isCollected.value = Boolean(res.data.data)
-          // eslint-disable-next-line no-console
-          console.log('帖子收藏状态:', isCollected.value ? '已收藏' : '未收藏')
-        }
       }
       catch (error) {
         console.error('检查收藏状态时出错:', error)
