@@ -11,10 +11,15 @@ export default defineComponent({
     const content = ref('')
     const username = ref('')
     const userAvatar = ref('')
+    const userId = ref('')
 
     onMounted(() => {
-      username.value = uni.getStorageSync('username') || '匿名用户'
+      const userInfo = uni.getStorageSync('userInfo')
+      userId.value = userInfo?.userId || userInfo?.id || ''
+      username.value = userInfo?.username || uni.getStorageSync('username') || '匿名用户'
       userAvatar.value = uni.getStorageSync('userAvatar') || ''
+      // eslint-disable-next-line no-console
+      console.log('用户ID:', userId.value)
     })
 
     /**
@@ -50,6 +55,22 @@ export default defineComponent({
       // 实现返回逻辑，例如跳转到上一页
       uni.navigateBack()
     }
+    const handleSuccess = () => {
+      uni.hideLoading()
+      uni.showToast({
+        title: '发布成功',
+        icon: 'success',
+        success: () => {
+          images.value = []
+          title.value = ''
+          content.value = ''
+
+          setTimeout(() => {
+            uni.navigateBack()
+          }, 1500)
+        },
+      })
+    }
 
     /**
      * 发布帖子
@@ -73,87 +94,97 @@ export default defineComponent({
         return
       }
 
+      if (!userId.value) {
+        uni.showToast({ title: '请先登录', icon: 'none' })
+        return
+      }
+
       try {
         uni.showLoading({
           title: '发布中...',
           mask: true,
         })
 
-        const formData = {
-          username: username.value,
-          title: title.value.trim(),
-          content: content.value.trim(),
-        }
-        const getDefaultAvatarPath = async () => {
-          return new Promise<string>((resolve) => {
-            const ctx = uni.createCanvasContext('avatarCanvas')
-            ctx.fillStyle = '#007bff'
-            ctx.fillRect(0, 0, 100, 100)
-            ctx.fillStyle = '#ffffff'
-            ctx.font = 'bold 50px sans-serif'
-            ctx.setTextAlign('center') // 修正：使用方法调用，而非赋值
-            ctx.setTextBaseline('middle') // 修正：使用方法调用，而非赋值
-            ctx.fillText(username.value.charAt(0).toUpperCase(), 50, 50)
-            ctx.draw(false, () => {
-              uni.canvasToTempFilePath({
-                canvasId: 'avatarCanvas',
-                success: (res) => {
-                  resolve(res.tempFilePath)
-                },
-                fail: () => {
-                  resolve(`https://placehold.co/100x100/007bff/ffffff?text=${username.value.charAt(0).toUpperCase()}`)
-                },
+        if (images.value.length > 0) {
+          // 修复：使用Promise包装uni.uploadFile，确保正确处理异步
+          for (const filePath of images.value) {
+            try {
+              // 使用Promise包装uni.uploadFile
+              await new Promise((resolve, reject) => {
+                uni.uploadFile({
+                  url: `${API_BASE_URL}/forum/post/new`,
+                  filePath,
+                  name: 'files', // 与后端参数名匹配
+                  formData: {
+                    userId: userId.value,
+                    title: title.value.trim(),
+                    content: content.value.trim(),
+                  },
+                  header: {
+                    Authorization: uni.getStorageSync('token'),
+                  },
+                  success: (res) => {
+                    // eslint-disable-next-line no-console
+                    console.log('上传成功:', res)
+                    if (res.statusCode === 200) {
+                      resolve(res)
+                    }
+                    else {
+                      reject(new Error(`上传失败，状态码: ${res.statusCode}`))
+                    }
+                  },
+                  fail: (err) => {
+                    console.error('上传失败:', err)
+                    reject(err)
+                  },
+                })
               })
+            }
+            catch (uploadErr) {
+              console.error('单个文件上传错误:', uploadErr)
+              throw uploadErr
+            }
+          }
+          handleSuccess()
+        }
+        else {
+          // 无图模式，直接发送请求
+          await new Promise((resolve, reject) => {
+            uni.request({
+              url: `${API_BASE_URL}/forum/post/new`,
+              method: 'POST',
+              data: {
+                userId: userId.value,
+                title: title.value.trim(),
+                content: content.value.trim(),
+              },
+              header: {
+                'Authorization': uni.getStorageSync('token'),
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              success: (res: any) => {
+                if (res.statusCode === 200) {
+                  resolve(res)
+                }
+                else {
+                  reject(new Error(`请求失败，状态码: ${res.statusCode}`))
+                }
+              },
+              fail: (err) => {
+                reject(err)
+              },
             })
           })
+          handleSuccess()
         }
-
-        const avatarPath = userAvatar.value || await getDefaultAvatarPath()
-
-        await uni.uploadFile({
-          url: `${API_BASE_URL}/forum/post/new`,
-          filePath: avatarPath,
-          name: 'userAvatar',
-          formData,
-          header: {
-            Authorization: uni.getStorageSync('token'),
-          },
-          files: images.value.map(path => ({
-            name: 'files',
-            uri: path,
-          })),
-          success: (uploadRes) => {
-            if (uploadRes.statusCode === 200) {
-              uni.hideLoading()
-              uni.showToast({
-                title: '发布成功',
-                icon: 'success',
-                success: () => {
-                  images.value = []
-                  title.value = ''
-                  content.value = ''
-
-                  setTimeout(() => {
-                    uni.navigateBack()
-                  }, 1500)
-                },
-              })
-            }
-            else {
-              throw new Error('发布失败')
-            }
-          },
-          fail: (error) => {
-            uni.hideLoading()
-            uni.showToast({ title: '发布失败', icon: 'none' })
-            console.error('上传失败:', error)
-          },
-        })
       }
       catch (error) {
         uni.hideLoading()
-        uni.showToast({ title: '发布失败', icon: 'none' })
-        console.error('发布失败:', error)
+        uni.showToast({
+          title: '发布失败，请稍后重试',
+          icon: 'none',
+        })
+        console.error('发布帖子详细错误:', error)
       }
     }
 
@@ -172,6 +203,7 @@ export default defineComponent({
       justifyClass,
       username,
       userAvatar,
+      userId,
     }
   },
 })

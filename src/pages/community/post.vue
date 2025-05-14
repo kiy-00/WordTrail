@@ -111,6 +111,54 @@ export default defineComponent({
     const showReportModal = ref(false)
     const reportReason = ref('')
 
+    // 添加：检查帖子是否已被收藏
+    const checkIsFavorite = async () => {
+      if (!postId)
+        return
+
+      try {
+        // 从本地存储获取用户ID
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || userInfo?.id
+
+        if (!userId) {
+          console.error('未找到用户ID，无法检查收藏状态')
+          return
+        }
+
+        // 调用API检查是否已收藏
+        const response = await uni.request({
+          url: `${API_BASE_URL}/forum/post/isFavorite?postId=${postId}&userId=${userId}`,
+          method: 'GET',
+          header: {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        // eslint-disable-next-line no-console
+        console.log('收藏状态检查响应:', response)
+
+        // 处理响应
+        const [err, res] = response as unknown as [any, { data: any, statusCode: number }]
+
+        if (err) {
+          console.error('检查收藏状态请求失败:', err)
+          return
+        }
+
+        if (res.statusCode === 200 && res.data && res.data.code === 200) {
+          // 正确获取响应中的布尔值 (res.data.data)
+          isCollected.value = Boolean(res.data.data)
+          // eslint-disable-next-line no-console
+          console.log('帖子收藏状态:', isCollected.value ? '已收藏' : '未收藏')
+        }
+      }
+      catch (error) {
+        console.error('检查收藏状态时出错:', error)
+      }
+    }
+
     // 返回逻辑
     const handleBack = () => {
       uni.navigateBack()
@@ -134,16 +182,72 @@ export default defineComponent({
       }
     }
 
-    // 收藏逻辑
-    const toggleCollect = () => {
-      isCollected.value = !isCollected.value
-      if (isCollected.value) {
-        collectCount.value += 1
-        // 执行收藏操作，例如发送 API 请求
+    // 修改：收藏逻辑，添加API调用
+    const toggleCollect = async () => {
+      try {
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || userInfo?.id
+
+        if (!userId) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 根据当前收藏状态决定调用哪个API
+        const apiUrl = `${API_BASE_URL}/forum/post/${isCollected.value ? 'cancelFavorite' : 'favorite'}`
+
+        // 执行收藏或取消收藏操作
+        const response = await uni.request({
+          url: apiUrl,
+          method: 'POST',
+          data: {
+            postId,
+            userId,
+          },
+          header: {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        const [err, res] = response as unknown as [any, { data: any, statusCode: number }]
+
+        if (err) {
+          throw err
+        }
+
+        if (res.statusCode === 200 && res.data && res.data.code === 200) {
+          // 操作成功，更新UI状态
+          isCollected.value = !isCollected.value
+
+          if (isCollected.value) {
+            collectCount.value += 1
+            uni.showToast({
+              title: '收藏成功',
+              icon: 'success',
+            })
+          }
+          else {
+            collectCount.value -= 1
+            uni.showToast({
+              title: '已取消收藏',
+              icon: 'none',
+            })
+          }
+        }
+        else {
+          throw new Error(res.data.msg || '操作失败')
+        }
       }
-      else {
-        collectCount.value -= 1
-        // 取消收藏操作
+      catch (error) {
+        console.error('收藏操作失败:', error)
+        uni.showToast({
+          title: isCollected.value ? '取消收藏失败' : '收藏失败',
+          icon: 'none',
+        })
       }
     }
 
@@ -300,6 +404,9 @@ export default defineComponent({
 
         // 获取评论列表时也直接使用字符串ID
         fetchComments()
+
+        // 添加：检查帖子是否已被收藏
+        checkIsFavorite()
       }
       else {
         console.error('Invalid postId:', postId)
