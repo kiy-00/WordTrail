@@ -1,7 +1,6 @@
 <script lang="ts">
 import type { Post } from '@/types/Post'
 import { API_BASE_URL } from '@/config/api'
-import { getUserInfo } from '@/types/User'
 import { defineComponent, ref } from 'vue'
 
 // 定义API响应的接口
@@ -27,6 +26,22 @@ interface FavoriteItem {
   postId: string
   createTime?: string
   updateTime?: string
+}
+
+// 添加用户帖子类型定义
+interface UserPost {
+  id: string
+  createdTime: string
+  updatedTime: string
+  title: string
+  content: string
+  userId: string
+  username: string
+  filePaths: string[]
+  commentCount: number
+  voteCount: number
+  state: string
+  userAvatar: string | null
 }
 
 export default defineComponent({
@@ -197,23 +212,11 @@ export default defineComponent({
     // 修改获取用户自己的帖子的函数
     const fetchMyPosts = async () => {
       try {
-        // 直接从用户信息获取ID，参照home.vue的方式
+        // 获取用户ID
         const userInfo = uni.getStorageSync('userInfo')
-        let uid = userInfo?.userId || userInfo?.id
+        const userId = userInfo?.userId || userInfo?.id
 
-        // 如果没有，则尝试刷新获取
-        if (!uid) {
-          try {
-            const refreshedInfo = await getUserInfo()
-            uid = refreshedInfo?.id
-          }
-          catch (e) {
-            console.error('获取用户信息失败:', e)
-          }
-        }
-
-        // 如果还是获取不到用户ID，则提示用户
-        if (!uid) {
+        if (!userId) {
           uni.showToast({
             title: '请先登录',
             icon: 'none',
@@ -221,67 +224,76 @@ export default defineComponent({
           return
         }
 
-        // 使用正确的uid调用API
-        const apiUrl: string = `${API_BASE_URL}/forum/post/user?uid=${uid}&page=${String(currentLoad.value)}`
+        // 修改: 使用新的API端点
+        const apiUrl = `${API_BASE_URL}/forum/post/searchByUser?userId=${userId}`
 
-        const response = await uni.request({
-          url: apiUrl,
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token'),
-            'content-type': 'application/json',
-          },
-        }) as unknown as {
-          [0]: any
-          [1]: { data: any, statusCode: number }
-        }
+        // eslint-disable-next-line no-console
+        console.log('获取我的帖子URL:', apiUrl)
 
-        const error = response[0]
-        const responseData = response[1]
+        // 使用Promise包装请求
+        const response = await new Promise<any>((resolve, reject) => {
+          uni.request({
+            url: apiUrl,
+            method: 'GET',
+            header: {
+              'Authorization': uni.getStorageSync('token'),
+              'Content-Type': 'application/json',
+            },
+            success: (res: any) => {
+              // eslint-disable-next-line no-console
+              console.log('我的帖子响应:', res)
+              resolve(res)
+            },
+            fail: (err) => {
+              reject(err)
+            },
+          })
+        })
 
-        if (error) {
-          throw error
-        }
+        if (response.statusCode === 200 && response.data && response.data.code === 200) {
+          const postsList = response.data.data as UserPost[]
 
-        // 添加调试日志
-        console.error('My posts response:', responseData.data)
+          // 转换数据格式
+          const formattedPosts: Post[] = postsList.map((post) => {
+            // 处理图片数据
+            let images: string[] = []
 
-        // 添加类型检查和类型断言
-        if (responseData.statusCode === 200 && typeof responseData.data === 'object' && responseData.data !== null) {
-          const apiResponse = responseData.data as ApiResponse
-
-          if (apiResponse.code === 200 && Array.isArray(apiResponse.data)) {
-            // 转换数据格式
-            const formattedPosts: Post[] = apiResponse.data.map(post => ({
-              id: Number(post.id), // 确保强制转换为 number 类型
-              title: post.title || '无标题',
-              content: '', // 可以根据需要添加内容
-              publishTime: post.createdTime,
-              username: post.username || '匿名用户',
-              userAvatar: post.userAvatarUrl || `https://via.placeholder.com/40?text=U${post.id}`,
-              images: [],
-              tags: [],
-              likes: post.voteCount || 0,
-              commentCount: post.commentCount || 0,
-            }))
-
-            // 更新状态
-            allMyPosts.value = formattedPosts
-            // 如果是"我的"标签页，更新显示的帖子
-            if (activeTab.value === 'my') {
-              displayedPosts.value = formattedPosts.slice(0, currentLoad.value * postsPerLoad)
+            if (post.filePaths && Array.isArray(post.filePaths) && post.filePaths.length > 0) {
+              images = post.filePaths
+            }
+            else {
+              // 如果没有图片，使用占位图
+              images = ['https://placehold.co/600x400?text=暂无图片']
             }
 
-            // 添加调试日志
-            console.error('Formatted posts:', formattedPosts)
-            console.error('Current displayed posts:', displayedPosts.value)
+            return {
+              id: post.id,
+              title: post.title || '无标题',
+              content: post.content || '',
+              publishTime: post.createdTime,
+              username: post.username || '匿名用户',
+              userAvatar: post.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(post.username || '匿名').charAt(0)}`,
+              images,
+              likes: post.voteCount || 0,
+              commentCount: post.commentCount || 0,
+              state: post.state || 'normal',
+            }
+          })
+
+          // 更新状态
+          allMyPosts.value = formattedPosts
+
+          // 如果是"我的"标签页，更新显示的帖子
+          if (activeTab.value === 'my') {
+            displayedPosts.value = formattedPosts.slice(0, currentLoad.value * postsPerLoad)
           }
-          else {
-            throw new Error('获取我的帖子失败: 无效的响应格式')
-          }
+
+          // 添加调试日志
+          // eslint-disable-next-line no-console
+          console.log('我的帖子数量:', formattedPosts.length)
         }
         else {
-          throw new Error(`获取我的帖子失败: 响应状态码 ${responseData.statusCode}`)
+          throw new Error(`获取我的帖子失败: ${response.data?.msg || '未知错误'}`)
         }
       }
       catch (error) {
@@ -290,6 +302,11 @@ export default defineComponent({
           title: '获取我的帖子失败',
           icon: 'none',
         })
+
+        // 如果失败，清空列表
+        if (activeTab.value === 'my') {
+          displayedPosts.value = []
+        }
       }
     }
 
