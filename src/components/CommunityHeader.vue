@@ -35,8 +35,18 @@ export default defineComponent({
     const onSearch = () => {
       if (searchQuery.value.trim()) {
         emit('search', searchQuery.value.trim())
+        // 不自动关闭搜索框，让用户可以继续修改搜索内容
       }
-      toggleSearch()
+    }
+
+    // 添加搜索按钮点击事件
+    const onSearchClick = () => {
+      if (isSearchVisible.value && searchQuery.value.trim()) {
+        onSearch()
+      }
+      else {
+        toggleSearch()
+      }
     }
 
     return {
@@ -47,6 +57,7 @@ export default defineComponent({
       selectTab,
       toggleSearch,
       onSearch,
+      onSearchClick, // 添加新的函数到返回值
     }
   },
 })
@@ -98,14 +109,14 @@ export default defineComponent({
     </view>
 
     <!-- 右侧搜索按钮 -->
-    <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="toggleSearch">
+    <view class="h-6 w-6 flex cursor-pointer items-center justify-center" @click="onSearchClick">
       <view class="i-mynaui:search text-2xl" />
     </view>
   </view>
   <transition name="fade">
     <view v-if="isSearchVisible" class="animate-fadeIn fixed left-0 right-0 top-20 z-1000 px-4 frosted-glass">
       <view class="flex items-center p-2">
-        <view class="i-mynaui:search mr-2 text-xl" />
+        <view class="i-mynaui:search mr-2 cursor-pointer text-xl" @click="onSearch" />
         <input
           v-model="searchQuery"
           type="text"

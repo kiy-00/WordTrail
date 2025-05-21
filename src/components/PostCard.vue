@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  (e: 'delete', id: number): void
+  (e: 'delete', id: string | number): void // 修改为接受字符串或数字类型
 }>()
 
 const isLiked = ref(false)
@@ -220,10 +220,12 @@ function navigateToDetail() {
   }
 }
 
-function deletePost() {
-  // 确保将ID转换为数字类型，如果可能的话
-  const postId = typeof props.post.id === 'string' ? Number.parseInt(props.post.id, 10) : props.post.id
-  emit('delete', postId as number)
+function handleDelete() {
+  // 确保帖子ID保持原始格式传递，不要强制转换为字符串
+  // 添加调试日志查看传递的ID
+  // eslint-disable-next-line no-console
+  console.log('Card传递删除ID:', props.post.id, '类型:', typeof props.post.id)
+  emit('delete', props.post.id) // 直接传递原始ID，不再调用toString()
 }
 </script>
 
@@ -236,7 +238,7 @@ function deletePost() {
     <view
       v-if="props.isMyPost"
       class="absolute right-1 top-2 z-10 h-6 w-6 flex cursor-pointer items-center justify-center rounded-full bg-red-500 text-white"
-      @click.stop="deletePost"
+      @click.stop="handleDelete"
     >
       <view class="i-mynaui:trash text-sm" />
     </view>

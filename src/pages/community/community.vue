@@ -407,7 +407,7 @@ export default defineComponent({
                             publishTime: postDetail.createdTime,
                             username: postDetail.username || '匿名用户',
                             userAvatar: postDetail.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(postDetail.username || '匿名').charAt(0)}`,
-                            images, // 使用处理后的图片数组
+                            images, // 修复：添加处理后的图片数组变量
                             likes: postDetail.voteCount || 0,
                             commentCount: postDetail.commentCount || 0,
                             state: postDetail.state || 'normal',
@@ -468,28 +468,144 @@ export default defineComponent({
       }
     }
 
-    // 初始化加载推荐帖子
-    const initializePosts = async () => {
-      // 尝试获取用户ID
+    // // 初始化加载推荐帖子
+    // const initializePosts = async () => {
+    //   // 尝试获取用户ID
+    //   try {
+    //     // 参照home.vue的方式获取用户信息
+    //     const userInfo = uni.getStorageSync('userInfo')
+
+    //     // 打印日志便于调试
+    //     // eslint-disable-next-line no-console
+    //     console.log('初始化社区页面, 用户信息:', userInfo)
+    //   }
+    //   catch (e) {
+    //     console.warn('获取用户信息失败:', e)
+    //   }
+
+    //   await fetchRandomPosts()
+    //   displayedPosts.value = allRecommendedPosts.value.slice(0, postsPerLoad)
+    //   currentLoad.value = 1
+    // }
+
+    // 添加搜索结果存储
+    const searchResults = ref<Post[]>([])
+    const isSearchMode = ref(false)
+
+    // 添加：通过API获取搜索结果
+    const fetchSearchResults = async (keyword: string) => {
       try {
-        // 参照home.vue的方式获取用户信息
-        const userInfo = uni.getStorageSync('userInfo')
+        if (!keyword.trim()) {
+          return
+        }
 
-        // 打印日志便于调试
+        // 进入搜索模式
+        isSearchMode.value = true
+
+        // 显示加载提示
+        uni.showLoading({
+          title: '搜索中...',
+          mask: true,
+        })
+
+        // 调用搜索API
+        const searchUrl = `${API_BASE_URL}/forum/post/search?keyword=${encodeURIComponent(keyword)}&page=1`
+
         // eslint-disable-next-line no-console
-        console.log('初始化社区页面, 用户信息:', userInfo)
-      }
-      catch (e) {
-        console.warn('获取用户信息失败:', e)
-      }
+        console.log('搜索请求URL:', searchUrl)
 
-      await fetchRandomPosts()
-      displayedPosts.value = allRecommendedPosts.value.slice(0, postsPerLoad)
-      currentLoad.value = 1
+        const response: UniApp.RequestSuccessCallbackResult = await uni.request({
+          url: searchUrl,
+          method: 'GET',
+          header: {
+            'Authorization': uni.getStorageSync('token'),
+            'Content-Type': 'application/json',
+          },
+        })
+
+        // eslint-disable-next-line no-console
+        console.log('搜索结果响应:', response)
+
+        if (response.statusCode === 200 && typeof response.data === 'object') {
+          const result = response.data as { code: number, msg: string | null, data: UserPost[] }
+
+          if (result.code === 200 && Array.isArray(result.data)) {
+            // 转换搜索结果数据格式
+            const formattedPosts: Post[] = result.data.map((post) => {
+              // 处理图片数据
+              let images: string[] = []
+
+              if (post.filePaths && Array.isArray(post.filePaths) && post.filePaths.length > 0) {
+                images = post.filePaths
+              }
+              else {
+                // 如果没有图片，使用占位图
+                images = ['https://placehold.co/600x400?text=暂无图片']
+              }
+
+              return {
+                id: post.id,
+                title: post.title || '无标题',
+                content: post.content || '',
+                publishTime: post.createdTime,
+                username: post.username || '匿名用户',
+                userAvatar: post.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(post.username || '匿名').charAt(0)}`,
+                images,
+                likes: post.voteCount || 0,
+                commentCount: post.commentCount || 0,
+                state: post.state || 'normal',
+              }
+            })
+
+            searchResults.value = formattedPosts
+            displayedPosts.value = formattedPosts
+
+            // 显示搜索结果提示
+            uni.showToast({
+              title: `找到 ${formattedPosts.length} 条结果`,
+              icon: 'none',
+            })
+          }
+          else {
+            searchResults.value = []
+            displayedPosts.value = []
+            uni.showToast({
+              title: '未找到匹配结果',
+              icon: 'none',
+            })
+          }
+        }
+        else {
+          throw new Error(`搜索请求失败: ${response.statusCode}`)
+        }
+      }
+      catch (error) {
+        console.error('搜索失败:', error)
+        uni.showToast({
+          title: '搜索失败',
+          icon: 'none',
+        })
+      }
+      finally {
+        uni.hideLoading()
+      }
     }
 
-    // 修改标签切换处理函数
+    // 修改：搜索功能，使用API而不是本地过滤
+    const handleSearch = (query: string) => {
+      if (!query.trim())
+        return
+
+      // 调用API搜索
+      fetchSearchResults(query)
+    }
+
+    // 修改：标签切换处理函数，退出搜索模式
     const handleTabChange = async (tab: 'recommend' | 'my' | 'favorites') => {
+      // 退出搜索模式
+      isSearchMode.value = false
+
+      // 原有逻辑
       // eslint-disable-next-line no-console
       console.log('Tab changed to:', tab) // 添加调试日志
       activeTab.value = tab
@@ -511,6 +627,23 @@ export default defineComponent({
       // 添加调试日志
       // eslint-disable-next-line no-console
       console.log('Current displayed posts after tab change:', displayedPosts.value)
+    }
+
+    // 增加清除搜索结果的功能
+    const clearSearch = () => {
+      isSearchMode.value = false
+      searchResults.value = []
+
+      // 恢复当前标签页的帖子显示
+      if (activeTab.value === 'recommend') {
+        displayedPosts.value = allRecommendedPosts.value.slice(0, currentLoad.value * postsPerLoad)
+      }
+      else if (activeTab.value === 'my') {
+        displayedPosts.value = allMyPosts.value.slice(0, currentLoad.value * postsPerLoad)
+      }
+      else if (activeTab.value === 'favorites') {
+        displayedPosts.value = allFavoritePosts.value.slice(0, currentLoad.value * postsPerLoad)
+      }
     }
 
     // 下拉刷新
@@ -549,25 +682,11 @@ export default defineComponent({
       }
     }
 
-    // 搜索功能的处理
-    const handleSearch = (query: string) => {
-      // 实现搜索逻辑，这里是简单的搜索过滤
-      if (activeTab.value === 'recommend') {
-        displayedPosts.value = allRecommendedPosts.value.filter(post => post.title.includes(query)).slice(0, postsPerLoad)
-      }
-      else if (activeTab.value === 'my') {
-        displayedPosts.value = allMyPosts.value.filter(post => post.title.includes(query)).slice(0, postsPerLoad)
-      }
-    }
-
     // 返回逻辑
     const handleBack = () => {
       // 实现返回逻辑，例如跳转到上一页
       uni.navigateBack()
     }
-
-    // 初始化帖子
-    initializePosts()
 
     const goToEdit = () => {
       uni.navigateTo({
@@ -575,17 +694,73 @@ export default defineComponent({
       })
     }
 
-    const handleDeletePost = (postId: number) => {
+    const handleDeletePost = (postId: string | number) => {
+      // 修改：确保使用toString()保留完整的ID字符串，而不是依赖强制类型转换
+      // 这样即使传入数字化的ID也会正确处理
+      const originalId = String(postId)
+
+      // eslint-disable-next-line no-console
+      console.log('准备删除帖子:')
+      // eslint-disable-next-line no-console
+      console.log('- 传入ID:', postId, '类型:', typeof postId)
+      // eslint-disable-next-line no-console
+      console.log('- 转换后ID:', originalId, '类型:', typeof originalId)
+
       uni.showModal({
         title: '确认删除',
         content: '确定要删除这条帖子吗？',
         success: (res) => {
           if (res.confirm) {
-            displayedPosts.value = displayedPosts.value.filter(post => post.id !== postId)
-            // 可在此处调用 API 删除帖子
-            uni.showToast({
-              title: '删除成功',
-              icon: 'success',
+            // 修改：直接使用originalId，不再尝试从displayedPosts中查找
+            const deleteUrl = `${API_BASE_URL}/forum/post/delete`
+            const deleteData = { id: originalId }
+
+            // eslint-disable-next-line no-console
+            console.log('删除帖子请求URL:', deleteUrl)
+            // eslint-disable-next-line no-console
+            console.log('删除帖子请求数据:', deleteData)
+
+            // 调用删除API
+            uni.request({
+              url: deleteUrl,
+              method: 'DELETE',
+              data: deleteData,
+              header: {
+                'Authorization': uni.getStorageSync('token'),
+                'Content-Type': 'application/json',
+              },
+              success: (res: any) => {
+                // eslint-disable-next-line no-console
+                console.log('删除帖子响应:', res)
+
+                if (res.statusCode === 200) {
+                  // 修改：从所有数据源中移除该帖子，而不仅仅是当前活动的数据源
+                  displayedPosts.value = displayedPosts.value.filter(post => post.id !== postId)
+
+                  // 无论当前是哪个标签页，都要更新所有数据源
+                  allMyPosts.value = allMyPosts.value.filter(post => post.id !== postId)
+                  allFavoritePosts.value = allFavoritePosts.value.filter(post => post.id !== postId)
+                  allRecommendedPosts.value = allRecommendedPosts.value.filter(post => post.id !== postId)
+
+                  uni.showToast({
+                    title: '删除成功',
+                    icon: 'success',
+                  })
+                }
+                else {
+                  uni.showToast({
+                    title: '删除失败',
+                    icon: 'none',
+                  })
+                }
+              },
+              fail: (err) => {
+                console.error('删除帖子请求失败:', err)
+                uni.showToast({
+                  title: '删除请求失败',
+                  icon: 'none',
+                })
+              },
             })
           }
         },
@@ -596,6 +771,7 @@ export default defineComponent({
       activeTab,
       displayedPosts,
       isRefreshing,
+      isSearchMode, // 添加到返回值
       handleBack,
       handleTabChange,
       handleSearch,
@@ -603,6 +779,7 @@ export default defineComponent({
       onRefresh,
       onLoadMore,
       goToEdit,
+      clearSearch, // 添加到返回值
     }
   },
 })
@@ -611,6 +788,19 @@ export default defineComponent({
 <template>
   <!-- <view class="community-container"> -->
   <CommunityHeader @back="handleBack" @tab-change="handleTabChange" @search="handleSearch" />
+
+  <!-- 添加搜索状态提示区域 -->
+  <view v-if="isSearchMode" class="flex items-center justify-between bg-gray-100 px-4 py-2">
+    <text class="text-sm text-gray-600">
+      搜索结果
+    </text>
+    <view class="flex items-center" @click="clearSearch">
+      <text class="mr-1 text-sm text-blue">
+        清除
+      </text>
+      <view class="i-ci:close-small text-sm text-blue" />
+    </view>
+  </view>
 
   <!-- 推荐和我的页面内容 -->
   <scroll-view
