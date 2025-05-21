@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Post } from '@/types/Post'
 import { API_BASE_URL } from '@/config/api'
-import { defineComponent, ref } from 'vue'
+import { defineComponent, onMounted, ref } from 'vue' // 添加 onMounted
 
 // 定义API响应的接口
 interface ApiResponse {
@@ -468,31 +468,65 @@ export default defineComponent({
       }
     }
 
-    // // 初始化加载推荐帖子
-    // const initializePosts = async () => {
-    //   // 尝试获取用户ID
-    //   try {
-    //     // 参照home.vue的方式获取用户信息
-    //     const userInfo = uni.getStorageSync('userInfo')
+    // 初始化加载推荐帖子
+    const initializePosts = async () => {
+      // 尝试获取用户ID
+      try {
+        // 参照home.vue的方式获取用户信息
+        const userInfo = uni.getStorageSync('userInfo')
 
-    //     // 打印日志便于调试
-    //     // eslint-disable-next-line no-console
-    //     console.log('初始化社区页面, 用户信息:', userInfo)
-    //   }
-    //   catch (e) {
-    //     console.warn('获取用户信息失败:', e)
-    //   }
+        // 打印日志便于调试
+        // eslint-disable-next-line no-console
+        console.log('初始化社区页面, 用户信息:', userInfo)
+      }
+      catch (e) {
+        console.warn('获取用户信息失败:', e)
+      }
 
-    //   await fetchRandomPosts()
-    //   displayedPosts.value = allRecommendedPosts.value.slice(0, postsPerLoad)
-    //   currentLoad.value = 1
-    // }
+      await fetchRandomPosts()
+      displayedPosts.value = allRecommendedPosts.value.slice(0, postsPerLoad)
+      currentLoad.value = 1
+    }
 
     // 添加搜索结果存储
     const searchResults = ref<Post[]>([])
     const isSearchMode = ref(false)
+    const lastSearchQuery = ref('') // 添加：存储上次搜索的关键词
 
-    // 添加：通过API获取搜索结果
+    // 添加：前端搜索功能，用于"我的"和"收藏"标签页
+    const searchLocalPosts = (query: string) => {
+      if (!query.trim())
+        return
+
+      lastSearchQuery.value = query
+      isSearchMode.value = true
+
+      // 根据当前标签页选择搜索的数据源
+      let sourceData: Post[] = []
+      if (activeTab.value === 'my') {
+        sourceData = allMyPosts.value
+      }
+      else if (activeTab.value === 'favorites') {
+        sourceData = allFavoritePosts.value
+      }
+
+      // 在标题和内容中搜索关键词
+      const results = sourceData.filter(post =>
+        post.title.toLowerCase().includes(query.toLowerCase())
+        || post.content.toLowerCase().includes(query.toLowerCase()),
+      )
+
+      searchResults.value = results
+      displayedPosts.value = results
+
+      // 显示搜索结果数量
+      uni.showToast({
+        title: `找到 ${results.length} 条结果`,
+        icon: 'none',
+      })
+    }
+
+    // 添加：通过API获取搜索结果（仅用于"推荐"标签页）
     const fetchSearchResults = async (keyword: string) => {
       try {
         if (!keyword.trim()) {
@@ -591,21 +625,30 @@ export default defineComponent({
       }
     }
 
-    // 修改：搜索功能，使用API而不是本地过滤
+    // 修改：搜索功能，根据当前标签页选择前端或后端搜索
     const handleSearch = (query: string) => {
       if (!query.trim())
         return
 
-      // 调用API搜索
-      fetchSearchResults(query)
+      lastSearchQuery.value = query
+
+      // 根据选项卡选择搜索方式
+      if (activeTab.value === 'recommend') {
+        // 推荐选项卡：调用API搜索
+        fetchSearchResults(query)
+      }
+      else {
+        // 我的和收藏选项卡：前端搜索
+        searchLocalPosts(query)
+      }
     }
 
-    // 修改：标签切换处理函数，退出搜索模式
+    // 修改：标签切换处理函数
     const handleTabChange = async (tab: 'recommend' | 'my' | 'favorites') => {
       // 退出搜索模式
       isSearchMode.value = false
+      searchResults.value = []
 
-      // 原有逻辑
       // eslint-disable-next-line no-console
       console.log('Tab changed to:', tab) // 添加调试日志
       activeTab.value = tab
@@ -629,10 +672,11 @@ export default defineComponent({
       console.log('Current displayed posts after tab change:', displayedPosts.value)
     }
 
-    // 增加清除搜索结果的功能
+    // 修改：清除搜索结果的功能
     const clearSearch = () => {
       isSearchMode.value = false
       searchResults.value = []
+      lastSearchQuery.value = ''
 
       // 恢复当前标签页的帖子显示
       if (activeTab.value === 'recommend') {
@@ -648,6 +692,34 @@ export default defineComponent({
 
     // 下拉刷新
     const onRefresh = async () => {
+      if (isSearchMode.value) {
+        // 如果在搜索模式，刷新后重新执行搜索
+        isRefreshing.value = true
+
+        if (activeTab.value === 'recommend') {
+          await fetchRandomPosts() // 先刷新推荐数据
+          if (lastSearchQuery.value) {
+            fetchSearchResults(lastSearchQuery.value) // 然后重新搜索
+          }
+        }
+        else if (activeTab.value === 'my') {
+          await fetchMyPosts()
+          if (lastSearchQuery.value) {
+            searchLocalPosts(lastSearchQuery.value)
+          }
+        }
+        else if (activeTab.value === 'favorites') {
+          await fetchFavoritePosts()
+          if (lastSearchQuery.value) {
+            searchLocalPosts(lastSearchQuery.value)
+          }
+        }
+
+        isRefreshing.value = false
+        return
+      }
+
+      // 非搜索模式下的原有逻辑
       isRefreshing.value = true
       if (activeTab.value === 'recommend') {
         await fetchRandomPosts() // 使用随机帖子API
@@ -766,6 +838,11 @@ export default defineComponent({
         },
       })
     }
+
+    // 初始化帖子 - 在组件挂载时执行
+    onMounted(() => {
+      initializePosts()
+    })
 
     return {
       activeTab,
