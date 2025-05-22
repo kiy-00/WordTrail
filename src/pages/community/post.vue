@@ -1,12 +1,17 @@
 <!-- Post.vue -->
 <script lang="ts">
-import type { Comment, Post } from '@/types/Post'
-import { API_BASE_URL } from '@/config/api' // 添加导入API_BASE_URL
+import type { Comment } from '@/types/Comment'
+import type { Post } from '@/types/Post'
+import CommentsCard from '@/components/CommentsCard.vue'
+import { API_BASE_URL } from '@/config/api'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 export default defineComponent({
   name: 'Post',
+  components: {
+    CommentsCard,
+  },
 
   setup() {
     const route = useRoute()
@@ -29,18 +34,63 @@ export default defineComponent({
     const newComment = ref('')
     const comments = ref<Comment[]>([])
 
-    // 评论列表数据结构处理
-    const processComments = (rawComments: any[]) => {
+    // 更新评论处理函数，获取用户详细信息
+    const processComments = async (rawComments: any[]) => {
       const result: Comment[] = []
-      const replyMap = new Map<number, Comment>()
+      const replyMap = new Map<string, Comment>()
+      const userInfoCache = new Map<string, any>() // 缓存用户信息，避免重复请求
 
-      // 首先找出所有主评论
-      rawComments.forEach((comment) => {
+      // 获取单个用户信息的函数
+      const getUserInfo = async (userId: string) => {
+        // 如果已经缓存了该用户信息，直接返回
+        if (userInfoCache.has(userId)) {
+          return userInfoCache.get(userId)
+        }
+
+        try {
+          const userRes = await new Promise<any>((resolve, reject) => {
+            uni.request({
+              url: `${API_BASE_URL}/api/v1/auth/user/${userId}`,
+              method: 'GET',
+              header: {
+                'Authorization': token,
+                'Content-Type': 'application/json',
+              },
+              success: res => resolve(res),
+              fail: err => reject(err),
+            })
+          })
+
+          if (userRes.statusCode === 200 && userRes.data) {
+            // 缓存用户信息
+            userInfoCache.set(userId, userRes.data)
+            return userRes.data
+          }
+          return null
+        }
+        catch (error) {
+          console.error('获取用户信息失败:', error)
+          return null
+        }
+      }
+
+      // 生成头像占位符的函数
+      const generateAvatarPlaceholder = (username: string) => {
+        const initial = username.charAt(0).toUpperCase()
+        return `https://placehold.co/40x40/007bff/ffffff?text=${initial}`
+      }
+
+      // 处理评论和用户信息
+      for (const comment of rawComments) {
         if (!comment.parentComment) {
+          // 获取评论者的用户信息
+          const userInfo = await getUserInfo(comment.userId)
+
+          // 创建主评论对象
           const mainComment: Comment = {
             id: comment.id,
-            username: comment.nickName,
-            avatar: comment.avatar || 'https://via.placeholder.com/40',
+            username: userInfo?.username || '未知用户',
+            avatar: userInfo?.avatarUrl || generateAvatarPlaceholder(userInfo?.username || '未知用户'),
             content: comment.content,
             publishTime: comment.createdTime,
             likes: 0,
@@ -50,56 +100,90 @@ export default defineComponent({
           result.push(mainComment)
           replyMap.set(comment.id, mainComment)
         }
-      })
+      }
 
       // 处理回复
-      rawComments.forEach((comment) => {
+      for (const comment of rawComments) {
         if (comment.parentComment) {
           const parentComment = replyMap.get(comment.parentComment)
-          if (parentComment && !comment.deleted) {
+          if (parentComment && comment.state !== 'deleted') {
+            // 获取回复者的用户信息
+            const userInfo = await getUserInfo(comment.userId)
+
+            // 创建回复对象
             const reply: Comment = {
               id: comment.id,
-              username: comment.nickName,
-              avatar: comment.avatar || 'https://via.placeholder.com/40',
+              username: userInfo?.username || '未知用户',
+              avatar: userInfo?.avatarUrl || generateAvatarPlaceholder(userInfo?.username || '未知用户'),
               content: comment.content,
               publishTime: comment.createdTime,
               likes: 0,
               dislikes: 0,
               replies: [],
+              parentComment: Number.parseInt(comment.parentComment),
+              parentUsername: parentComment.username,
+              state: comment.state, // 保存评论状态
             }
             parentComment.replies?.push(reply)
           }
         }
-      })
+      }
 
-      return result.filter(comment => !comment.content.includes('[该评论已被删除]'))
+      // 修改过滤条件使用 deleted 属性或检查 state
+      return result.filter(comment => !comment.deleted && comment.state !== 'deleted')
     }
 
     // 获取评论列表
-    const fetchComments = () => {
+    const fetchComments = async () => {
       if (!postId)
         return
 
-      uni.request({
-        url: `${API_BASE_URL}/forum/comment/list?postId=${postId}`, // 添加API_BASE_URL
-        method: 'GET',
-        header: {
-          'Authorization': token,
-          'Content-Type': 'application/json',
-        },
-        success: (res: any) => {
-          const { data, statusCode } = res
-          if (statusCode === 200 && data.code === 200) {
-            comments.value = processComments(data.data)
-          }
-          else {
-            console.error('获取评论失败:', data.msg)
-          }
-        },
-        fail: (err) => {
-          console.error('获取评论请求失败:', err)
-        },
-      })
+      try {
+        // 显示加载提示
+        uni.showLoading({
+          title: '加载评论中...',
+          mask: true,
+        })
+
+        // 第一步：获取评论列表
+        const commentRes = await new Promise<any>((resolve, reject) => {
+          uni.request({
+            url: `${API_BASE_URL}/forum/comment/list?postId=${postId}`,
+            method: 'GET',
+            header: {
+              'Authorization': token,
+              'Content-Type': 'application/json',
+            },
+            success: res => resolve(res),
+            fail: err => reject(err),
+          })
+        })
+
+        // 检查评论请求是否成功
+        if (commentRes.statusCode !== 200 || !commentRes.data || commentRes.data.code !== 200) {
+          throw new Error(`获取评论失败: ${commentRes.data?.msg || '未知错误'}`)
+        }
+
+        const rawComments = commentRes.data.data || []
+
+        // 第二步：处理评论，获取用户信息
+        const processedComments = await processComments(rawComments)
+
+        comments.value = processedComments
+
+        // eslint-disable-next-line no-console
+        console.log('处理后的评论:', comments.value)
+      }
+      catch (error) {
+        console.error('获取评论失败:', error)
+        uni.showToast({
+          title: '获取评论失败',
+          icon: 'none',
+        })
+      }
+      finally {
+        uni.hideLoading()
+      }
     }
 
     // 悬浮模块状态
@@ -168,14 +252,132 @@ export default defineComponent({
       currentImage.value = e.detail.current
     }
 
-    // 修改提交评论的逻辑
-    const submitComment = () => {
-      if (newComment.value.trim()) {
-        // TODO: 实现评论提交的 API 调用
-        // 提交成功后重新获取评论列表
-        fetchComments()
-        newComment.value = ''
+    // 在setup函数中添加新的状态和函数
+    const replyToComment = ref<number | null>(null)
+    const replyToUsername = ref('')
+
+    // 修改提交评论的逻辑，实现API调用
+    const submitComment = async () => {
+      if (!newComment.value.trim()) {
+        uni.showToast({
+          title: '评论内容不能为空',
+          icon: 'none',
+        })
+        return
       }
+
+      if (!postId) {
+        uni.showToast({
+          title: '帖子ID无效',
+          icon: 'none',
+        })
+        return
+      }
+
+      try {
+        // 获取用户信息
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || userInfo?.id
+
+        if (!userId) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 显示加载提示
+        uni.showLoading({
+          title: '发表评论中...',
+          mask: true,
+        })
+
+        // 准备评论数据
+        const commentData = {
+          postId,
+          content: newComment.value,
+          userId,
+          parentComment: replyToComment.value, // 如果不是回复，则为null
+        }
+
+        // 调用评论API
+        uni.request({
+          url: `${API_BASE_URL}/forum/comment/post`,
+          method: 'POST',
+          header: {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+          },
+          data: commentData,
+          success: (res: any) => {
+            // 检查响应
+            if (res.statusCode === 200 && res.data && res.data.code === 200) {
+              // 评论成功
+              uni.showToast({
+                title: '评论成功',
+                icon: 'success',
+              })
+
+              // 清空评论框和回复状态
+              newComment.value = ''
+              replyToComment.value = null
+              replyToUsername.value = ''
+
+              // 重新获取评论列表
+              fetchComments()
+
+              // 如果有评论数统计，更新评论数
+              if (post.value) {
+                if (post.value.commentCount !== undefined) {
+                  post.value.commentCount += 1
+                }
+              }
+            }
+            else {
+              // 评论失败
+              uni.showToast({
+                title: res.data?.msg || '评论失败',
+                icon: 'none',
+              })
+            }
+          },
+          fail: (err) => {
+            console.error('评论提交请求失败:', err)
+            uni.showToast({
+              title: '网络请求失败',
+              icon: 'none',
+            })
+          },
+          complete: () => {
+            // 隐藏加载提示
+            uni.hideLoading()
+          },
+        })
+      }
+      catch (error) {
+        console.error('评论提交出错:', error)
+        uni.hideLoading()
+        uni.showToast({
+          title: '评论失败',
+          icon: 'none',
+        })
+      }
+    }
+
+    // 设置回复状态的函数
+    const setReplyTo = (commentId: number, username: string) => {
+      replyToComment.value = commentId
+      replyToUsername.value = username
+      // 设置回复内容提示
+      newComment.value = `回复 @${username}: `
+    }
+
+    // 取消回复
+    const cancelReply = () => {
+      replyToComment.value = null
+      replyToUsername.value = ''
+      newComment.value = ''
     }
 
     // 修改收藏逻辑，同样使用any类型避免TypeScript错误
@@ -451,12 +653,23 @@ export default defineComponent({
       }
     })
 
+    // 添加刷新评论的方法
+    const refreshComments = () => {
+      fetchComments()
+      if (post.value && post.value.commentCount !== undefined) {
+        post.value.commentCount += 1
+      }
+    }
+
+    // 在返回值中添加postId，供CommentsCard组件使用
     return {
       post,
+      postId,
+      comments,
+      refreshComments,
       handleBack,
       handleShare,
       currentImage,
-      comments,
       newComment,
       onImageChange,
       submitComment,
@@ -474,7 +687,11 @@ export default defineComponent({
       isExpanded,
       toggleExpand,
       fetchComments,
-      formattedDate, // 添加到返回值中
+      formattedDate,
+      replyToComment,
+      replyToUsername,
+      setReplyTo,
+      cancelReply,
     }
   },
 })
@@ -561,12 +778,17 @@ export default defineComponent({
       <view class="i-mynaui:message-reply m-1 cursor-pointer text-2xl text-yellow" @click="submitComment" />
     </view>
 
-    <!-- Comment Field -->
-    <view class="flex-1 overflow-y-auto p-1">
-      <Comments
+    <!-- 评论列表 - 使用CommentsCard组件 -->
+    <view class="flex-1 overflow-y-auto p-2">
+      <view v-if="comments.length === 0" class="h-20 flex items-center justify-center text-gray-500">
+        暂无评论，发表第一条评论吧
+      </view>
+      <CommentsCard
         v-for="comment in comments"
         :key="comment.id"
         :comment="comment"
+        :post-id="postId"
+        @comment-added="refreshComments"
       />
     </view>
 

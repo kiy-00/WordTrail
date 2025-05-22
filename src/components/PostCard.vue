@@ -155,7 +155,7 @@ async function toggleLike() {
 
     const response = await uni.request({
       url,
-      method: 'GET',
+      method: 'POST',
       header: {
         Authorization: uni.getStorageSync('token'),
       },

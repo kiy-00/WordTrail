@@ -14,4 +14,5 @@ export interface Comment {
   deleted?: boolean // 是否已删除
   replyToId?: number // 回复目标ID
   replyToName?: string // 回复目标用户名
+  state?: string // 评论状态
 }

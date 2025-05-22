@@ -1,16 +1,10 @@
 // src/types/Post.ts
 
-export interface Comment {
-  id: number
-  username: string
-  avatar: string
-  content: string
-  publishTime: string
-  likes: number
-  dislikes: number
-  replies?: Comment[]
-  parentUsername?: string
-}
+// 从独立的 Comment 类型定义文件导入
+import type { Comment } from './Comment'
+
+// 导出 Comment 类型以保持兼容性
+export type { Comment }
 
 export interface Post {
   id: string | number
