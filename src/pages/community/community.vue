@@ -387,32 +387,39 @@ export default defineComponent({
                         && postRes.data.code === 200) {
                         const postDetail = postRes.data.data
                         if (postDetail) {
-                          // 处理图片数据
-                          let images: string[] = []
+                          // 只处理 state 为 normal 的帖子
+                          if (postDetail.state === 'normal') {
+                            // 处理图片数据
+                            let images: string[] = []
 
-                          // 使用filePaths字段，与随机帖子逻辑保持一致
-                          if (postDetail.filePaths && Array.isArray(postDetail.filePaths) && postDetail.filePaths.length > 0) {
-                            images = postDetail.filePaths
+                            // 使用filePaths字段，与随机帖子逻辑保持一致
+                            if (postDetail.filePaths && Array.isArray(postDetail.filePaths) && postDetail.filePaths.length > 0) {
+                              images = postDetail.filePaths
+                            }
+                            // 如果没有图片，添加占位图
+                            else {
+                              images = ['https://placehold.co/600x400?text=暂无图片']
+                            }
+
+                            // 创建帖子对象
+                            const favoritePost: Post = {
+                              id: postDetail.id,
+                              title: postDetail.title || '无标题',
+                              content: postDetail.content || '',
+                              publishTime: postDetail.createdTime,
+                              username: postDetail.username || '匿名用户',
+                              userAvatar: postDetail.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(postDetail.username || '匿名').charAt(0)}`,
+                              images, // 修复：添加处理后的图片数组变量
+                              likes: postDetail.voteCount || 0,
+                              commentCount: postDetail.commentCount || 0,
+                              state: postDetail.state || 'normal',
+                            }
+                            allFavoritePosts.value.push(favoritePost)
                           }
-                          // 如果没有图片，添加占位图
                           else {
-                            images = ['https://placehold.co/600x400?text=暂无图片']
+                            // eslint-disable-next-line no-console
+                            console.log(`跳过非正常状态帖子: ID=${postDetail.id}, 状态=${postDetail.state}`)
                           }
-
-                          // 创建帖子对象
-                          const favoritePost: Post = {
-                            id: postDetail.id,
-                            title: postDetail.title || '无标题',
-                            content: postDetail.content || '',
-                            publishTime: postDetail.createdTime,
-                            username: postDetail.username || '匿名用户',
-                            userAvatar: postDetail.userAvatar || `https://placehold.co/40x40/007bff/ffffff?text=${(postDetail.username || '匿名').charAt(0)}`,
-                            images, // 修复：添加处理后的图片数组变量
-                            likes: postDetail.voteCount || 0,
-                            commentCount: postDetail.commentCount || 0,
-                            state: postDetail.state || 'normal',
-                          }
-                          allFavoritePosts.value.push(favoritePost)
                         }
                       }
 
