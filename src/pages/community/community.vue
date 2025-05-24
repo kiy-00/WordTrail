@@ -147,8 +147,14 @@ export default defineComponent({
           // eslint-disable-next-line no-console
           console.log('Random posts data:', result) // 调试日志
 
+          // 添加状态过滤：只处理state为"normal"的帖子
+          const normalPosts = result.filter(post => post.state === 'normal')
+
+          // eslint-disable-next-line no-console
+          console.log(`过滤前帖子数量: ${result.length}, 过滤后normal状态帖子数量: ${normalPosts.length}`)
+
           // 将响应数据转换为Post类型格式
-          const formattedPosts: Post[] = result.map((post) => {
+          const formattedPosts: Post[] = normalPosts.map((post) => {
             // 处理图片数据
             let images: string[] = []
 
