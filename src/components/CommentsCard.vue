@@ -3,7 +3,7 @@
 import type { Comment } from '@/types/Comment'
 import type { PropType } from 'vue'
 import { API_BASE_URL } from '@/config/api'
-import { computed, defineComponent, ref } from 'vue'
+import { computed, defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
   name: 'CommentsCard',
@@ -26,33 +26,178 @@ export default defineComponent({
     const likes = ref(props.comment.likes)
     const dislikes = ref(props.comment.dislikes)
 
-    const toggleLike = () => {
-      if (isLiked.value) {
-        likes.value--
-        isLiked.value = false
-      }
-      else {
-        likes.value++
-        isLiked.value = true
-        if (isDisliked.value) {
-          dislikes.value--
-          isDisliked.value = false
+    // 添加用户ID状态
+    const userId = ref('')
+
+    // 检查用户对评论的点赞状态
+    const checkUserVoteStatus = async () => {
+      try {
+        if (!userId.value || !props.comment.id)
+          return
+
+        const url = `${API_BASE_URL}/forum/comment/getVote?userId=${userId.value}&commentId=${props.comment.id}`
+
+        const response = await uni.request({
+          url,
+          method: 'GET',
+          header: {
+            'Authorization': uni.getStorageSync('token'),
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.statusCode === 200 && response.data) {
+          const result = response.data as any
+          if (result.code === 200) {
+            const voteStatus = result.data
+            // data: -1表示点踩，1表示点赞，0表示未操作
+            if (voteStatus === 1) {
+              isLiked.value = true
+              isDisliked.value = false
+            }
+            else if (voteStatus === -1) {
+              isLiked.value = false
+              isDisliked.value = true
+            }
+            else {
+              isLiked.value = false
+              isDisliked.value = false
+            }
+          }
         }
+      }
+      catch (e) {
+        console.error('检查评论点赞状态失败:', e)
       }
     }
 
-    const toggleDislike = () => {
-      if (isDisliked.value) {
-        dislikes.value--
-        isDisliked.value = false
-      }
-      else {
-        dislikes.value++
-        isDisliked.value = true
-        if (isLiked.value) {
-          likes.value--
-          isLiked.value = false
+    // 在组件挂载时获取用户ID并检查点赞状态
+    onMounted(async () => {
+      try {
+        // 获取用户ID
+        const userInfo = uni.getStorageSync('userInfo')
+        userId.value = userInfo?.userId || userInfo?.id || ''
+
+        if (userId.value && props.comment.id) {
+          await checkUserVoteStatus()
         }
+      }
+      catch (e) {
+        console.error('初始化评论点赞状态失败:', e)
+      }
+    })
+
+    const toggleLike = async () => {
+      if (!userId.value) {
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none',
+        })
+        return
+      }
+
+      try {
+        // 确定upVote参数：如果当前已点赞，则取消(null)，否则点赞(true)
+        const upVote = isLiked.value ? 'null' : 'true'
+
+        const response = await uni.request({
+          url: `${API_BASE_URL}/forum/comment/vote`,
+          method: 'POST',
+          header: {
+            'Authorization': uni.getStorageSync('token'),
+            'Content-Type': 'application/json',
+          },
+          data: {
+            commentId: props.comment.id,
+            upVote,
+            userId: userId.value,
+          },
+        })
+
+        if (response.statusCode === 200 && response.data) {
+          const result = response.data as any
+          if (result.code === 200) {
+            // 更新点赞状态
+            isLiked.value = !isLiked.value
+            if (isLiked.value && isDisliked.value) {
+              isDisliked.value = false
+            }
+
+            // 更新点赞数和点踩数
+            likes.value = result.like || 0
+            dislikes.value = result.dislike || 0
+          }
+          else {
+            uni.showToast({
+              title: '操作失败',
+              icon: 'none',
+            })
+          }
+        }
+      }
+      catch (e) {
+        console.error('点赞操作失败:', e)
+        uni.showToast({
+          title: '点赞失败',
+          icon: 'none',
+        })
+      }
+    }
+
+    const toggleDislike = async () => {
+      if (!userId.value) {
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none',
+        })
+        return
+      }
+
+      try {
+        // 确定upVote参数：如果当前已点踩，则取消(null)，否则点踩(false)
+        const upVote = isDisliked.value ? 'null' : 'false'
+
+        const response = await uni.request({
+          url: `${API_BASE_URL}/forum/comment/vote`,
+          method: 'POST',
+          header: {
+            'Authorization': uni.getStorageSync('token'),
+            'Content-Type': 'application/json',
+          },
+          data: {
+            commentId: props.comment.id,
+            upVote,
+            userId: userId.value,
+          },
+        })
+
+        if (response.statusCode === 200 && response.data) {
+          const result = response.data as any
+          if (result.code === 200) {
+            // 更新点踩状态
+            isDisliked.value = !isDisliked.value
+            if (isDisliked.value && isLiked.value) {
+              isLiked.value = false
+            }
+
+            // 更新点赞数和点踩数
+            likes.value = result.like || 0
+            dislikes.value = result.dislike || 0
+          }
+          else {
+            uni.showToast({
+              title: '操作失败',
+              icon: 'none',
+            })
+          }
+        }
+      }
+      catch (e) {
+        console.error('点踩操作失败:', e)
+        uni.showToast({
+          title: '点踩失败',
+          icon: 'none',
+        })
       }
     }
 
@@ -260,7 +405,7 @@ export default defineComponent({
       </view>
     </view>
 
-    <!-- 回复列表 -->
+    <!-- 回复列表 - 回复不显示点赞/点踩功能 -->
     <view v-if="hasReplies" class="mt-3 border-l-2 border-gray-200 pl-4">
       <view v-for="reply in comment.replies" :key="reply.id" class="mb-2 pt-2">
         <view class="mb-1 flex items-center justify-between">
@@ -277,6 +422,7 @@ export default defineComponent({
         <text class="text-left text-sm">
           {{ reply.content }}
         </text>
+        <!-- 回复不显示点赞/点踩功能，只显示内容 -->
       </view>
     </view>
   </view>

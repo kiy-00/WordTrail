@@ -86,15 +86,15 @@ export default defineComponent({
           // 获取评论者的用户信息
           const userInfo = await getUserInfo(comment.userId)
 
-          // 创建主评论对象
+          // 创建主评论对象，使用API返回的点赞数和点踩数
           const mainComment: Comment = {
             id: comment.id,
             username: userInfo?.username || '未知用户',
             avatar: userInfo?.avatarUrl || generateAvatarPlaceholder(userInfo?.username || '未知用户'),
             content: comment.content,
             publishTime: comment.createdTime,
-            likes: 0,
-            dislikes: 0,
+            likes: comment.like || 0, // 使用API返回的点赞数
+            dislikes: comment.dislike || 0, // 使用API返回的点踩数
             replies: [],
           }
           result.push(mainComment)
@@ -110,15 +110,15 @@ export default defineComponent({
             // 获取回复者的用户信息
             const userInfo = await getUserInfo(comment.userId)
 
-            // 创建回复对象
+            // 创建回复对象，回复不需要点赞数和点踩数
             const reply: Comment = {
               id: comment.id,
               username: userInfo?.username || '未知用户',
               avatar: userInfo?.avatarUrl || generateAvatarPlaceholder(userInfo?.username || '未知用户'),
               content: comment.content,
               publishTime: comment.createdTime,
-              likes: 0,
-              dislikes: 0,
+              likes: 0, // 回复不显示点赞数
+              dislikes: 0, // 回复不显示点踩数
               replies: [],
               parentComment: Number.parseInt(comment.parentComment),
               parentUsername: parentComment.username,
@@ -190,7 +190,6 @@ export default defineComponent({
     const isCollected = ref(false)
     const isLiked = ref(false)
     const likeCount = ref(0)
-    const collectCount = ref(0)
     // 举报弹窗状态
     const showReportModal = ref(false)
     const reportReason = ref('')
@@ -422,7 +421,7 @@ export default defineComponent({
       newComment.value = ''
     }
 
-    // 修改收藏逻辑，同样使用any类型避免TypeScript错误
+    // 修改收藏逻辑，移除数量相关代码
     const toggleCollect = async () => {
       try {
         const userInfo = uni.getStorageSync('userInfo')
@@ -459,7 +458,6 @@ export default defineComponent({
 
                 if (res.statusCode === 200 && res.data && res.data.code === 200) {
                   isCollected.value = false
-                  collectCount.value = Math.max(0, collectCount.value - 1)
 
                   uni.showToast({
                     title: '已取消收藏',
@@ -497,7 +495,6 @@ export default defineComponent({
 
                 if (res.statusCode === 200 && res.data && res.data.code === 200) {
                   isCollected.value = true
-                  collectCount.value += 1
 
                   uni.showToast({
                     title: '收藏成功',
@@ -711,7 +708,7 @@ export default defineComponent({
 
                 // 更新状态
                 likeCount.value = postData.voteCount || 0
-                collectCount.value = 0
+                // 移除收藏数量初始化
                 // eslint-disable-next-line no-console
                 console.log('帖子数据加载成功:', post.value) // 添加调试日志
               }
@@ -766,7 +763,7 @@ export default defineComponent({
       }
     }
 
-    // 在返回值中添加postId，供CommentsCard组件使用
+    // 在返回值中移除 collectCount
     return {
       post,
       postId,
@@ -784,7 +781,6 @@ export default defineComponent({
       isCollected,
       isLiked,
       likeCount,
-      collectCount,
       showReportModal,
       reportReason,
       submitReport,
@@ -899,15 +895,12 @@ export default defineComponent({
 
     <!-- 悬浮模块 -->
     <view class="fixed bottom-4 right-4 z-50 flex flex-row items-center rounded-lg bg-yellow p-2">
-      <!-- 收藏按钮 -->
+      <!-- 收藏按钮 - 移除数量显示 -->
       <view
         class="mr-2 cursor-pointer"
         @click="toggleCollect"
       >
         <view :class="isCollected ? 'i-mynaui:bookmark-solid text-green' : 'i-mynaui:bookmark'" class="text-2xl" />
-        <text class="text-xs">
-          {{ collectCount }}
-        </text>
       </view>
 
       <!-- 点赞按钮 -->
