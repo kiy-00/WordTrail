@@ -239,6 +239,48 @@ export default defineComponent({
       }
     }
 
+    // 添加检查用户点赞状态的函数
+    const checkIsUserVoted = async () => {
+      if (!postId)
+        return
+
+      try {
+        // 从本地存储获取用户ID
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || userInfo?.id
+
+        if (!userId) {
+          console.error('未找到用户ID，无法检查点赞状态')
+          return
+        }
+
+        // 调用API检查是否已点赞
+        const response = await uni.request({
+          url: `${API_BASE_URL}/forum/post/isVoted?postId=${postId}&userId=${userId}`,
+          method: 'GET',
+          header: {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        // eslint-disable-next-line no-console
+        console.log('点赞状态检查响应:', response)
+
+        if (response.statusCode === 200 && response.data) {
+          const result = response.data as any
+          if (result.code === 200) {
+            isLiked.value = result.data === 1
+            // eslint-disable-next-line no-console
+            console.log('帖子点赞状态:', isLiked.value ? '已点赞' : '未点赞')
+          }
+        }
+      }
+      catch (error) {
+        console.error('检查点赞状态时出错:', error)
+      }
+    }
+
     // 返回逻辑
     const handleBack = () => {
       uni.navigateBack()
@@ -488,15 +530,75 @@ export default defineComponent({
     }
 
     // 点赞逻辑
-    const toggleLike = () => {
-      isLiked.value = !isLiked.value
-      if (isLiked.value) {
-        likeCount.value += 1
-        // 执行点赞操作，例如发送 API 请求
+    const toggleLike = async () => {
+      try {
+        const userInfo = uni.getStorageSync('userInfo')
+        const userId = userInfo?.userId || userInfo?.id
+
+        if (!userId) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          })
+          return
+        }
+
+        if (!postId) {
+          uni.showToast({
+            title: '帖子ID无效',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 显示加载中提示
+        uni.showLoading({
+          title: isLiked.value ? '取消点赞中...' : '点赞中...',
+          mask: true,
+        })
+
+        // 根据当前点赞状态决定upvote参数
+        const upvoteParam = isLiked.value ? 'null' : 'true'
+        const voteUrl = `${API_BASE_URL}/forum/post/vote?postId=${postId}&userId=${userId}&upvote=${upvoteParam}`
+
+        const response = await uni.request({
+          url: voteUrl,
+          method: 'POST',
+          header: {
+            'Authorization': uni.getStorageSync('token'),
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.statusCode === 200 && response.data) {
+          const result = response.data as any
+          if (result.code === 200) {
+            // 更新点赞状态和数量
+            isLiked.value = !isLiked.value
+            likeCount.value = result.like
+
+            uni.showToast({
+              title: isLiked.value ? '点赞成功' : '已取消点赞',
+              icon: 'success',
+            })
+          }
+          else {
+            throw new Error(`点赞操作失败: ${result.msg || '未知错误'}`)
+          }
+        }
+        else {
+          throw new Error(`请求失败: ${response.statusCode}`)
+        }
       }
-      else {
-        likeCount.value -= 1
-        // 取消点赞操作
+      catch (error) {
+        console.error('点赞操作失败:', error)
+        uni.showToast({
+          title: '点赞操作失败',
+          icon: 'none',
+        })
+      }
+      finally {
+        uni.hideLoading()
       }
     }
 
@@ -643,6 +745,9 @@ export default defineComponent({
 
         // 添加：检查帖子是否已被收藏
         checkIsFavorite()
+
+        // 添加：检查帖子是否已被点赞
+        checkIsUserVoted()
       }
       else {
         console.error('Invalid postId:', postId)

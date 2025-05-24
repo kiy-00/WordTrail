@@ -103,12 +103,11 @@ async function checkIsUserVoted() {
       header: {
         Authorization: uni.getStorageSync('token'),
       },
-    }) as unknown as [any, UniApp.RequestSuccessCallbackResult] // 使用正确的类型
+    })
 
-    // 安全地访问响应数据
-    const responseData = response[1] as any
-    if (responseData && responseData.statusCode === 200 && responseData.data) {
-      const result = responseData.data
+    // 修复：直接访问response对象，不需要数组索引
+    if (response.statusCode === 200 && response.data) {
+      const result = response.data as any
       if (result.code === 200) {
         isLiked.value = result.data === 1
       }
@@ -130,11 +129,11 @@ async function toggleLike() {
     return
   }
 
-  try {
-    // 先执行本地UI变更，提高响应速度
-    const originalLiked = isLiked.value
-    const originalLikes = likes.value
+  // 将变量声明移到函数开始，确保在所有作用域中可访问
+  const originalLiked = isLiked.value
+  const originalLikes = likes.value
 
+  try {
     // 立即更新UI
     if (isLiked.value) {
       likes.value -= 1
@@ -149,9 +148,9 @@ async function toggleLike() {
       return // 如果没有必要的数据，仅执行本地更新
     }
 
-    // 发送API请求
-    const upvote = originalLiked ? '0' : '1' // 根据原始状态决定操作
-    const url = `${API_BASE_URL}/forum/post/vote?postId=${props.post.id}&userId=${userId.value}&upvote=${upvote}`
+    // 修正：根据当前状态决定upvote参数值
+    const upvoteParam = originalLiked ? 'null' : 'true'
+    const url = `${API_BASE_URL}/forum/post/vote?postId=${props.post.id}&userId=${userId.value}&upvote=${upvoteParam}`
 
     const response = await uni.request({
       url,
@@ -159,30 +158,44 @@ async function toggleLike() {
       header: {
         Authorization: uni.getStorageSync('token'),
       },
-    }) as unknown as [any, UniApp.RequestSuccessCallbackResult] // 使用正确的类型
+    })
 
-    // 检查API响应
-    const responseData = response[1] as any
-    if (responseData && responseData.statusCode === 200 && responseData.data) {
-      const result = responseData.data
+    // 修复：直接访问response对象
+    if (response.statusCode === 200 && response.data) {
+      const result = response.data as any
       if (result.code === 200) {
-        // 使用API返回的实际点赞数
-        likes.value = result.data
+        // 修正：使用API返回的like字段作为实际点赞数
+        likes.value = result.like
       }
       else {
         // 如果API失败，恢复原始状态
         isLiked.value = originalLiked
         likes.value = originalLikes
+        uni.showToast({
+          title: '操作失败',
+          icon: 'none',
+        })
       }
     }
     else {
       // API请求失败，恢复原始状态
       isLiked.value = originalLiked
       likes.value = originalLikes
+      uni.showToast({
+        title: '网络请求失败',
+        icon: 'none',
+      })
     }
   }
   catch (e) {
     console.error('点赞操作失败:', e)
+    // 恢复原始状态 - 现在变量在正确的作用域中
+    isLiked.value = originalLiked
+    likes.value = originalLikes
+    uni.showToast({
+      title: '点赞失败',
+      icon: 'none',
+    })
   }
 }
 
