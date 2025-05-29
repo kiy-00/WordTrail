@@ -28,7 +28,6 @@ export default defineComponent({
 
     const username = ref<string>('')
     const avatarUrl = ref<string>('')
-    const defaultAvatar = '/static/avatar/avatar.png'
 
     const signInDays = ref<number>(0) // 累计签到天数
     const currentLexicon = ref<CurrentLexicon | null>(LexiconStorage.getCurrentLexicon()) // 当前词书
@@ -78,7 +77,7 @@ export default defineComponent({
       },
     )
 
-    const loadUserInfo = () => {
+    const loadUserInfo = async () => {
       try {
         const userInfo = uni.getStorageSync('userInfo')
 
@@ -87,13 +86,90 @@ export default defineComponent({
           return
         }
 
-        // 直接使用存储的用户信息
-        username.value = userInfo.username || ''
-        avatarUrl.value = userInfo.avatarUrl || defaultAvatar
+        // 获取用户ID
+        const userId = userInfo.userId || userInfo.id
+
+        if (!userId) {
+          console.error('无法获取用户ID')
+          uni.redirectTo({ url: '/pages/user/login' })
+          return
+        }
+
+        // 调用API获取用户详细信息
+        const token = uni.getStorageSync('token')
+        const response = await uni.request({
+          url: `${API_BASE_URL}/api/v1/auth/user/${userId}`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.statusCode === 200 && response.data) {
+          const userData = response.data as any
+
+          // 更新用户信息
+          username.value = userData.username || ''
+
+          // 处理头像：如果API返回的头像为空，使用用户名首字母作为占位符
+          if (userData.avatarUrl && userData.avatarUrl.trim() !== '') {
+            avatarUrl.value = userData.avatarUrl
+          }
+          else {
+            // 使用用户名首字母生成占位符头像
+            const initial = (userData.username || 'U').charAt(0).toUpperCase()
+            avatarUrl.value = `https://placehold.co/64x64/007bff/ffffff?text=${initial}`
+          }
+
+          // 可选：更新本地存储的用户信息
+          const updatedUserInfo = {
+            ...userInfo,
+            username: userData.username,
+            avatarUrl: userData.avatarUrl,
+            email: userData.email,
+            phone: userData.phone,
+            active: userData.active,
+          }
+          uni.setStorageSync('userInfo', updatedUserInfo)
+        }
+        else {
+          console.error('获取用户信息失败:', response)
+          // 如果API调用失败，使用本地存储的信息作为备选
+          username.value = userInfo.username || ''
+          if (userInfo.avatarUrl && userInfo.avatarUrl.trim() !== '') {
+            avatarUrl.value = userInfo.avatarUrl
+          }
+          else {
+            const initial = (userInfo.username || 'U').charAt(0).toUpperCase()
+            avatarUrl.value = `https://placehold.co/64x64/007bff/ffffff?text=${initial}`
+          }
+        }
       }
       catch (error) {
         console.error('加载用户信息失败:', error)
-        uni.redirectTo({ url: '/pages/user/login' })
+
+        // 如果出错，尝试使用本地存储的信息
+        try {
+          const userInfo = uni.getStorageSync('userInfo')
+          if (userInfo) {
+            username.value = userInfo.username || ''
+            if (userInfo.avatarUrl && userInfo.avatarUrl.trim() !== '') {
+              avatarUrl.value = userInfo.avatarUrl
+            }
+            else {
+              const initial = (userInfo.username || 'U').charAt(0).toUpperCase()
+              avatarUrl.value = `https://placehold.co/64x64/007bff/ffffff?text=${initial}`
+            }
+          }
+          else {
+            uni.redirectTo({ url: '/pages/user/login' })
+          }
+        }
+        catch (storageError) {
+          console.error('读取本地用户信息失败:', storageError)
+          uni.redirectTo({ url: '/pages/user/login' })
+        }
       }
     }
 
@@ -223,7 +299,7 @@ export default defineComponent({
 
         // 获取用户ID
         const userInfo = uni.getStorageSync('userInfo')
-        const userId = userInfo?.userId || ' ' // 使用默认ID作为备选
+        const userId = userInfo?.userId || userInfo?.id // 修改：支持两种ID字段格式
 
         // 使用新的API获取单词ID列表
         const token = uni.getStorageSync('token')
