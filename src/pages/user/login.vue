@@ -54,7 +54,7 @@ export default defineComponent({
 
         try {
           const response = await uni.request({
-            url: `/api/v1/auth/login`,
+            url: '/api/v1/auth/login',
             method: 'POST',
             header: {
               'Content-Type': 'application/json',
