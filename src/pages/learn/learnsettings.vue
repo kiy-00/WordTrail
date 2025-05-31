@@ -26,9 +26,9 @@ export default defineComponent({
       { value: 25, text: '25 个' },
     ]
 
-    // 每日目标选项 - 从10到100，每10个一组
-    const dailyGoalOptions = Array.from({ length: 10 }, (_, i) => {
-      const value = (i + 1) * 10
+    // 每日目标选项 - 从0到100，每10个一组
+    const dailyGoalOptions = Array.from({ length: 11 }, (_, i) => {
+      const value = i * 10
       return { value, text: `${value} 个` }
     })
 
@@ -104,11 +104,30 @@ export default defineComponent({
       isSaving.value = false
     }
 
+    // 验证学习目标的函数
+    const validateGoals = (newWordsGoal: number, reviewWordsGoal: number) => {
+      if (newWordsGoal === 0 && reviewWordsGoal === 0) {
+        uni.showToast({
+          title: '每日新词和复习数量不能同时为零',
+          icon: 'none',
+          duration: 2000,
+        })
+        return false
+      }
+      return true
+    }
+
     // 处理每日新词目标变更
     const handleNewWordsGoalChange = (e: any) => {
       const index = e.detail.value
-      selectedNewWordsGoalIndex.value = index
       const newValue = dailyGoalOptions[index].value
+
+      // 验证：新词目标设为0时，复习目标不能也为0
+      if (!validateGoals(newValue, currentSettings.value.dailyReviewWordsGoal)) {
+        return // 验证失败，不更新设置
+      }
+
+      selectedNewWordsGoalIndex.value = index
       currentSettings.value.dailyNewWordsGoal = newValue
       LearnSettingsStorage.updateDailyNewWordsGoal(newValue)
       saveGoalsToServer()
@@ -117,8 +136,14 @@ export default defineComponent({
     // 处理每日复习目标变更
     const handleReviewWordsGoalChange = (e: any) => {
       const index = e.detail.value
-      selectedReviewWordsGoalIndex.value = index
       const newValue = dailyGoalOptions[index].value
+
+      // 验证：复习目标设为0时，新词目标不能也为0
+      if (!validateGoals(currentSettings.value.dailyNewWordsGoal, newValue)) {
+        return // 验证失败，不更新设置
+      }
+
+      selectedReviewWordsGoalIndex.value = index
       currentSettings.value.dailyReviewWordsGoal = newValue
       LearnSettingsStorage.updateDailyReviewWordsGoal(newValue)
       saveGoalsToServer()
