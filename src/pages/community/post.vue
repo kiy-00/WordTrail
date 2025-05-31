@@ -807,7 +807,6 @@ export default defineComponent({
       @share="handleShare"
     />
 
-    <!-- Image Carousel -->
     <view class="relative mt-3">
       <swiper
         :indicator-dots="false"
