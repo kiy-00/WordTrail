@@ -1,5 +1,3 @@
-import { API_BASE_URL } from '@/config/api'
-
 export interface Lexicon {
   id: string
   language: string
@@ -61,7 +59,7 @@ export const LexiconAPI = {
   getUserLexicons: async () => {
     return new Promise<UniApp.RequestSuccessCallbackResult>((resolve, reject) => {
       uni.request({
-        url: `${API_BASE_URL}/api/lexicon`,
+        url: `/api/lexicon`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${uni.getStorageSync('token')}`,
@@ -82,7 +80,7 @@ export const LexiconAPI = {
       }
 
       uni.request({
-        url: `${API_BASE_URL}/books`,
+        url: `/books`,
         method: 'GET',
         header: {
           'Authorization': `Bearer ${token}`,

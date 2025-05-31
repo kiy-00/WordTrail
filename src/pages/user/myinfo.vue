@@ -1,6 +1,5 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
-import { API_BASE_URL } from '@/config/api'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
 // 修改收到的好友请求接口定义以匹配API响应格式
@@ -71,7 +70,7 @@ export default defineComponent({
         }
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/friends/requests/received`,
+          url: `/api/v1/friends/requests/received`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -105,7 +104,7 @@ export default defineComponent({
         }
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/friends/requests/sent`,
+          url: `/api/v1/friends/requests/sent`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -139,7 +138,7 @@ export default defineComponent({
         }
 
         // 修改API路径以匹配后端实际API
-        const url = `${API_BASE_URL}/api/v1/friends/request/${action}?requestId=${requestId}`
+        const url = `/api/v1/friends/request/${action}?requestId=${requestId}`
 
         const response = await uni.request({
           url,

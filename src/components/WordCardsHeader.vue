@@ -1,5 +1,4 @@
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { computed, defineComponent, onMounted, ref, watch } from 'vue'
 
 interface UserLexicon {
@@ -72,7 +71,7 @@ export default defineComponent({
 
         // 调用API获取用户的词书列表
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId.value}?page=0&size=100`,
+          url: `/api/v1/user-wordbooks/user/${userId.value}?page=0&size=100`,
           method: 'GET',
           header: {
             'Authorization': `Bearer ${token}`,
@@ -183,7 +182,7 @@ export default defineComponent({
         }
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId.value}/check-word/${props.wordId}`,
+          url: `/api/v1/user-wordbooks/user/${userId.value}/check-word/${props.wordId}`,
           method: 'GET',
           header: {
             'Authorization': `Bearer ${token}`,
@@ -268,7 +267,7 @@ export default defineComponent({
 
         // 调用API将单词添加到词书
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/user-wordbooks/${selectedLexiconId.value}/words/user/${userId.value}`,
+          url: `/api/v1/user-wordbooks/${selectedLexiconId.value}/words/user/${userId.value}`,
           method: 'POST',
           data: requestBody, // 直接发送数组
           header: {
@@ -441,7 +440,7 @@ export default defineComponent({
         })
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/user-wordbooks/${selectedDeleteLexiconId.value}/words/user/${userId.value}`,
+          url: `/api/v1/user-wordbooks/${selectedDeleteLexiconId.value}/words/user/${userId.value}`,
           method: 'DELETE',
           data: requestBody,
           header: {

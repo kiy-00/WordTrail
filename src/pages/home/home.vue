@@ -1,6 +1,5 @@
 <script lang="ts">
 import TabBar from '@/components/TabBar.vue' // 添加TabBar组件导入
-import { API_BASE_URL } from '@/config/api'
 // 添加API基础URL导入
 import { WordAPI } from '@/types/Word'
 import { LearnSettingsStorage } from '@/utils/learnSettingsStorage' // 添加导入
@@ -98,7 +97,7 @@ export default defineComponent({
         // 调用API获取用户详细信息
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/auth/user/${userId}`,
+          url: `/api/v1/auth/user/${userId}`,
           method: 'GET',
           header: {
             'Authorization': `Bearer ${token}`,
@@ -317,7 +316,7 @@ export default defineComponent({
         // 使用新的API获取单词ID列表
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/learning/book/${lexicon.id}/new-words?userId=${userId}&batchSize=${batchSize}`,
+          url: `/api/v1/learning/book/${lexicon.id}/new-words?userId=${userId}&batchSize=${batchSize}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,

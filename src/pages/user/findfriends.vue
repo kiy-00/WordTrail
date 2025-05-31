@@ -1,6 +1,5 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 // 用户接口定义 - 更新为与搜索API返回格式一致
@@ -61,7 +60,7 @@ export default defineComponent({
         }
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/friends/search?keyword=${encodeURIComponent(searchQuery.value)}`,
+          url: `/api/v1/friends/search?keyword=${encodeURIComponent(searchQuery.value)}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -137,7 +136,7 @@ export default defineComponent({
         }
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/friends/recommend?limit=10`,
+          url: `/api/v1/friends/recommend?limit=10`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -206,7 +205,7 @@ export default defineComponent({
         }
 
         // 构建请求URL和参数
-        const url = `${API_BASE_URL}/api/v1/friends/request`
+        const url = `/api/v1/friends/request`
         const params = new URLSearchParams()
         params.append('receiverId', userId)
         if (message) {

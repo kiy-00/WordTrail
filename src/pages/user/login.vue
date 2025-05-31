@@ -1,5 +1,4 @@
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, ref } from 'vue'
 
 // 严格匹配后端返回的登录响应格式
@@ -55,7 +54,7 @@ export default defineComponent({
 
         try {
           const response = await uni.request({
-            url: `${API_BASE_URL}/api/v1/auth/login`,
+            url: `/api/v1/auth/login`,
             method: 'POST',
             header: {
               'Content-Type': 'application/json',
@@ -179,7 +178,7 @@ export default defineComponent({
 
         try {
           const response = await uni.request({
-            url: `${API_BASE_URL}/api/v1/auth/register`,
+            url: `/api/v1/auth/register`,
             method: 'POST',
             header: {
               'Content-Type': 'application/json',

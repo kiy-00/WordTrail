@@ -1,7 +1,6 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
 import UserLexiconBox from '@/components/UserLexiconBox.vue'
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 interface UserLexicon {
@@ -95,7 +94,7 @@ export default defineComponent({
         }
 
         // 构建API URL - 根据后端接口定义修改
-        const requestUrl = `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId.value}`
+        const requestUrl = `/api/v1/user-wordbooks/user/${userId.value}`
 
         // eslint-disable-next-line no-console
         console.log('请求URL:', requestUrl)

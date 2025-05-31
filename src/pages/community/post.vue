@@ -3,7 +3,6 @@
 import type { Comment } from '@/types/Comment'
 import type { Post } from '@/types/Post'
 import CommentsCard from '@/components/CommentsCard.vue'
-import { API_BASE_URL } from '@/config/api'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -50,7 +49,7 @@ export default defineComponent({
         try {
           const userRes = await new Promise<any>((resolve, reject) => {
             uni.request({
-              url: `${API_BASE_URL}/api/v1/auth/user/${userId}`,
+              url: `/api/v1/auth/user/${userId}`,
               method: 'GET',
               header: {
                 'Authorization': token,
@@ -148,7 +147,7 @@ export default defineComponent({
         // 第一步：获取评论列表
         const commentRes = await new Promise<any>((resolve, reject) => {
           uni.request({
-            url: `${API_BASE_URL}/forum/comment/list?postId=${postId}`,
+            url: `/forum/comment/list?postId=${postId}`,
             method: 'GET',
             header: {
               'Authorization': token,
@@ -211,7 +210,7 @@ export default defineComponent({
 
         // 调用API检查是否已收藏
         uni.request({
-          url: `${API_BASE_URL}/forum/post/isFavorite?postId=${postId}&userId=${userId}`,
+          url: `/forum/post/isFavorite?postId=${postId}&userId=${userId}`,
           method: 'POST',
           header: {
             'Authorization': token,
@@ -255,7 +254,7 @@ export default defineComponent({
 
         // 调用API检查是否已点赞
         const response = await uni.request({
-          url: `${API_BASE_URL}/forum/post/isVoted?postId=${postId}&userId=${userId}`,
+          url: `/forum/post/isVoted?postId=${postId}&userId=${userId}`,
           method: 'GET',
           header: {
             'Authorization': token,
@@ -344,7 +343,7 @@ export default defineComponent({
 
         // 调用评论API
         uni.request({
-          url: `${API_BASE_URL}/forum/comment/post`,
+          url: `/forum/comment/post`,
           method: 'POST',
           header: {
             'Authorization': token,
@@ -446,7 +445,7 @@ export default defineComponent({
           // 取消收藏 - 使用DELETE方法
           await new Promise((resolve, reject) => {
             uni.request({
-              url: `${API_BASE_URL}/forum/post/deleteFavorite?postId=${postId}&userId=${userId}`,
+              url: `/forum/post/deleteFavorite?postId=${postId}&userId=${userId}`,
               method: 'DELETE',
               header: {
                 'Authorization': token,
@@ -483,7 +482,7 @@ export default defineComponent({
           // 收藏帖子 - 使用POST方法
           await new Promise((resolve, reject) => {
             uni.request({
-              url: `${API_BASE_URL}/forum/post/favorite?postId=${postId}&userId=${userId}`,
+              url: `/forum/post/favorite?postId=${postId}&userId=${userId}`,
               method: 'POST',
               header: {
                 'Authorization': token,
@@ -556,7 +555,7 @@ export default defineComponent({
 
         // 根据当前点赞状态决定upvote参数
         const upvoteParam = isLiked.value ? 'null' : 'true'
-        const voteUrl = `${API_BASE_URL}/forum/post/vote?postId=${postId}&userId=${userId}&upvote=${upvoteParam}`
+        const voteUrl = `/forum/post/vote?postId=${postId}&userId=${userId}&upvote=${upvoteParam}`
 
         const response = await uni.request({
           url: voteUrl,
@@ -666,10 +665,10 @@ export default defineComponent({
 
         // 添加详细的日志输出
         // eslint-disable-next-line no-console
-        console.log(`完整请求URL: ${API_BASE_URL}/forum/post/get?id=${postId}`)
+        console.log(`完整请求URL: /forum/post/get?id=${postId}`)
 
         uni.request({
-          url: `${API_BASE_URL}/forum/post/get?id=${postId}`, // 添加API_BASE_URL
+          url: `/forum/post/get?id=${postId}`, // 添加API_BASE_URL
           method: 'GET',
           header: {
             'Authorization': token,

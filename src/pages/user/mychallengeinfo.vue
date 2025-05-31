@@ -1,6 +1,5 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 // 发出的挑战请求接口定义
@@ -60,7 +59,7 @@ export default defineComponent({
         }
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/team-challenges/requests/sent`,
+          url: `/api/v1/team-challenges/requests/sent`,
           method: 'GET',
           header: { Authorization: `Bearer ${token}` },
         })
@@ -89,7 +88,7 @@ export default defineComponent({
         }
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/team-challenges/requests/received`,
+          url: `/api/v1/team-challenges/requests/received`,
           method: 'GET',
           header: { Authorization: `Bearer ${token}` },
         })
@@ -118,7 +117,7 @@ export default defineComponent({
         }
 
         // 更新API路径为正确的接受/拒绝挑战端点
-        const url = `${API_BASE_URL}/api/v1/team-challenges/${challengeId}/${action}`
+        const url = `/api/v1/team-challenges/${challengeId}/${action}`
 
         // eslint-disable-next-line no-console
         console.log(`调用${action === 'accept' ? '接受' : '拒绝'}挑战API:`, url)

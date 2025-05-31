@@ -1,7 +1,6 @@
 <script lang="ts">
 import type { LexiconStatus } from '@/components/LexiconBox.vue'
 import type { Lexicon, SystemWordbook, WordbooksResponse } from '@/types/Lexicon'
-import { API_BASE_URL } from '@/config/api'
 import { LanguageStorage } from '@/utils/languageStorage'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent, onMounted, ref } from 'vue'
@@ -135,7 +134,7 @@ export default defineComponent({
 
         if (activeType.value === 'system') {
           const response = await uni.request({
-            url: `${API_BASE_URL}/api/v1/system-wordbooks/by-language/${selectedLanguage.value.name}`,
+            url: `/api/v1/system-wordbooks/by-language/${selectedLanguage.value.name}`,
             method: 'GET',
             header: {
               'Authorization': `Bearer ${token}`,
@@ -164,7 +163,7 @@ export default defineComponent({
         }
         else if (activeType.value === 'user') {
           const response = await uni.request({
-            url: `${API_BASE_URL}/api/v1/user-wordbooks/by-language/${selectedLanguage.value.name}/approved`,
+            url: `/api/v1/user-wordbooks/by-language/${selectedLanguage.value.name}/approved`,
             method: 'GET',
             header: {
               'Authorization': `Bearer ${token}`,
@@ -194,7 +193,7 @@ export default defineComponent({
           }
 
           const response = await uni.request({
-            url: `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId.value}`,
+            url: `/api/v1/user-wordbooks/user/${userId.value}`,
             method: 'GET',
             header: {
               'Authorization': `Bearer ${token}`,
@@ -226,7 +225,7 @@ export default defineComponent({
         }
         else {
           const response = await uni.request({
-            url: `${API_BASE_URL}/api/v1/system-wordbooks`,
+            url: `/api/v1/system-wordbooks`,
             method: 'GET',
             header: {
               'Authorization': `Bearer ${token}`,

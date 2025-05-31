@@ -1,5 +1,3 @@
-import { API_BASE_URL } from '@/config/api'
-
 export interface LearnSettings {
   wordsPerGroup: number
   dailyNewWordsGoal: number
@@ -84,7 +82,7 @@ export class LearnSettingsStorage {
       }
 
       // 构建请求参数
-      const url = `${API_BASE_URL}/api/v1/clock-in/goal`
+      const url = `/api/v1/clock-in/goal`
       const response = await uni.request({
         url,
         method: 'POST',

@@ -1,6 +1,5 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, ref } from 'vue'
 
 export default defineComponent({
@@ -80,7 +79,7 @@ export default defineComponent({
 
         // 使用新的API端点进行词书创建
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/user-wordbooks/user/${userId}`,
+          url: `/api/v1/user-wordbooks/user/${userId}`,
           method: 'POST',
           data: requestData,
           header: {

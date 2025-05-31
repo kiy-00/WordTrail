@@ -1,5 +1,4 @@
 import type { DetailedPartOfSpeech } from '@/types/DetailedWord' // 添加这一行导入
-import { API_BASE_URL } from '@/config/api'
 
 export interface Example {
   sentence: string
@@ -85,7 +84,7 @@ export const WordAPI = {
       }
 
       const response = await uni.request({
-        url: `${API_BASE_URL}/api/v1/learning/book/${lexiconId}/new-words-count?userId=${userId}`,
+        url: `/api/v1/learning/book/${lexiconId}/new-words-count?userId=${userId}`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${token}`,
@@ -116,7 +115,7 @@ export const WordAPI = {
       }
 
       const response = await uni.request({
-        url: `${API_BASE_URL}/api/v1/learning/book/${lexiconId}/today-review-count?userId=${userId}`,
+        url: `/api/v1/learning/book/${lexiconId}/today-review-count?userId=${userId}`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${token}`,
@@ -147,7 +146,7 @@ export const WordAPI = {
       }
 
       const response = await uni.request({
-        url: `${API_BASE_URL}/api/v1/learning/book/${lexiconId}/familiar-words?userId=${userId}`,
+        url: `/api/v1/learning/book/${lexiconId}/familiar-words?userId=${userId}`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${token}`,
@@ -178,7 +177,7 @@ export const WordAPI = {
       }
 
       const response = await uni.request({
-        url: `${API_BASE_URL}/api/v1/learning/book/${lexiconId}/fuzzy-words?userId=${userId}`,
+        url: `/api/v1/learning/book/${lexiconId}/fuzzy-words?userId=${userId}`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${token}`,
@@ -209,7 +208,7 @@ export const WordAPI = {
       }
 
       const response = await uni.request({
-        url: `${API_BASE_URL}/api/v1/learning/book/${lexiconId}/unlearned-words?userId=${userId}`,
+        url: `/api/v1/learning/book/${lexiconId}/unlearned-words?userId=${userId}`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${token}`,
@@ -239,7 +238,7 @@ export const WordAPI = {
       }
 
       const response = await uni.request({
-        url: `${API_BASE_URL}/api/v1/words/${wordId}`,
+        url: `/api/v1/words/${wordId}`,
         method: 'GET',
         header: {
           Authorization: `Bearer ${token}`,

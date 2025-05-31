@@ -1,5 +1,4 @@
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import { computed, defineComponent, ref, watch } from 'vue'
 
@@ -172,7 +171,7 @@ export default defineComponent({
       try {
         const token = uni.getStorageSync('token')
         const response: UniApp.RequestSuccessCallbackResult = await uni.request({
-          url: `${API_BASE_URL}/api/v1/words/${wordId}`,
+          url: `/api/v1/words/${wordId}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -211,16 +210,16 @@ export default defineComponent({
 
         switch (tabType) {
           case 'unlearned':
-            url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/unlearned-words?userId=${userId.value}`
+            url = `/api/v1/learning/book/${currentLexicon.id}/unlearned-words?userId=${userId.value}`
             break
           case 'newly':
-            url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/newly-learned-words?userId=${userId.value}`
+            url = `/api/v1/learning/book/${currentLexicon.id}/newly-learned-words?userId=${userId.value}`
             break
           case 'fuzzy':
-            url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/fuzzy-words?userId=${userId.value}`
+            url = `/api/v1/learning/book/${currentLexicon.id}/fuzzy-words?userId=${userId.value}`
             break
           case 'familiar':
-            url = `${API_BASE_URL}/api/v1/learning/book/${currentLexicon.id}/familiar-words?userId=${userId.value}`
+            url = `/api/v1/learning/book/${currentLexicon.id}/familiar-words?userId=${userId.value}`
             break
           default:
             return [] // 对于 'all' 标签，使用 fetchAllWords 函数
@@ -266,7 +265,7 @@ export default defineComponent({
 
         // 先尝试从系统词书获取
         let response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/system-wordbooks/${currentLexicon.id}/words`,
+          url: `/api/v1/system-wordbooks/${currentLexicon.id}/words`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -279,7 +278,7 @@ export default defineComponent({
           console.log('系统词书API未返回有效数据，尝试用户词书API')
 
           response = await uni.request({
-            url: `${API_BASE_URL}/api/v1/user-wordbooks/${currentLexicon.id}/words`,
+            url: `/api/v1/user-wordbooks/${currentLexicon.id}/words`,
             method: 'GET',
             header: {
               Authorization: `Bearer ${token}`,

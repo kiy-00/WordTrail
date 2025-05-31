@@ -2,7 +2,6 @@
 <script lang="ts">
 import type { Comment } from '@/types/Comment'
 import type { PropType } from 'vue'
-import { API_BASE_URL } from '@/config/api'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
@@ -35,7 +34,7 @@ export default defineComponent({
         if (!userId.value || !props.comment.id)
           return
 
-        const url = `${API_BASE_URL}/forum/comment/getVote?userId=${userId.value}&commentId=${props.comment.id}`
+        const url = `/forum/comment/getVote?userId=${userId.value}&commentId=${props.comment.id}`
 
         const response = await uni.request({
           url,
@@ -101,7 +100,7 @@ export default defineComponent({
         const upVote = isLiked.value ? 'null' : 'true'
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/forum/comment/vote`,
+          url: `/forum/comment/vote`,
           method: 'POST',
           header: {
             'Authorization': uni.getStorageSync('token'),
@@ -158,7 +157,7 @@ export default defineComponent({
         const upVote = isDisliked.value ? 'null' : 'false'
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/forum/comment/vote`,
+          url: `/forum/comment/vote`,
           method: 'POST',
           header: {
             'Authorization': uni.getStorageSync('token'),
@@ -247,7 +246,7 @@ export default defineComponent({
 
         // 调用评论API
         uni.request({
-          url: `${API_BASE_URL}/forum/comment/post`,
+          url: `/forum/comment/post`,
           method: 'POST',
           header: {
             'Authorization': token,

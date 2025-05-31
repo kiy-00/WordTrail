@@ -3,7 +3,6 @@ import type { DetailedPartOfSpeech, DetailedWord, Example } from '@/types/Detail
 import type { Word } from '@/types/Word'
 import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
-import { API_BASE_URL } from '@/config/api'
 import { LearnSettingsStorage } from '@/utils/learnSettingsStorage'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
@@ -40,7 +39,7 @@ export default defineComponent({
       try {
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/words/${wordId}`,
+          url: `/api/v1/words/${wordId}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -151,7 +150,7 @@ export default defineComponent({
         console.log('使用原始 wordId 进行学习记录:', wordId)
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/learning/start?userId=${encodeURIComponent(userId.value)}&wordId=${encodeURIComponent(wordId)}`,
+          url: `/api/v1/learning/start?userId=${encodeURIComponent(userId.value)}&wordId=${encodeURIComponent(wordId)}`,
           method: 'POST',
           header: {
             'Authorization': `Bearer ${token}`,
@@ -166,7 +165,7 @@ export default defineComponent({
         }
         else {
           console.error('添加学习记录失败:', response)
-          console.error('请求URL:', `${API_BASE_URL}/api/v1/learning/start?userId=${userId.value}&wordId=${wordId}`)
+          console.error('请求URL:', `/api/v1/learning/start?userId=${userId.value}&wordId=${wordId}`)
 
           if (response.data && response.data) {
             uni.showToast({

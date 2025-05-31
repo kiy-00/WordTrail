@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { UserDetail } from '@/services/userService'
-import { API_BASE_URL } from '@/config/api'
 import { getUserDetailById } from '@/services/userService'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
@@ -79,7 +78,7 @@ export default defineComponent({
         // 并行请求多个单词的详细信息
         const wordPromises = wordIds.map(wordId =>
           uni.request({
-            url: `${API_BASE_URL}/api/v1/words/${wordId}`,
+            url: `/api/v1/words/${wordId}`,
             method: 'GET',
             header: {
               'Authorization': `Bearer ${token}`,
@@ -145,7 +144,7 @@ export default defineComponent({
         loading.value = true
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/user-wordbooks/${id.value}`,
+          url: `/api/v1/user-wordbooks/${id.value}`,
           method: 'GET',
           header: {
             'Authorization': `Bearer ${token}`,

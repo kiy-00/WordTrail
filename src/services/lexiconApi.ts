@@ -1,5 +1,3 @@
-import { API_BASE_URL } from '@/config/api'
-
 export interface WordbookDetail {
   id: string
   bookName: string
@@ -24,7 +22,7 @@ export interface WordDetail {
 export default {
   getWordbook: async (id: string): Promise<WordbookDetail> => {
     const response = await uni.request({
-      url: `${API_BASE_URL}/api/v1/system-wordbooks/${id}`,
+      url: `/api/v1/system-wordbooks/${id}`,
       method: 'GET',
       header: {
         Authorization: `Bearer ${uni.getStorageSync('token')}`,
@@ -37,7 +35,7 @@ export default {
 
   getWord: async (id: string): Promise<WordDetail> => {
     const response = await uni.request({
-      url: `${API_BASE_URL}/api/v1/words/${id}`,
+      url: `/api/v1/words/${id}`,
       method: 'GET',
       header: {
         Authorization: `Bearer ${uni.getStorageSync('token')}`,

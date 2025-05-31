@@ -1,5 +1,4 @@
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 interface Word {
@@ -99,7 +98,7 @@ export default defineComponent({
         // 并行请求多个单词的详细信息
         const wordPromises = wordIds.map(wordId =>
           uni.request({
-            url: `${API_BASE_URL}/api/v1/words/${wordId}`,
+            url: `/api/v1/words/${wordId}`,
             method: 'GET',
             header: {
               'Authorization': `Bearer ${token}`,
@@ -150,7 +149,7 @@ export default defineComponent({
         loading.value = true
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/system-wordbooks/${id.value}`,
+          url: `/api/v1/system-wordbooks/${id.value}`,
           method: 'GET',
           header: {
             'Authorization': `Bearer ${token}`,

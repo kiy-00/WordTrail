@@ -1,6 +1,5 @@
 <!-- PostEditor.vue -->
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
@@ -76,7 +75,7 @@ export default defineComponent({
     const uploadSingleFile = async () => {
       return new Promise((resolve, reject) => {
         uni.uploadFile({
-          url: `${API_BASE_URL}/forum/post/new`,
+          url: `/forum/post/new`,
           filePath: images.value[0],
           name: 'files',
           formData: {
@@ -111,7 +110,7 @@ export default defineComponent({
       for (let i = 0; i < images.value.length; i++) {
         const uploadPromise = new Promise((resolve, reject) => {
           uni.uploadFile({
-            url: `${API_BASE_URL}/forum/post/new`,
+            url: `/forum/post/new`,
             filePath: images.value[i],
             name: 'files',
             formData: {
@@ -152,7 +151,7 @@ export default defineComponent({
     const uploadWithoutImages = async () => {
       return new Promise((resolve, reject) => {
         uni.request({
-          url: `${API_BASE_URL}/forum/post/new`,
+          url: `/forum/post/new`,
           method: 'POST',
           data: {
             userId: userId.value,

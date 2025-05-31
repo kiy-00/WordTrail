@@ -1,6 +1,5 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 // 定义学习记录统计接口
@@ -72,7 +71,7 @@ export default defineComponent({
           return
         }
 
-        const url = `${API_BASE_URL}/api/v1/learning-records/${userId.value}/streak`
+        const url = `/api/v1/learning-records/${userId.value}/streak`
 
         const response = await uni.request({
           url,
@@ -120,7 +119,7 @@ export default defineComponent({
         }
 
         const { startDate, endDate } = getDateRange()
-        const url = `${API_BASE_URL}/api/v1/learning-records/${userId.value}/stats?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+        const url = `/api/v1/learning-records/${userId.value}/stats?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
 
         // eslint-disable-next-line no-console
         console.log('请求学习统计数据:', url)

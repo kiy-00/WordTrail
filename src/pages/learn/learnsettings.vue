@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { LearnSettings } from '@/utils/learnSettingsStorage'
-import { API_BASE_URL } from '@/config/api'
 import { LearnSettingsStorage } from '@/utils/learnSettingsStorage'
 import { defineComponent, onMounted, ref } from 'vue'
 
@@ -154,7 +153,7 @@ export default defineComponent({
       try {
         isLoading.value = true
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/clock-in/goal`,
+          url: `/api/v1/clock-in/goal`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${uni.getStorageSync('token')}`,

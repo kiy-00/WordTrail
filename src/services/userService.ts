@@ -1,5 +1,3 @@
-import { API_BASE_URL } from '@/config/api'
-
 export interface UserDetail {
   userId: string
   username: string
@@ -21,7 +19,7 @@ export async function getUserDetailById(userId: string): Promise<UserDetail> {
     const token = uni.getStorageSync('token')
 
     const response = await uni.request({
-      url: `${API_BASE_URL}/api/v1/auth/user/${userId}`,
+      url: `/api/v1/auth/user/${userId}`,
       method: 'GET',
       header: {
         'Authorization': `Bearer ${token}`,

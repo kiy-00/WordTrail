@@ -1,5 +1,3 @@
-import { API_BASE_URL } from '@/config/api'
-
 /**
  * Generate an example sentence and its translation for a given word.
  * @param language - The language of the word (e.g., "English", "Chinese").
@@ -10,7 +8,7 @@ import { API_BASE_URL } from '@/config/api'
 export async function generateExampleSentence(language: string, word: string): Promise<{ sentence: string, translation: string }> {
   try {
     const token = uni.getStorageSync('token')
-    const response = await fetch(`${API_BASE_URL}/api/v1/ai/generate-sentence?language=${encodeURIComponent(language)}&word=${encodeURIComponent(word)}`, {
+    const response = await fetch(`/api/v1/ai/generate-sentence?language=${encodeURIComponent(language)}&word=${encodeURIComponent(word)}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -44,7 +42,7 @@ export async function generateExampleSentence(language: string, word: string): P
 export async function generateStory(language: string, words: string[]): Promise<{ story: string, translation: string }> {
   try {
     const token = uni.getStorageSync('token')
-    const response = await fetch(`${API_BASE_URL}/api/v1/ai/generate-story`, {
+    const response = await fetch(`/api/v1/ai/generate-story`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

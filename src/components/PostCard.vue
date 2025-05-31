@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Post } from '@/types/Post'
-import { API_BASE_URL } from '@/config/api'
 import { getUserInfo } from '@/types/User'
 import { computed, defineEmits, onMounted, ref } from 'vue'
 
@@ -95,7 +94,7 @@ async function checkIsUserVoted() {
       return
 
     // 直接通过URL参数传递
-    const url = `${API_BASE_URL}/forum/post/isVoted?postId=${props.post.id}&userId=${userId.value}`
+    const url = `/forum/post/isVoted?postId=${props.post.id}&userId=${userId.value}`
 
     const response = await uni.request({
       url,
@@ -150,7 +149,7 @@ async function toggleLike() {
 
     // 修正：根据当前状态决定upvote参数值
     const upvoteParam = originalLiked ? 'null' : 'true'
-    const url = `${API_BASE_URL}/forum/post/vote?postId=${props.post.id}&userId=${userId.value}&upvote=${upvoteParam}`
+    const url = `/forum/post/vote?postId=${props.post.id}&userId=${userId.value}&upvote=${upvoteParam}`
 
     const response = await uni.request({
       url,

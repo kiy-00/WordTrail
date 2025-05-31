@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { Post } from '@/types/Post'
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue' // 添加 onMounted
 
 // 定义API响应的接口
@@ -62,7 +61,7 @@ export default defineComponent({
     const fetchRecommendedPostsFallback = async () => {
       try {
         const response: UniApp.RequestSuccessCallbackResult = await uni.request({
-          url: `${API_BASE_URL}/forum/post/list?page=${String(currentLoad.value)}`,
+          url: `/forum/post/list?page=${String(currentLoad.value)}`,
           method: 'GET',
           header: {
             'Authorization': uni.getStorageSync('token'),
@@ -111,7 +110,7 @@ export default defineComponent({
         const token = uni.getStorageSync('token')
 
         // 修改：确保使用完整的API URL（添加API_BASE_URL前缀）
-        const url = `${API_BASE_URL}/forum/post/random`
+        const url = `/forum/post/random`
 
         // eslint-disable-next-line no-console
         console.log('获取随机帖子请求URL:', url) // 调试日志
@@ -231,7 +230,7 @@ export default defineComponent({
         }
 
         // 修改: 使用新的API端点
-        const apiUrl = `${API_BASE_URL}/forum/post/searchByUser?userId=${userId}`
+        const apiUrl = `/forum/post/searchByUser?userId=${userId}`
 
         // eslint-disable-next-line no-console
         console.log('获取我的帖子URL:', apiUrl)
@@ -332,7 +331,7 @@ export default defineComponent({
         }
 
         // 修正: 使用完整的API URL并添加用户ID参数
-        const favoriteUrl = `${API_BASE_URL}/forum/post/listFavorite?userId=${userId}`
+        const favoriteUrl = `/forum/post/listFavorite?userId=${userId}`
 
         // 使用Promise包装请求，避免解构错误
         await new Promise((resolve, reject) => {
@@ -376,7 +375,7 @@ export default defineComponent({
                   }
 
                   // 获取帖子详情
-                  const postUrl = `${API_BASE_URL}/forum/post/get?id=${item.postId}`
+                  const postUrl = `/forum/post/get?id=${item.postId}`
 
                   uni.request({
                     url: postUrl,
@@ -556,7 +555,7 @@ export default defineComponent({
         })
 
         // 调用搜索API
-        const searchUrl = `${API_BASE_URL}/forum/post/search?keyword=${encodeURIComponent(keyword)}&page=1`
+        const searchUrl = `/forum/post/search?keyword=${encodeURIComponent(keyword)}&page=1`
 
         // eslint-disable-next-line no-console
         console.log('搜索请求URL:', searchUrl)
@@ -797,7 +796,7 @@ export default defineComponent({
         success: (res) => {
           if (res.confirm) {
             // 修改：直接使用originalId，不再尝试从displayedPosts中查找
-            const deleteUrl = `${API_BASE_URL}/forum/post/delete`
+            const deleteUrl = `/forum/post/delete`
             const deleteData = { id: originalId }
 
             // eslint-disable-next-line no-console

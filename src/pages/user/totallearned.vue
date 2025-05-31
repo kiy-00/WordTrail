@@ -1,6 +1,5 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 // 定义学习统计响应接口
@@ -53,7 +52,7 @@ export default defineComponent({
         }
 
         // 修正API路径：使用查询参数传递用户ID
-        const url = `${API_BASE_URL}/api/v1/learning/stats?userId=${encodeURIComponent(userId.value)}`
+        const url = `/api/v1/learning/stats?userId=${encodeURIComponent(userId.value)}`
 
         // 日志记录请求URL
         // eslint-disable-next-line no-console

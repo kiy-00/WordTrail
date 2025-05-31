@@ -4,7 +4,6 @@ import type { DetailedPartOfSpeech, DetailedWord, Example } from '@/types/Detail
 import type { Word } from '@/types/Word'
 import WordCardContent from '@/components/WordCardContent.vue'
 import WordCardsHeader from '@/components/WordCardsHeader.vue'
-import { API_BASE_URL } from '@/config/api'
 import { LearnSettingsStorage } from '@/utils/learnSettingsStorage'
 import { LexiconStorage } from '@/utils/lexiconStorage'
 import { defineComponent } from 'vue'
@@ -256,7 +255,7 @@ export default defineComponent({
 
         // 调用API获取今日需要复习的单词学习记录，使用批次大小限制
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/learning/today-review?userId=${this.userId}&bookId=${currentLexicon.id}&limit=${this.batchSize}`,
+          url: `/api/v1/learning/today-review?userId=${this.userId}&bookId=${currentLexicon.id}&limit=${this.batchSize}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -311,7 +310,7 @@ export default defineComponent({
         const wordId = this.learningRecords[this.currentIndex].wordId
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/words/${wordId}`,
+          url: `/api/v1/words/${wordId}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -360,7 +359,7 @@ export default defineComponent({
 
         // 使用复习API记录单词复习结果
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/learning/review?userId=${this.userId}&wordId=${wordId}&remembered=${remembered}`,
+          url: `/api/v1/learning/review?userId=${this.userId}&wordId=${wordId}&remembered=${remembered}`,
           method: 'POST',
           header: {
             'Authorization': `Bearer ${token}`,
@@ -467,7 +466,7 @@ export default defineComponent({
 
         // 发送批量复习记录
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/learning-records/${this.userId}`,
+          url: `/api/v1/learning-records/${this.userId}`,
           method: 'POST',
           data: requestBody,
           header: {

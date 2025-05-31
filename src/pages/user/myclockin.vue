@@ -1,6 +1,5 @@
 <script lang="ts">
 import BackButton from '@/components/BackButton.vue'
-import { API_BASE_URL } from '@/config/api'
 import { computed, defineComponent, onMounted, ref } from 'vue'
 
 // 定义打卡数据接口
@@ -207,7 +206,7 @@ export default defineComponent({
           return
         }
 
-        const url = `${API_BASE_URL}/api/v1/clock-in/goal`
+        const url = `/api/v1/clock-in/goal`
 
         // eslint-disable-next-line no-console
         console.log('获取学习目标:', url)
@@ -286,7 +285,7 @@ export default defineComponent({
           return
         }
 
-        const url = `${API_BASE_URL}/api/v1/clock-in/weekly`
+        const url = `/api/v1/clock-in/weekly`
 
         // eslint-disable-next-line no-console
         console.log('获取周打卡记录:', url)
@@ -383,7 +382,7 @@ export default defineComponent({
         }
 
         // 使用真实API获取好友列表
-        const url = `${API_BASE_URL}/api/v1/friends/list`
+        const url = `/api/v1/friends/list`
 
         // eslint-disable-next-line no-console
         console.log('获取好友列表:', url)
@@ -424,7 +423,7 @@ export default defineComponent({
         }
 
         // 调用API获取用户的所有挑战
-        const url = `${API_BASE_URL}/api/v1/team-challenges/user`
+        const url = `/api/v1/team-challenges/user`
 
         // eslint-disable-next-line no-console
         console.log('获取用户挑战:', url)
@@ -474,7 +473,7 @@ export default defineComponent({
           return
         }
 
-        const url = `${API_BASE_URL}/api/v1/clock-in/try`
+        const url = `/api/v1/clock-in/try`
 
         // eslint-disable-next-line no-console
         console.log('发送打卡请求:', url)
@@ -567,7 +566,7 @@ export default defineComponent({
           return
         }
 
-        const url = `${API_BASE_URL}/api/v1/team-challenges/${challengeId}/clock-in`
+        const url = `/api/v1/team-challenges/${challengeId}/clock-in`
 
         // eslint-disable-next-line no-console
         console.log('挑战打卡请求:', url)
@@ -655,7 +654,7 @@ export default defineComponent({
           return null
         }
 
-        const url = `${API_BASE_URL}/api/v1/team-challenges/${challengeId}/result`
+        const url = `/api/v1/team-challenges/${challengeId}/result`
 
         // eslint-disable-next-line no-console
         console.log('获取挑战结果:', url)
@@ -803,7 +802,7 @@ export default defineComponent({
         params.append('durationDays', challengeForm.value.durationDays.toString())
 
         // 调用创建挑战API
-        const url = `${API_BASE_URL}/api/v1/team-challenges/create?${params.toString()}`
+        const url = `/api/v1/team-challenges/create?${params.toString()}`
 
         const response = await uni.request({
           url,

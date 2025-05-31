@@ -1,5 +1,4 @@
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
@@ -66,7 +65,7 @@ export default defineComponent({
         }
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/checkin/count?userId=${userId}`,
+          url: `/api/checkin/count?userId=${userId}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -99,7 +98,7 @@ export default defineComponent({
         }
 
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/checkin/days?userId=${userId}`,
+          url: `/api/checkin/days?userId=${userId}`,
           method: 'GET',
           header: {
             Authorization: `Bearer ${token}`,
@@ -139,7 +138,7 @@ export default defineComponent({
 
         // 使用新的后端API接口
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/checkin/userCheckin?userId=${userId}`,
+          url: `/api/checkin/userCheckin?userId=${userId}`,
           method: 'POST',
           header: {
             Authorization: `Bearer ${token}`,

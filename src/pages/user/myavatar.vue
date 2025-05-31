@@ -1,5 +1,4 @@
 <script lang="ts">
-import { API_BASE_URL } from '@/config/api'
 import { defineComponent, onMounted, ref } from 'vue'
 
 export default defineComponent({
@@ -37,7 +36,7 @@ export default defineComponent({
         // 调用API获取用户详细信息
         const token = uni.getStorageSync('token')
         const response = await uni.request({
-          url: `${API_BASE_URL}/api/v1/auth/user/${userId}`,
+          url: `/api/v1/auth/user/${userId}`,
           method: 'GET',
           header: {
             'Authorization': `Bearer ${token}`,
@@ -91,7 +90,7 @@ export default defineComponent({
 
         // 修复：确保正确的请求格式
         const uploadResponse = await uni.uploadFile({
-          url: `${API_BASE_URL}/account/UploadUserAvatar`,
+          url: `/account/UploadUserAvatar`,
           filePath,
           name: 'file', // 后端期望的文件字段名
           formData: {
