@@ -112,13 +112,16 @@ export default defineComponent({
           // 更新用户信息
           username.value = userData.username || ''
 
-          // 处理头像：如果API返回的头像为空，使用用户名首字母作为占位符
-          if (userData.avatarUrl && userData.avatarUrl.trim() !== '') {
+          // 修改：优化头像处理逻辑
+          if (userData.avatarUrl
+            && userData.avatarUrl.trim() !== ''
+            && userData.avatarUrl !== 'null'
+            && !userData.avatarUrl.includes('undefined')) {
             avatarUrl.value = userData.avatarUrl
           }
           else {
-            // 使用用户名首字母生成占位符头像
-            const initial = (userData.username || 'U').charAt(0).toUpperCase()
+            // 使用用户名首字母生成蓝底白字占位符头像
+            const initial = (userData.username || username.value || 'U').charAt(0).toUpperCase()
             avatarUrl.value = `https://placehold.co/64x64/007bff/ffffff?text=${initial}`
           }
 
@@ -137,7 +140,12 @@ export default defineComponent({
           console.error('获取用户信息失败:', response)
           // 如果API调用失败，使用本地存储的信息作为备选
           username.value = userInfo.username || ''
-          if (userInfo.avatarUrl && userInfo.avatarUrl.trim() !== '') {
+
+          // 修改：优化本地存储头像处理
+          if (userInfo.avatarUrl
+            && userInfo.avatarUrl.trim() !== ''
+            && userInfo.avatarUrl !== 'null'
+            && !userInfo.avatarUrl.includes('undefined')) {
             avatarUrl.value = userInfo.avatarUrl
           }
           else {
@@ -154,7 +162,12 @@ export default defineComponent({
           const userInfo = uni.getStorageSync('userInfo')
           if (userInfo) {
             username.value = userInfo.username || ''
-            if (userInfo.avatarUrl && userInfo.avatarUrl.trim() !== '') {
+
+            // 修改：优化错误情况下的头像处理
+            if (userInfo.avatarUrl
+              && userInfo.avatarUrl.trim() !== ''
+              && userInfo.avatarUrl !== 'null'
+              && !userInfo.avatarUrl.includes('undefined')) {
               avatarUrl.value = userInfo.avatarUrl
             }
             else {

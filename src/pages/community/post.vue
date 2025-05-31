@@ -812,13 +812,14 @@ export default defineComponent({
       <swiper
         :indicator-dots="false"
         :current="currentImage"
-        class="h-64"
+        class="image-carousel"
         @change="onImageChange"
       >
         <swiper-item v-for="(image, index) in post.images" :key="index">
           <image
             :src="image"
-            class="h-full w-full object-cover"
+            class="h-full w-full bg-gray-100 object-contain"
+            mode="aspectFit"
             loading="lazy"
           />
         </swiper-item>
@@ -895,7 +896,7 @@ export default defineComponent({
 
     <!-- 悬浮模块 -->
     <view class="fixed bottom-4 right-4 z-50 flex flex-row items-center rounded-lg bg-yellow p-2">
-      <!-- 收藏按钮 - 移除数量显示 -->
+      <!-- 收藏按钮 - 秮除数量显示 -->
       <view
         class="mr-2 cursor-pointer"
         @click="toggleCollect"
@@ -952,6 +953,18 @@ export default defineComponent({
 
 <style scoped>
 /* UnoCSS handles most of the styling using utility classes */
+
+.image-carousel {
+  height: 300px;
+  max-height: 60vh;
+  background-color: #f5f5f5;
+}
+
+@media (max-width: 768px) {
+  .image-carousel {
+    height: 250px;
+  }
+}
 
 @keyframes fadeIn {
   from {

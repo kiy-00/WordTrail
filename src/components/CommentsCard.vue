@@ -391,7 +391,7 @@ export default defineComponent({
 
     <!-- 回复输入框 -->
     <view v-if="isReplying" class="mt-3">
-      <view class="flex items-center border border-gray-300 rounded-lg bg-white">
+      <view class="flex items-center border border-gray-300 rounded-lg bg-white text-gray-7">
         <input
           v-model="replyContent"
           type="text"

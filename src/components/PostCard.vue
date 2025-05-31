@@ -262,7 +262,8 @@ function handleDelete() {
       <image
         v-if="postImage"
         :src="postImage"
-        class="post-image mt-2 h-40 w-full rounded-lg object-cover"
+        class="post-image mt-2 w-full rounded-lg bg-gray-100"
+        mode="aspectFit"
       />
       <!-- 添加标题 -->
       <text class="title mt-2 text-left text-base">
@@ -327,6 +328,20 @@ function handleDelete() {
   height: 100%;
   border-radius: 50% !important;
   object-fit: cover;
+}
+
+/* 帖子图片样式 */
+.post-image {
+  height: 200px;
+  max-height: 300px;
+  object-fit: contain;
+  background-color: #f5f5f5;
+}
+
+@media (max-width: 768px) {
+  .post-image {
+    height: 180px;
+  }
 }
 
 .publish-time {
