@@ -13,8 +13,8 @@ export default defineComponent({
     const notes = ref(0)
 
     // 添加用户信息状态
-    const username = ref('用户名')
-    const avatarUrl = ref('/static/avatar/avatar.png')
+    const username = ref('')
+    const avatarUrl = ref('')
 
     // 加载用户信息的函数
     const loadUserInfo = async () => {

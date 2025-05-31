@@ -72,6 +72,112 @@ export default defineComponent({
       })
     }
 
+    // 单文件上传
+    const uploadSingleFile = async () => {
+      return new Promise((resolve, reject) => {
+        uni.uploadFile({
+          url: `${API_BASE_URL}/forum/post/new`,
+          filePath: images.value[0],
+          name: 'files',
+          formData: {
+            userId: userId.value,
+            title: title.value.trim(),
+            content: content.value.trim(),
+          },
+          header: {
+            Authorization: `Bearer ${uni.getStorageSync('token')}`,
+          },
+          success: (res) => {
+            if (res.statusCode === 200) {
+              resolve(res)
+            }
+            else {
+              reject(new Error(`上传失败，状态码: ${res.statusCode}`))
+            }
+          },
+          fail: (err) => {
+            console.error('单文件上传失败:', err)
+            reject(err)
+          },
+        })
+      })
+    }
+
+    // 多文件上传 - 逐个上传但在后端统一处理
+    const uploadMultipleFiles = async () => {
+      const totalFiles = images.value.length
+      const uploadPromises = []
+
+      for (let i = 0; i < images.value.length; i++) {
+        const uploadPromise = new Promise((resolve, reject) => {
+          uni.uploadFile({
+            url: `${API_BASE_URL}/forum/post/new`,
+            filePath: images.value[i],
+            name: 'files',
+            formData: {
+              userId: userId.value,
+              title: title.value.trim(),
+              content: content.value.trim(),
+              fileIndex: i.toString(),
+              totalFiles: totalFiles.toString(),
+              isMultiFile: 'true',
+            },
+            header: {
+              Authorization: `Bearer ${uni.getStorageSync('token')}`,
+            },
+            success: (res) => {
+              // eslint-disable-next-line no-console
+              console.log(`文件 ${i + 1}/${totalFiles} 上传成功:`, res)
+              if (res.statusCode === 200) {
+                resolve(res)
+              }
+              else {
+                reject(new Error(`文件${i + 1}上传失败，状态码: ${res.statusCode}`))
+              }
+            },
+            fail: (err) => {
+              console.error(`文件${i + 1}上传失败:`, err)
+              reject(err)
+            },
+          })
+        })
+        uploadPromises.push(uploadPromise)
+      }
+
+      // 等待所有文件上传完成
+      await Promise.all(uploadPromises)
+    }
+
+    // 无图片上传
+    const uploadWithoutImages = async () => {
+      return new Promise((resolve, reject) => {
+        uni.request({
+          url: `${API_BASE_URL}/forum/post/new`,
+          method: 'POST',
+          data: {
+            userId: userId.value,
+            title: title.value.trim(),
+            content: content.value.trim(),
+          },
+          header: {
+            'Authorization': `Bearer ${uni.getStorageSync('token')}`,
+            'Content-Type': 'application/json',
+          },
+          success: (res) => {
+            if (res.statusCode === 200) {
+              resolve(res)
+            }
+            else {
+              reject(new Error(`请求失败，状态码: ${res.statusCode}`))
+            }
+          },
+          fail: (err) => {
+            reject(err)
+          },
+        })
+      })
+    }
+
     /**
      * 发布帖子
      */
@@ -88,12 +194,10 @@ export default defineComponent({
         uni.showToast({ title: '标题不能少于3个字符', icon: 'none' })
         return
       }
-
       if (content.value.length < 10) {
         uni.showToast({ title: '正文不能少于10个字符', icon: 'none' })
         return
       }
-
       if (!userId.value) {
         uni.showToast({ title: '请先登录', icon: 'none' })
         return
@@ -106,75 +210,19 @@ export default defineComponent({
         })
 
         if (images.value.length > 0) {
-          // 修复：使用Promise包装uni.uploadFile，确保正确处理异步
-          for (const filePath of images.value) {
-            try {
-              // 使用Promise包装uni.uploadFile
-              await new Promise((resolve, reject) => {
-                uni.uploadFile({
-                  url: `${API_BASE_URL}/forum/post/new`,
-                  filePath,
-                  name: 'files', // 与后端参数名匹配
-                  formData: {
-                    userId: userId.value,
-                    title: title.value.trim(),
-                    content: content.value.trim(),
-                  },
-                  header: {
-                    Authorization: uni.getStorageSync('token'),
-                  },
-                  success: (res) => {
-                    // eslint-disable-next-line no-console
-                    console.log('上传成功:', res)
-                    if (res.statusCode === 200) {
-                      resolve(res)
-                    }
-                    else {
-                      reject(new Error(`上传失败，状态码: ${res.statusCode}`))
-                    }
-                  },
-                  fail: (err) => {
-                    console.error('上传失败:', err)
-                    reject(err)
-                  },
-                })
-              })
-            }
-            catch (uploadErr) {
-              console.error('单个文件上传错误:', uploadErr)
-              throw uploadErr
-            }
+          if (images.value.length === 1) {
+            // 单文件上传，保持原逻辑
+            await uploadSingleFile()
+          }
+          else {
+            // 多文件上传，使用新的逐个上传逻辑
+            await uploadMultipleFiles()
           }
           handleSuccess()
         }
         else {
-          // 无图模式，直接发送请求
-          await new Promise((resolve, reject) => {
-            uni.request({
-              url: `${API_BASE_URL}/forum/post/new`,
-              method: 'POST',
-              data: {
-                userId: userId.value,
-                title: title.value.trim(),
-                content: content.value.trim(),
-              },
-              header: {
-                'Authorization': uni.getStorageSync('token'),
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              success: (res: any) => {
-                if (res.statusCode === 200) {
-                  resolve(res)
-                }
-                else {
-                  reject(new Error(`请求失败，状态码: ${res.statusCode}`))
-                }
-              },
-              fail: (err) => {
-                reject(err)
-              },
-            })
-          })
+          // 无图模式
+          await uploadWithoutImages()
           handleSuccess()
         }
       }
@@ -255,14 +303,18 @@ export default defineComponent({
       </view>
 
       <!-- Content Editor -->
-      <view class="h-50 flex flex-col">
+      <view class="flex flex-col">
         <textarea
           v-model="content"
           placeholder="请输入正文内容..."
-          class="w-full border border-gray-300 rounded-lg px-3 py-1 text-left focus:border-yellow focus:outline-none"
-          rows="6"
-          style="box-sizing:border-box"
+          class="w-full resize-none overflow-y-auto border border-gray-300 rounded-lg px-3 py-2 text-left focus:border-yellow focus:outline-none"
+          :maxlength="2000"
+          rows="10"
+          style="box-sizing: border-box; height: 200px; max-height: 200px; min-height: 200px;"
         />
+        <text class="mt-1 text-left text-sm text-gray-500">
+          {{ content.length }}/2000
+        </text>
       </view>
 
       <!-- Publish Button -->

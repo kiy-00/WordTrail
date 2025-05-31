@@ -294,10 +294,10 @@ export default defineComponent({
       <!-- 当前头像预览 -->
       <view class="relative mb-8">
         <image
-          class="h-32 w-32 border-4 border-gray-200 rounded-full"
+          class="h-32 w-32 border-4 rounded-full"
           :src="currentAvatarUrl"
           alt="当前头像"
-          @error="currentAvatarUrl = '/static/avatar/avatar.png'"
+          @error="currentAvatarUrl = ''"
         />
 
         <!-- 上传中的遮罩 -->
@@ -309,7 +309,7 @@ export default defineComponent({
       </view>
 
       <!-- 用户名显示 -->
-      <text class="mb-8 text-lg text-gray-600">
+      <text class="mb-8 text-lg">
         {{ username }}
       </text>
     </view>
@@ -331,7 +331,7 @@ export default defineComponent({
 
     <!-- 重置为默认头像按钮 -->
     <button
-      class="w-full border border-gray-300 rounded-lg bg-white py-4 text-gray-700 font-bold"
+      class="w-full border rounded-lg bg-blue py-4 text-white font-bold"
       :disabled="isUploading"
       @click="resetToDefaultAvatar"
     >

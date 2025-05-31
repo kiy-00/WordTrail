@@ -31,8 +31,8 @@ export default defineComponent({
     ])
 
     // 添加用户信息状态
-    const username = ref('用户名')
-    const avatarUrl = ref('/static/avatar/avatar.png')
+    const username = ref('')
+    const avatarUrl = ref('')
 
     // 返回逻辑
     const handleBack = () => {
@@ -43,16 +43,9 @@ export default defineComponent({
     const handleLogout = async () => {
       try {
         const token = uni.getStorageSync('token')
-        const response = await uni.request({
-          url: `/auth/logout`,
-          method: 'DELETE',
-          header: {
-            Authorization: token,
-          },
-        })
 
-        if (response.statusCode === 200) {
-          // 清除本地存储的用户信息
+        if (!token) {
+          // 如果没有token，直接清除本地数据并跳转
           uni.removeStorageSync('token')
           uni.removeStorageSync('userInfo')
 
@@ -61,22 +54,113 @@ export default defineComponent({
             icon: 'success',
           })
 
-          // 跳转到登录页
           setTimeout(() => {
             uni.reLaunch({
               url: '/pages/user/login',
             })
           }, 1500)
+          return
         }
-        else {
-          throw new Error('登出失败')
+
+        // 显示加载提示
+        uni.showLoading({
+          title: '退出中...',
+          mask: true,
+        })
+
+        try {
+          // 调用正确的登出API
+          const response = await uni.request({
+            url: `${API_BASE_URL}/api/users/logout`,
+            method: 'POST',
+            header: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          })
+          // eslint-disable-next-line no-console
+          console.log('登出响应:', response)
+
+          if (response.statusCode === 200) {
+            // 登出成功
+            uni.hideLoading()
+            uni.showToast({
+              title: '已退出登录',
+              icon: 'success',
+            })
+          }
+          else if (response.statusCode === 401) {
+            // Token已失效，这是正常情况
+            // eslint-disable-next-line no-console
+            console.log('Token已失效，正常清除本地数据')
+            uni.hideLoading()
+            uni.showToast({
+              title: '已退出登录',
+              icon: 'success',
+            })
+          }
+          else if (response.statusCode === 400) {
+            // Token格式错误
+            console.warn('Token格式错误，清除本地数据')
+            uni.hideLoading()
+            uni.showToast({
+              title: '已退出登录',
+              icon: 'success',
+            })
+          }
+          else {
+            // 其他HTTP错误
+            throw new Error(`登出失败，状态码: ${response.statusCode}`)
+          }
         }
+        catch (apiError) {
+          // API调用失败
+          console.warn('登出API调用失败:', apiError)
+          uni.hideLoading()
+
+          // 即使API失败，也清除本地数据，确保用户能退出
+          uni.showToast({
+            title: '已退出登录',
+            icon: 'success',
+          })
+        }
+
+        // 无论API调用成功与否，都清除本地数据并跳转
+        uni.removeStorageSync('token')
+        uni.removeStorageSync('userInfo')
+
+        // 跳转到登录页
+        setTimeout(() => {
+          uni.reLaunch({
+            url: '/pages/user/login',
+          })
+        }, 1500)
       }
       catch (error) {
-        console.error('登出失败:', error)
-        uni.showToast({
-          title: '登出失败',
-          icon: 'none',
+        console.error('登出过程出错:', error)
+        uni.hideLoading()
+
+        // 提供强制退出选项
+        uni.showModal({
+          title: '退出登录',
+          content: '登出过程中出现问题，是否强制退出？',
+          success: (res) => {
+            if (res.confirm) {
+              uni.removeStorageSync('token')
+              uni.removeStorageSync('userInfo')
+
+              uni.showToast({
+                title: '已强制退出',
+                icon: 'success',
+              })
+
+              setTimeout(() => {
+                uni.reLaunch({
+                  url: '/pages/user/login',
+                })
+              }, 1500)
+            }
+          },
         })
       }
     }
@@ -215,7 +299,7 @@ export default defineComponent({
         class="h-24 w-24 rounded-full"
         :src="avatarUrl"
         alt="User Avatar"
-        @error="avatarUrl = '/static/avatar/avatar.png'"
+        @error="avatarUrl = ''"
       />
       <text class="mt-2 text-2xl">
         {{ username }}
@@ -227,10 +311,7 @@ export default defineComponent({
       <view class="absolute h-4 w-4 flex items-center justify-center rounded-full bg-red-500 -right-2 -top-1">
         <text class="text-xs font-bold">
           3
-        </text>
-      </view>
-    </view> -->
-
+        </</view> -->
     <!-- Links -->
 
     <view class="my-[15%] w-full flex flex-col rounded-md">
